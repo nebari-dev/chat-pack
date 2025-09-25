@@ -6,7 +6,7 @@ import type {
 } from 'react';
 
 import {
-  memo
+  memo, useMemo
 } from 'react';
 
 import {
@@ -27,29 +27,64 @@ function RequestRenderer(props: RequestRenderer.Props): ReactNode {
   // Extract the props.
   const { chatId, runId } = props;
 
-  // Fetch the request text from the store.
-  //
-  // TODO handle file attachments.
-  const requestText = useAppStore(store => {
-    // Get the chat from the store.
+  // Fetch the run from the store.
+  const run = useAppStore(store => {
     const chat = store.chats.find(chat => chat.id === chatId)!;
+    return chat.runs.find(run => run.id === runId)!;
+  });
 
-    // Get the run for the chat.
-    const run = chat.runs.find(run => run.id === runId)!;
+  // Fetch the files from the store.
+  const storeFiles = useAppStore(store => store.files);
+
+  // Memoised computation of the request text and files.
+  const { runText, files } = useMemo(() => {
 
     // Create the request text for the run.
-    return run.request.parts.filter(part =>
+    const runText = run.request.parts.filter(part =>
       part.kind === 'text'
     ).flatMap(part =>
       part.data.content_parts
     ).join('');
-  });
+
+    // Create the request files for the run.
+    const runFileIds = run.request.parts.filter(part =>
+      part.kind === 'file'
+    ).map(part =>
+      part.data.file_id
+    );
+
+    // Get file data based on IDs
+    const files = [...new Set(runFileIds)]
+    .flatMap(id => {
+      const files = storeFiles.find(file => file.id === id);
+      return files ? [files] : [];
+    });
+
+    return { runText, files };
+  }, [run, storeFiles]);
 
   // Return the rendered component.
   return (
-    <div className='chat-RequestRenderer'>
-      <p>{ requestText }</p>
-    </div>
+    <>
+      {/* File list above */}
+      {files.length > 0 && (
+        <div className="chat-RequestFileList">
+          {files.map(file => (
+            <div key={file.id} className="chat-RequestFileBox">
+              <div className="chat-RequestFileName">{file.name}</div>
+              <div className="chat-RequestFileType">
+                {file.content_type}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Request text inside chat box */}
+      <div className="chat-RequestRenderer">
+        <p>{runText}</p>
+      </div>
+    </>
   );
 }
 
