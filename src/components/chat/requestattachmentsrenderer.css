@@ -1,0 +1,12 @@
+.chat-RequestFileList {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.chat-RequestFileBox{
+  border: 1px solid;
+  border-radius: var(--radius-100);
+  background-color: var(--background-default);
+  padding: 0 var(--space-600);
+}

@@ -17,6 +17,10 @@ import {
   ChatScroller
 } from './chatscroller';
 
+import {
+  RequestAttachmentsRendererMemo
+} from './requestattachmentsrenderer';
+
 import './requestrenderer.css';
 
 
@@ -32,8 +36,6 @@ function RequestRenderer(props: RequestRenderer.Props): ReactNode {
   const { chatId, runId } = props;
 
   // Fetch the request text from the store.
-  //
-  // TODO handle file attachments.
   const requestText = useAppStore(store => {
     // Get the chat from the store.
     const chat = store.chats.find(chat => chat.id === chatId)!;
@@ -56,9 +58,12 @@ function RequestRenderer(props: RequestRenderer.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-RequestRenderer'>
-      <p>{ requestText }</p>
-    </div>
+    <>
+      <RequestAttachmentsRendererMemo chatId={ chatId } runId={ runId }/>
+      <div className='chat-RequestRenderer'>
+        <p>{ requestText }</p>
+      </div>
+    </>
   );
 }
 
