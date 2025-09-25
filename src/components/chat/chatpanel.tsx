@@ -10,6 +10,10 @@ import {
 } from 'react';
 
 import {
+  useAppStore
+} from '@/store';
+
+import {
   ChatLogo
 } from './chatlogo';
 
@@ -20,10 +24,6 @@ import {
 import {
   InputAreaMemo
 } from './inputarea';
-
-import {
-  useAppStore
-} from '../../store';
 
 import './chatpanel.css';
 

@@ -11,11 +11,11 @@ import type {
 
 import Select from 'react-select';
 
-import * as Hrafnar from '../../hrafnar';
+import * as Hrafnar from '@/hrafnar';
 
 import {
   useAppStore
-} from '../../store';
+} from '@/store';
 
 import './filesselector.css';
 

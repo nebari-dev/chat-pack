@@ -9,15 +9,11 @@ import {
   memo, useCallback, useRef, useState
 } from 'react';
 
-import * as Hrafnar from '../../hrafnar';
+import * as Hrafnar from '@/hrafnar';
 
 import {
   useAppStore
-} from '../../store';
-
-import {
-  FilesSelector
-} from './filesselector';
+} from '@/store';
 
 import {
   TextArea

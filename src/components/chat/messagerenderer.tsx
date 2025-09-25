@@ -27,7 +27,7 @@ import {
 
 import {
   useAppStore
-} from '../../store';
+} from '@/store';
 
 import './messagerenderer.css';
 

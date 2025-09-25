@@ -9,18 +9,18 @@ import {
   memo
 } from 'react';
 
-import {
-  useAppStore
-} from '../../store';
+// import {
+//   useAppStore
+// } from '@/store';
 
 
 /**
  * A React component that renders a tool call response.
  */
 export
-function ToolCallRenderer(props: ToolCallRenderer.Props): ReactNode {
+function ToolCallRenderer(_props: ToolCallRenderer.Props): ReactNode {
   // Extract the props.
-  const { chatId, runId, stepId } = props;
+  //const { chatId, runId, stepId } = props;
 
   // // Fetch the response from the store.
   // //

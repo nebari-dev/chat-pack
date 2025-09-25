@@ -11,7 +11,7 @@ import {
 
 import {
   useAppStore
-} from '../../store';
+} from '@/store';
 
 import {
   MessageRendererMemo

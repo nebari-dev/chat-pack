@@ -2,10 +2,10 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import type {
-  MouseEvent, ReactNode, Ref
+  MouseEvent, ReactNode
 } from 'react';
 
-import * as Hrafnar from '../../hrafnar';
+import * as Hrafnar from '@/hrafnar';
 
 import {
   FilesSelector

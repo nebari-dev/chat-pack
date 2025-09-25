@@ -13,7 +13,7 @@ import type {
   StateCreator
 } from 'zustand';
 
-import * as Hrafnar from '../hrafnar';
+import * as Hrafnar from '@/hrafnar';
 
 import type {
   ChatPanelSpec, UISlice
