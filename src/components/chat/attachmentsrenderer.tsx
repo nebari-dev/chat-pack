@@ -15,25 +15,24 @@ import {
 
 import {
   useAppStore
-} from '../../store';
+} from '@/store';
 
-import './requestattachmentsrenderer.css';
+import './attachmentsrenderer.css';
 
 
 /**
- * A React component that renders a request in a chat.
+ * A React component that renders request attachments.
  *
  * #### Notes
  * This component assumes that `chatId` and `runId` exist in the store.
  */
 export
-function RequestAttachmentsRenderer(props: RequestAttachmentsRenderer.Props): ReactNode {
-
-  // // Extract the props.
+function AttachmentsRenderer(props: AttachmentsRenderer.Props): ReactNode {
+  // Extract the props.
   const { chatId, runId } = props;
 
-  const fileList = useAppStore(
-  useShallow(store => {
+  // Collect the files attached to the run.
+  const files = useAppStore(useShallow(store => {
     // Find the chat/run
     const chat = store.chats.find(chat => chat.id === chatId)!;
     const run = chat.runs.find(run => run.id === runId)!;
@@ -44,45 +43,38 @@ function RequestAttachmentsRenderer(props: RequestAttachmentsRenderer.Props): Re
       .map(part => part.data.file_id);
 
     // Map IDs -> file objects from the store and drop any misses.
-    const files = fileIds.flatMap(id => {
-      const file = store.files.find(f => f.id === id);
-      return file ? [file] : [];
-    });
+    return fileIds.flatMap(id => store.files.find(f => f.id === id)!);
+  }));
 
-    return files;
-  })
-);
+  // Create the content for the files.
+  const content = files.map(file =>
+    <div key={ file.id } className='chat-AttachmentsRenderer-file'>
+      { file.name }
+    </div>
+  );
 
   // Return the rendered component.
   return (
-    <div className=''>
-      {fileList.length > 0 && (
-        <div className="chat-RequestFileList">
-          {fileList.map(file => (
-            <div key={file.id} className="chat-RequestFileBox">
-              <div className="chat-RequestFileName">{file.name}</div>
-              <div className="chat-RequestFileType">{file.content_type}</div>
-            </div>
-          ))}
-        </div>
-      )}
+    content.length === 0 ? null :
+    <div className='chat-AttachmentsRenderer'>
+      { content }
     </div>
   );
 }
 
 
 /**
- * A memoized version of `RequestRenderer`.
+ * A memoized version of `AttachmentsRenderer`.
  */
 export
-const RequestAttachmentsRendererMemo = memo(RequestAttachmentsRenderer);
+const AttachmentsRendererMemo = memo(AttachmentsRenderer);
 
 
 /**
  * The namespace for the `RequestRenderer` component statics.
  */
 export
-namespace RequestAttachmentsRenderer {
+namespace AttachmentsRenderer {
   /**
    * A type alias for the `RequestRenderer` props.
    */

@@ -14,12 +14,12 @@ import {
 } from '@/store';
 
 import {
-  ChatScroller
-} from './chatscroller';
+  AttachmentsRendererMemo
+} from './attachmentsrenderer';
 
 import {
-  RequestAttachmentsRendererMemo
-} from './requestattachmentsrenderer';
+  ChatScroller
+} from './chatscroller';
 
 import './requestrenderer.css';
 
@@ -58,12 +58,12 @@ function RequestRenderer(props: RequestRenderer.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <>
-      <RequestAttachmentsRendererMemo chatId={ chatId } runId={ runId }/>
-      <div className='chat-RequestRenderer'>
+    <div className='chat-RequestRenderer'>
+      <div className='chat-RequestRenderer-prompt'>
         <p>{ requestText }</p>
       </div>
-    </>
+      <AttachmentsRendererMemo chatId={ chatId } runId={ runId }/>
+    </div>
   );
 }
 
