@@ -42,11 +42,11 @@ function AttachmentsRenderer(props: AttachmentsRenderer.Props): ReactNode {
       .filter(part => part.kind === 'file')
       .map(part => part.data.file_id);
 
-    // Map IDs -> file objects from the store and drop any misses.
-    return fileIds.flatMap(id => store.files.find(f => f.id === id)!);
+    // Map the file ids to file objects in the store.
+    return fileIds.map(id => store.files.find(f => f.id === id)!);
   }));
 
-  // Create the content for the files.
+  // Create the content items for the files.
   const content = files.map(file =>
     <div key={ file.id } className='chat-AttachmentsRenderer-file'>
       { file.name }
@@ -71,12 +71,12 @@ const AttachmentsRendererMemo = memo(AttachmentsRenderer);
 
 
 /**
- * The namespace for the `RequestRenderer` component statics.
+ * The namespace for the `AttachmentsRenderer` component statics.
  */
 export
 namespace AttachmentsRenderer {
   /**
-   * A type alias for the `RequestRenderer` props.
+   * A type alias for the `AttachmentsRenderer` props.
    */
   export
   type Props = {
