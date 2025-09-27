@@ -17,8 +17,6 @@ import {
   useAppStore
 } from '@/store';
 
-import './filesselector.css';
-
 
 /**
  * A React component which renders the files selector dropdown.
@@ -40,7 +38,6 @@ function FilesSelector(props: FilesSelector.Props): ReactNode {
   // Return the rendered component.
   return (
     <Select
-      className='chat-FilesSelector'
       value={ selectedFiles }
       onChange={ setSelectedFiles }
       isMulti={ true }

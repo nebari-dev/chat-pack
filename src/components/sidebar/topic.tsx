@@ -1,15 +1,25 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
+import {
+  EllipsisVertical
+} from 'lucide-react';
+
 import type {
   ReactNode
 } from 'react';
 
 import {
-  useAppStore
-} from '../../store';
+  DockPanel
+} from 'otui/containers';
 
-import './topic.css';
+import {
+  useAppStore
+} from '@/store';
 
 
 /**
@@ -32,6 +42,22 @@ function Topic(props: Topic.Props): ReactNode {
     return chat.display_name;
   });
 
+  // Determine whether the chat is open in the dock layout.
+  const isOpen = useAppStore(store => {
+    // Fetch the dock layout from the store.
+    const layout = store.dockLayout;
+
+    // Bail early if the layout is null.
+    if (layout === null) {
+      return false;
+    }
+
+    // Find a tab layout that includes the chat id.
+    return DockPanel.findTabLayout(layout, tabLayout =>
+      tabLayout.keys.includes(chatId)
+    ) !== null;
+  });
+
   // Fetch the `openChat` function from the store.
   const openPanel = useAppStore(store => store.openPanel);
 
@@ -46,11 +72,22 @@ function Topic(props: Topic.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <li className='sidebar-Topic'>
-      <span className='sidebar-Topic-name' onClick={ handleOpen }>
+    <li className={ clsx(
+      'px-3 h-10 flex items-center justify-between',
+      'rounded-sm whitespace-nowrap',
+      isOpen ? 'bg-bg-brand-secondary border border-bd-brand-default' : ''
+    ) }>
+      <span
+        onClick={ handleOpen }
+        className={ clsx(
+          'flex-1 min-w-0 text-text-neutral-default',
+          'overflow-hidden text-ellipsis cursor-pointer'
+        ) }>
         { name }
       </span>
-      <span className='sidebar-Topic-options' onClick={ handleDelete } />
+      <span className='cursor-pointer' onClick={ handleDelete }>
+        <EllipsisVertical size={ 16 } />
+      </span>
     </li>
   );
 }

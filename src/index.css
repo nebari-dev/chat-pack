@@ -6,8 +6,9 @@
 
 
 body {
-  font-family: var(--body-font-family);
-  font-weight: var(--body-font-weight-regular);
+  font-family: Inter;
+  font-weight: 400;
+  color: #1E1E1E;
 }
 
 
@@ -20,4 +21,22 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: 'row';
+}
+
+
+@theme {
+  /* Background Colors */
+  --color-bg-neutral-default: #F5F5F5;
+  --color-bg-neutral-white: #FBFBFB;
+  --color-bg-brand-default: #9B3DCC;
+  --color-bg-brand-secondary: #E8D7FB;
+  --color-bg-white: #FFFFFF;
+
+  /* Border Colors */
+  --color-bd-neutral-default: #D9D9D9;
+  --color-bd-neutral-secondary: #B3B3B3;
+  --color-bd-brand-default: #682888;
+
+  /* Text Colors */
+  --color-text-brand-on-brand: #FBFBFB;
 }

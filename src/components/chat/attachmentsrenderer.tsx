@@ -17,8 +17,6 @@ import {
   useAppStore
 } from '@/store';
 
-import './attachmentsrenderer.css';
-
 
 /**
  * A React component that renders request attachments.
@@ -48,7 +46,8 @@ function AttachmentsRenderer(props: AttachmentsRenderer.Props): ReactNode {
 
   // Create the content items for the files.
   const content = files.map(file =>
-    <div key={ file.id } className='chat-AttachmentsRenderer-file'>
+    <div key={ file.id } className=
+      'p-2 bg-bg-neutral-default rounded-lg whitespace-nowrap'>
       { file.name }
     </div>
   );
@@ -56,7 +55,7 @@ function AttachmentsRenderer(props: AttachmentsRenderer.Props): ReactNode {
   // Return the rendered component.
   return (
     content.length === 0 ? null :
-    <div className='chat-AttachmentsRenderer'>
+    <div className='flex flex-row flex-wrap items-center gap-2'>
       { content }
     </div>
   );

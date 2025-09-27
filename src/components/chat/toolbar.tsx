@@ -19,8 +19,6 @@ import {
   SubmitButton
 } from './submitbutton';
 
-import './toolbar.css';
-
 
 /**
  * A React component that renders a chat tool bar.
@@ -32,8 +30,8 @@ function ToolBar(props: ToolBar.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-ToolBar'>
-      <div className='chat-ToolBar-content'>
+    <div className='flex flex-row gap-3'>
+      <div className='flex flow-row flex-wrap flex-1 items-start gap-3'>
         <FilesSelector selectedFiles={ selectedFiles } setSelectedFiles={ setSelectedFiles } />
         <ModelSelector model={ model } setModel={ setModel } />
       </div>

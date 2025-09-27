@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  X
+} from 'lucide-react';
+
 import type {
   ReactNode
 } from 'react';
@@ -12,8 +16,6 @@ import {
 import {
   useAppStore
 } from '@/store';
-
-import './chattab.css';
 
 
 /**
@@ -73,14 +75,16 @@ function ChatTab(props: ChatTab.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-ChatTab'>
-      <span className='chat-ChatTab-name'>
+    <div className='flex flex-row w-full h-full items-center'>
+      <span className='flex-1 min-w-0 overflow-hidden text-ellipsis'>
         { chatName }
       </span>
       <span
-        className='chat-ChatTab-close'
         ref={ closeRef }
-        onClick={ handleClose } />
+        onClick={ handleClose }
+        className='flex-none cursor-pointer'>
+        <X size={ 16 } />
+      </span>
     </div>
   );
 }

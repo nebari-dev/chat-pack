@@ -1,6 +1,14 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
+import {
+  Plus
+} from 'lucide-react';
+
 import type {
   ReactNode
 } from 'react';
@@ -8,8 +16,6 @@ import type {
 import {
   useAppStore
 } from '../../store';
-
-import './newchatbutton.css';
 
 
 /**
@@ -31,11 +37,14 @@ function NewChatButton(): ReactNode {
   // Return the rendered button.
   return (
     <button
-      className='sidebar-NewChatButton'
-      data-state={ sideBarState }
-      onClick={ onClick }>
-      <span className='sidebar-NewChatButton-icon' />
-      <span className='sidebar-NewChatButton-text'>
+      onClick={ onClick }
+      className={ clsx(
+        'flex flex-row flex-none items-center justify-center gap-2',
+        'whitespace-nowrap rounded-sm border border-bd-brand-default',
+        'text-text-brand-on-brand bg-bg-brand-default h-9 cursor-pointer',
+      ) }>
+      <Plus size={ 16 } />
+      <span className={ sideBarState === 'collapsed' ? 'hidden' : '' }>
         New Chat
       </span>
     </button>

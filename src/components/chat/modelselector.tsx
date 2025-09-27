@@ -13,8 +13,6 @@ import {
   useAppStore
 } from '@/store';
 
-import './modelselector.css';
-
 
 /**
  * A React component which renders the model selector dropdown.
@@ -36,7 +34,6 @@ function ModelSelector(props: ModelSelector.Props) {
   // Return the rendered component.
   return (
     <Select
-      className='chat-ModelSelector'
       menuPlacement='auto'
       value={ model }
       onChange={ setModel }

@@ -1,11 +1,17 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
+import {
+  Send
+} from 'lucide-react';
+
 import type {
   MouseEvent, ReactNode
 } from 'react';
-
-import './submitbutton.css';
 
 
 /**
@@ -14,15 +20,17 @@ import './submitbutton.css';
 export
 function SubmitButton(props: SubmitButton.Props): ReactNode {
   // Extract the props.
-  const { onClick }  = props;
+  const { onClick } = props;
 
   // Return the rendered component.
   return (
-    <button className='chat-SubmitButton' onClick={ onClick }>
-      <span className='chat-SubmitButton-text'>
-        Send
-      </span>
-      <span className='chat-SubmitButton-icon' />
+    <button onClick={ onClick } className={ clsx(
+      'flex-none px-3 h-8 flex flex-row gap-2 items-center justify-center',
+      'whitespace-nowrap cursor-pointer bg-bg-brand-default',
+      'text-text-brand-on-brand border border-bd-brand-default rounded-sm'
+    ) }>
+      Send
+      <Send size={ 16 } />
     </button>
   );
 }

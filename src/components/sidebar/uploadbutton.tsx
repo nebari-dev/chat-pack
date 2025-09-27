@@ -1,21 +1,23 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
 
 import {
-  useCallback, useState
+  useCallback
 } from 'react';
 
-import * as Hrafnar from '../../hrafnar';
+import * as Hrafnar from '@/hrafnar';
 
 import {
   useAppStore
-} from '../../store';
-
-import './uploadbutton.css';
+} from '@/store';
 
 
 /**
@@ -26,27 +28,18 @@ function UploadButton(): ReactNode {
   // Get the `uploadFiles` function from the store.
   const uploadRemoteFiles = useAppStore(store => store.uploadRemoteFiles);
 
-  // Set up the state to track the uploading flag.
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-
   // Handle click event for the upload button.
   const handleClick = useCallback(() => {
-    window.Dropbox!.choose({
+    Dropbox.choose({
       linkType: 'direct',
       multiselect: true,
       extensions: ['.pdf', '.jpg', '.png'],
       success: async files => {
-        // Set the uploading flag.
-        setIsUploading(true);
-
         // Convert the dropbox files to upload specs.
         const specs = files.map(Private.convertDropboxFile);
 
         // Upload the files.
         await uploadRemoteFiles(specs);
-
-        // Clear the uploading flag.
-        setIsUploading(false);
       }
     });
   }, [uploadRemoteFiles]);
@@ -54,13 +47,17 @@ function UploadButton(): ReactNode {
   // Return the rendered component.
   return (
     <button
-      className='sidebar-UploadButton'
-      data-uploading={ isUploading ? '' : undefined }
-      onClick={ handleClick }>
-      <span className='sidebar-UploadButton-icon' />
-      <span className='sidebar-UploadButton-text'>
-        Upload Files
-      </span>
+      onClick={ handleClick }
+      className={ clsx(
+        'sidebar-UploadButton px-3 py-1 flex flex-row gap-2 justify-center',
+        'items-center bg-bg-neutral-default border border-bd-neutral-default',
+        'rounded-sm whitespace-nowrap cursor-pointer'
+      ) }>
+      <span className={ clsx(
+        'bg-[url(/assets/dropboxicon.svg)] h-4 w-4 inline-block',
+        'bg-size-[auto_16px] bg-center bg-no-repeat'
+      ) }/>
+      Upload Files
     </button>
   );
 }

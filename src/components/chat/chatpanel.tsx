@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
@@ -14,10 +18,6 @@ import {
 } from '@/store';
 
 import {
-  ChatLogo
-} from './chatlogo';
-
-import {
   ChatScroller
 } from './chatscroller';
 
@@ -28,8 +28,6 @@ import {
 import {
   InputAreaMemo
 } from './inputarea';
-
-import './chatpanel.css';
 
 
 /**
@@ -55,16 +53,19 @@ function ChatPanel(props: ChatPanel.Props): ReactNode {
   // Create the content child for the chat panel.
   const content = (
     empty ?
-    <ChatLogo /> :
+    <div className={ clsx(
+      'flex-auto bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)]',
+      'bg-[auto_240px] bg-center bg-no-repeat h-[240px]'
+    ) }/> :
     <CompletionAreaMemo chatId={ chatId } />
   );
 
   // Return the rendered component.
   return (
-    <div className='chat-ChatPanel' data-empty={ empty }>
+    <div className='flex flex-col w-full h-full'>
       <ChatScroller chatId={ chatId }>
         { content }
-        <InputAreaMemo chatId={ chatId } />
+        <InputAreaMemo chatId={ chatId } empty={ empty } />
       </ChatScroller>
     </div>
   );

@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
@@ -16,8 +20,6 @@ import {
 import {
   Topic
 } from './topic';
-
-import './chatlist.css';
 
 
 /**
@@ -40,10 +42,18 @@ function ChatList(): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='sidebar-ChatList' data-state={ sideBarState }>
-      <ul className='sidebar-ChatList-list'>
-        { topics }
-      </ul>
+    <div className={ clsx(
+      'flex flex-col flex-auto min-h-0 gap-2 select-none',
+      sideBarState === 'collapsed' ? 'hidden' : ''
+      ) }>
+      <h1 className='flex-none'>
+        Chats
+      </h1>
+      <div className='flex-auto overflow-y-auto'>
+        <ul className='flex flex-col gap-3'>
+          { topics }
+        </ul>
+      </div>
     </div>
   );
 }

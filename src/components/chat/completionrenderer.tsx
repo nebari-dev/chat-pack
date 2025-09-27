@@ -17,8 +17,6 @@ import {
   ResponseRendererMemo
 } from './responserenderer';
 
-import './completionrenderer.css';
-
 
 /**
  * A React component which renders a chat completion.
@@ -33,7 +31,7 @@ function CompletionRenderer(props: CompletionRenderer.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-CompletionRenderer'>
+    <div className='flex flex-col gap-6'>
       <RequestRendererMemo chatId={ chatId } runId={ runId } />
       <ResponseRendererMemo chatId={ chatId } runId={ runId } />
     </div>

@@ -21,8 +21,6 @@ import {
   CompletionRendererMemo
 } from './completionrenderer';
 
-import './completionarea.css';
-
 
 /**
  * A React component that renders the chat completion area.
@@ -51,7 +49,8 @@ function CompletionArea(props: CompletionArea.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-CompletionArea'>
+    <div className=
+      'flex flex-col flex-auto w-full min-w-3xs max-w-3xl gap-6 m-auto'>
       { children }
     </div>
   );

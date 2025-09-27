@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
@@ -24,8 +28,6 @@ import {
 import {
   ChatPanelMemo, ChatTabMemo
 } from '../chat';
-
-import './contentdockpanel.css';
 
 
 /**
@@ -63,16 +65,26 @@ function ContentDockPanel(): ReactNode {
   // Return the rendered component.
   return (
     <DockPanel
-      className='content-ContentDockPanel'
+      className='w-full h-full'
       items={ itemMap }
       layout={ dockLayout }
       eventHandler={ handleDockEvent }
-      splitPanelClassName='content-ContentDockPanel-SplitPanel'
-      tabPanelClassName='content-ContentDockPanel-TabPanel'
-      tabPanelPanelClassName='content-ContentDockPanel-TabPanel-Panel'
-      tabBarInnerClassName='content-ContentDockPanel-TabBar-inner'
-      tabClassName='content-ContentDockPanel-Tab'
-      overlayClassName='content-ContentDockPanel-Overlay'
+      splitPanelClassName='w-full h-full'
+      tabPanelClassName='w-full h-full min-w-[100px] min-h-[100px]'
+      tabPanelPanelClassName='bg-bg-white border border-bd-neutral-default'
+      tabBarInnerClassName='gap-2'
+      tabClassName={ clsx(
+        'pt-1 pb-1 pl-2 pr-2 w-40 bg-bg-neutral-default',
+        'rounded-tl-md rounded-tr-md border-x border-t',
+        'border-x-bd-neutral-default border-t-bd-neutral-default',
+        'bg-bg-neutral-default data-[selected]:bg-bg-white',
+        'data-[selected]:translate-y-px'
+      ) }
+      overlayClassName={ clsx(
+        'bg-[rgba(255,255,255,0.6)]',
+        'border-2 border-dashed border-bd-brand-default',
+        'transition transition-[top,left,right,bottom] duration-150'
+      ) }
       handleSize={ 8 } />
   );
 }

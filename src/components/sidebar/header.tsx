@@ -1,6 +1,14 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
+import {
+  PanelLeft
+} from 'lucide-react';
+
 import type {
   ReactNode
 } from 'react';
@@ -8,8 +16,6 @@ import type {
 import {
   useAppStore
 } from '../../store';
-
-import './header.css';
 
 
 /**
@@ -28,11 +34,20 @@ function Header(): ReactNode {
 
   // Return the rendered component with the sidebar state.
   return (
-    <div className='sidebar-Header' data-state={ sideBarState }>
-      <div className='sidebar-Header-logo'>
-        <a className='sidebar-Header-logo-link' href='/' />
+    <div className={ clsx(
+      'flex flex-row flex-none h-9',
+      sideBarState === 'open' ? 'justify-between' : 'justify-center'
+      ) }>
+      <div className={ clsx(
+        'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)] bg-[auto_100px]',
+        'bg-center bg-no-repeat w-[100px] cursor-pointer',
+        sideBarState === 'collapsed' ? 'hidden' : ''
+        ) }>
+        <a className='block w-full h-full' href='/' />
       </div>
-      <button className='sidebar-Header-toggle' onClick={ handleClick } />
+      <button className='cursor-pointer' onClick={ handleClick }>
+        <PanelLeft size={ 16 }/>
+      </button>
     </div>
   );
 }

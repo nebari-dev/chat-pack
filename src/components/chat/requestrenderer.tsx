@@ -21,8 +21,6 @@ import {
   ChatScroller
 } from './chatscroller';
 
-import './requestrenderer.css';
-
 
 /**
  * A React component that renders a request in a chat.
@@ -58,8 +56,9 @@ function RequestRenderer(props: RequestRenderer.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-RequestRenderer'>
-      <div className='chat-RequestRenderer-prompt'>
+    <div className='flex flex-col items-end gap-2 overflow-hidden'>
+      <div className=
+        'p-3 bg-bg-neutral-default rounded-lg select-text max-w-2xl'>
         <p>{ requestText }</p>
       </div>
       <AttachmentsRendererMemo chatId={ chatId } runId={ runId }/>

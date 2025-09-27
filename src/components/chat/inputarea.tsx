@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   FormEvent, KeyboardEvent, MouseEvent, ReactNode
 } from 'react';
@@ -23,8 +27,6 @@ import {
   ToolBar
 } from './toolbar';
 
-import './inputarea.css';
-
 
 /**
  * A React component which renders the chat input area.
@@ -35,7 +37,7 @@ import './inputarea.css';
 export
 function InputArea(props: InputArea.Props): ReactNode {
   // Extract the props.
-  const { chatId } = props;
+  const { chatId, empty } = props;
 
   // Fetch all the models from the store.
   const allModels = useAppStore(store => store.models);
@@ -140,22 +142,31 @@ function InputArea(props: InputArea.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <form
-      id={ `form-${chatId}` }
-      ref={ formRef }
-      className='chat-InputArea'
-      onSubmit={ handleSubmit }>
-      <TextArea
-        chatId={ chatId }
-        ref={ textAreaRef }
-        onKeyDown={ handleKeyDown } />
-      <ToolBar
-        selectedFiles={ selectedFiles }
-        setSelectedFiles={ setSelectedFiles }
-        model={ model }
-        setModel={ setSelectedModel }
-        onSubmit={ handleClick } />
-    </form>
+    <div className={ clsx(
+      'w-full min-w-3xs max-w-3xl',
+      'm-auto pb-6 bg-bg-neutral-white',
+      empty ? '' : 'sticky bottom-0'
+      ) }>
+      <form
+        id={ `form-${chatId}` }
+        ref={ formRef }
+        onSubmit={ handleSubmit }
+        className={ clsx(
+          'w-full p-4 flex flex-col gap-4 shadow-md',
+          'border border-bd-neutral-secondary rounded-lg'
+        ) }>
+        <TextArea
+          chatId={ chatId }
+          ref={ textAreaRef }
+          onKeyDown={ handleKeyDown } />
+        <ToolBar
+          selectedFiles={ selectedFiles }
+          setSelectedFiles={ setSelectedFiles }
+          model={ model }
+          setModel={ setSelectedModel }
+          onSubmit={ handleClick } />
+      </form>
+    </div>
   );
 }
 
@@ -181,5 +192,10 @@ namespace InputArea {
      * The chat id associated with the input area.
      */
     readonly chatId: string;
+
+    /**
+     *
+     */
+    readonly empty: boolean;
   };
 }

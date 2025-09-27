@@ -124,7 +124,7 @@ function MessageRenderer(props: MessageRenderer.Props): ReactNode {
   // Return the rendered component.
   return (
     <div
-      className='chat-MessageRenderer markdown-renderer'
+      className='markdown-renderer'
       dangerouslySetInnerHTML={ { __html: safeHtml } } />
   );
 }

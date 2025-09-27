@@ -5,8 +5,6 @@ import type {
   KeyboardEvent, ReactNode, Ref
 } from 'react';
 
-import './textarea.css';
-
 
 /**
  * A React component that render the text input area for a chat.
@@ -18,14 +16,12 @@ function TextArea(props: TextArea.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-TextArea'>
-      <textarea
-        className='chat-TextArea-textarea'
-        ref={ ref }
-        name={ `input-${chatId}` }
-        placeholder='How can we help?'
-        onKeyDown={ onKeyDown } />
-    </div>
+    <textarea
+      className='outline-none resize-none field-sizing-content w-full'
+      ref={ ref }
+      name={ `input-${chatId}` }
+      placeholder='How can we help?'
+      onKeyDown={ onKeyDown } />
   );
 }
 

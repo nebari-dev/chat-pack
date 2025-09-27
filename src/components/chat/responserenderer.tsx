@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
@@ -20,8 +24,6 @@ import {
 import {
   ResponseDispatchMemo
 } from './responsedispatch';
-
-import './responserenderer.css';
 
 
 /**
@@ -58,7 +60,10 @@ function ResponseRenderer(props: ResponseRenderer.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-ResponseRenderer'>
+    <div className={ clsx(
+      'p-3 select-text rounded-lg bg-bg-neutral-white',
+      'border border-bd-neutral-default overflow-x-auto'
+    ) }>
       { children }
     </div>
   );

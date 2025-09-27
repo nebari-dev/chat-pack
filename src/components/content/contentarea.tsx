@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
@@ -17,8 +21,6 @@ import {
   Onboarding
 } from './onboarding';
 
-import './contentarea.css';
-
 
 /**
  * A React component which renders the chat app content area.
@@ -33,7 +35,10 @@ function ContentArea(): ReactNode {
 
   // Return the rendered content.
   return (
-    <div className='content-ContentArea'>
+    <div className={ clsx(
+      'flex flex-col flex-auto p-2 items-center justify-center',
+      'bg-bg-neutral-default'
+    ) }>
       { content }
     </div>
   );

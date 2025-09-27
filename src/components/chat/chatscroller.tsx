@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
@@ -8,8 +12,6 @@ import type {
 import {
   useCallback, useEffect, useRef
 } from 'react';
-
-import './chatscroller.css';
 
 
 /**
@@ -36,7 +38,12 @@ function ChatScroller(props: ChatScroller.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='chat-ChatScroller' ref={ ref }>
+    <div
+      ref={ ref }
+      className={ clsx(
+        'flex flex-col flex-1 gap-6 pt-6 pr-6 pl-6',
+        'overflow-x-hidden overflow-y-auto scroll-smooth'
+      ) }>
       { children }
     </div>
   );
