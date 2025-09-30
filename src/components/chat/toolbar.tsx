@@ -16,6 +16,10 @@ import {
 } from './modelselector';
 
 import {
+  ToolSelector
+} from './toolselector';
+
+import {
   SubmitButton
 } from './submitbutton';
 
@@ -26,7 +30,7 @@ import {
 export
 function ToolBar(props: ToolBar.Props): ReactNode {
   // Extract the props.
-  const { selectedFiles, setSelectedFiles, model, setModel, onSubmit} = props;
+  const { selectedFiles, setSelectedFiles, model, setModel,  setTools, tools, onSubmit} = props;
 
   // Return the rendered component.
   return (
@@ -34,8 +38,11 @@ function ToolBar(props: ToolBar.Props): ReactNode {
       <div className='flex flow-row flex-wrap flex-1 items-start gap-3'>
         <FilesSelector selectedFiles={ selectedFiles } setSelectedFiles={ setSelectedFiles } />
         <ModelSelector model={ model } setModel={ setModel } />
+        <ToolSelector tools={tools} setTools={setTools} />
       </div>
-      <SubmitButton onClick={ onSubmit } />
+      <div className="flex flex-col justify-end">
+        <SubmitButton onClick={onSubmit} />
+      </div>
     </div>
   );
 }
@@ -70,6 +77,16 @@ namespace ToolBar {
      *
      */
     readonly setModel: (model: Hrafnar.Model | null) => void;
+
+    /**
+     *
+     */
+    readonly tools: Hrafnar.Tool[];
+
+    /**
+     *
+     */
+    readonly setTools: (tools: Hrafnar.Tool[]) => void;
 
     /**
      * The click handler for the submit button.
