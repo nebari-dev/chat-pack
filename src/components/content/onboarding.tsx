@@ -1,11 +1,13 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  clsx
+} from 'clsx';
+
 import type {
   ReactNode
 } from 'react';
-
-import './onboarding.css';
 
 
 /**
@@ -14,25 +16,28 @@ import './onboarding.css';
 export
 function Onboarding(): ReactNode {
   return (
-    <div className='content-Onboarding'>
-      <h2 className='content-Onboarding-header'>
+    <div className={ clsx(
+      'w-150 p-8 bg-bg-white border border-neutral-default',
+      'rounded-md text-text-neutral-default'
+      ) }>
+      <h2 className='font-bold text-xl'>
         AI Overview
       </h2>
-      <ul className='content-Onboarding-list'>
-        <li>Shown when there are no open chats.</li>
-        <li>
+      <ul className='mt-6 list-disc'>
+        <li className='ml-6'>Shown when there are no open chats.</li>
+        <li className='ml-6'>
           Add what to expect from AI, things can go wrong,
           necessary warnings here.
         </li>
       </ul>
-      <p className='content-Onboarding-paragraph'>
+      <p className='mt-6'>
         Vitae quam ac posuere nibh viverra. Nunc feugiat eget tortor enim ut
         suscipit urna congue. Pulvinar pellentesque consectetur habitasse enim
         porttitor gravida tincidunt imperdiet vitae. Fames massa felis dictumst
         lacus. Nulla nam pellentesque sagittis porttitor fames. Ut duis urna
         quis urna ipsum diam magna.
       </p>
-      <p className='content-Onboarding-paragraph'>
+      <p className='mt-6'>
         Magna mollis elit ullamcorper eget amet ut a. Facilisis volutpat massa
         adipiscing ut etiam risus fermentum. Malesuada vitae hendrerit pretium
         ornare convallis blandit integer odio. Eu curabitur in aliquet a non

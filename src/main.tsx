@@ -18,7 +18,7 @@ import {
 } from './components/content';
 
 import {
-  SideBar
+  SideBar, SideBarContent
 } from './components/sidebar';
 
 // import {
@@ -85,10 +85,12 @@ function App(): ReactNode {
   //   );
   // }
 
+
   // Return the rendered app.
   return (
     <>
       <SideBar />
+      <SideBarContent />
       <ContentArea />
     </>
   );

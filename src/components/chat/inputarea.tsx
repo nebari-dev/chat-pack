@@ -13,7 +13,9 @@ import {
   memo, useCallback, useRef, useState
 } from 'react';
 
-import * as Hrafnar from '@/hrafnar';
+import {
+  useShallow
+} from 'zustand/react/shallow';
 
 import {
   useAppStore
@@ -39,13 +41,15 @@ function InputArea(props: InputArea.Props): ReactNode {
   // Extract the props.
   const { chatId, empty } = props;
 
-  // Fetch all the models from the store.
-  const allModels = useAppStore(store => store.models);
+  // Fetch all the model names from the store.
+  const allModels = useAppStore(useShallow(
+    store => store.models.map(m => m.name)
+  ));
 
   // Fetch the tool names from the store.
   const allTools = useAppStore(store => store.tools);
 
-  // Fetch the most recently selected model from the store.
+  // Fetch the most recently selected model name from the store.
   const recentModel = useAppStore(store => {
     // Fetch the chat.
     const chat = store.chats.find(chat => chat.id === chatId)!;
@@ -53,11 +57,8 @@ function InputArea(props: InputArea.Props): ReactNode {
     // Fetch the most recent run.
     const run = chat.runs[chat.runs.length - 1];
 
-    // Fetch the model name of the most recent run.
-    const modelName = run?.model;
-
-    // Map the most recent model name to a full model object.
-    return store.models.find(m => m.name === modelName) ?? null;
+    // Return the model name of the most recent run.
+    return run?.model ?? '';
   });
 
   // Get the `submitChat` function from the store.
@@ -70,19 +71,18 @@ function InputArea(props: InputArea.Props): ReactNode {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   // Set up the state to track the selected model.
-  const [selectedModel, setSelectedModel] =
-    useState<Hrafnar.Model | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>('');
 
   // Set up the state to track the list of selected tools
   const [selectedTools, setSelectedTools] =
     useState<Hrafnar.Tool[]>([]);
 
   // Set up the state to track the selected files.
-  const [selectedFiles, setSelectedFiles] =
-    useState<readonly Hrafnar.FileInfo[]>([]);
+  // const [selectedFiles, setSelectedFiles] =
+  //   useState<readonly Hrafnar.FileInfo[]>([]);
 
   // Calculate the model to display in the model selector.
-  const model = selectedModel ?? recentModel ?? allModels[0];;
+  const model = selectedModel || recentModel || allModels[0];
 
   // Calculate tool to display in the tools selector.
   const tools = selectedTools.length ? selectedTools : (allTools.length ? [allTools[0]] : []);
@@ -107,8 +107,8 @@ function InputArea(props: InputArea.Props): ReactNode {
       return;
     }
 
-    // Convert the files into file ids.
-    const fileIds = selectedFiles.map(f => f.id);
+    // // Convert the files into file ids.
+    // const fileIds = selectedFiles.map(f => f.id);
 
     // Extract the tool names.
     const toolNames = tools.map(tool => tool.name);
@@ -116,9 +116,9 @@ function InputArea(props: InputArea.Props): ReactNode {
     // Submit the chat for completion.
     submitChat({
       id: chatId,
-      model: model?.name ?? '',
+      model,
       prompt,
-      files: fileIds,
+      files: [],
       tools: toolNames
     });
   };
@@ -148,8 +148,7 @@ function InputArea(props: InputArea.Props): ReactNode {
   // Return the rendered component.
   return (
     <div className={ clsx(
-      'w-full min-w-3xs max-w-3xl',
-      'm-auto pb-6 bg-bg-neutral-white',
+      'w-full min-w-3xs max-w-3xl m-auto pb-6 bg-bg-neutral-white',
       empty ? '' : 'sticky bottom-0'
       ) }>
       <form
@@ -165,8 +164,6 @@ function InputArea(props: InputArea.Props): ReactNode {
           ref={ textAreaRef }
           onKeyDown={ handleKeyDown } />
         <ToolBar
-          selectedFiles={ selectedFiles }
-          setSelectedFiles={ setSelectedFiles }
           model={ model }
           setModel={ setSelectedModel }
           tools={selectedTools} 
@@ -201,7 +198,7 @@ namespace InputArea {
     readonly chatId: string;
 
     /**
-     *
+     * Whether the chat is empty.
      */
     readonly empty: boolean;
   };

@@ -48,7 +48,7 @@ type PanelSpec = ChatPanelSpec;
  * A type alias for the side bar state.
  */
 export
-type SideBarState = 'open' | 'collapsed';
+type SideBarState = 'none' | 'chats' | 'files';
 
 
 /**
@@ -84,6 +84,11 @@ type UISlice = {
   |--------------------------------------------------------------------------*/
 
   /**
+   * Check whether a panel is open in the dock area.
+   */
+  readonly isPanelOpen: (id: string) => boolean;
+
+  /**
    * Open a panel in the dock area, or select the tab if it's already open.
    *
    * If a panel with the given `id` does not exist, the function is a no-op,
@@ -104,7 +109,7 @@ type UISlice = {
   /**
    * The function to toggle the `SideBar` state.
    */
-  readonly toggleSideBarState: () => void;
+  readonly toggleSideBarState: (state: SideBarState) => void;
 
   /**
    * The function to set the dock layout for the application.
@@ -129,7 +134,7 @@ const createUISlice: StateCreator<UISlice> = (set, get) => ({
   panelSpecs: [],
 
   // Initial side bar state.
-  sideBarState: 'open',
+  sideBarState: 'none',
 
   // Initial dock layout.
   dockLayout: null,
@@ -137,6 +142,23 @@ const createUISlice: StateCreator<UISlice> = (set, get) => ({
   /*---------------------------------------------------------------------------
   | Actions
   |--------------------------------------------------------------------------*/
+
+  // Check whether a panel is open.
+  isPanelOpen: (id: string) => {
+    // Fetch the dock layout from the store.
+    const layout = get().dockLayout;
+
+    // Bail early if the layout is null.
+    if (layout === null) {
+      return false;
+    }
+
+    // Find a tab layout that includes the chat id.
+    const tl = DockPanel.findTabLayout(layout, tl => tl.keys.includes(id));
+
+    // Return whether the panel was found.
+    return tl !== null;
+  },
 
   // Open an existing panel.
   openPanel: (id: string) => {
@@ -255,9 +277,9 @@ const createUISlice: StateCreator<UISlice> = (set, get) => ({
   },
 
   // Toggle the side bar state.
-  toggleSideBarState: () => {
-    const state = get().sideBarState;
-    set({ sideBarState: state === 'open' ? 'collapsed' : 'open' });
+  toggleSideBarState: (state: SideBarState) => {
+    const newState = get().sideBarState === state ? 'none' : state;
+    set({ sideBarState: newState });
   },
 
   // Set the dock layout.

@@ -17,17 +17,17 @@ import {
   DockPanel
 } from 'otui/containers';
 
+import {
+  ChatPanelMemo, ChatTabMemo
+} from '@/components/chat';
+
 import type {
   PanelSpec
-} from '../../store';
+} from '@/store';
 
 import {
   useAppStore
-} from '../../store';
-
-import {
-  ChatPanelMemo, ChatTabMemo
-} from '../chat';
+} from '@/store';
 
 
 /**
@@ -75,7 +75,7 @@ function ContentDockPanel(): ReactNode {
       tabBarInnerClassName='gap-2'
       tabClassName={ clsx(
         'pt-1 pb-1 pl-2 pr-2 w-40 bg-bg-neutral-default',
-        'rounded-tl-md rounded-tr-md border-x border-t',
+        'rounded-tl-sm rounded-tr-sm border-x border-t',
         'border-x-bd-neutral-default border-t-bd-neutral-default',
         'bg-bg-neutral-default data-[selected]:bg-bg-white',
         'data-[selected]:translate-y-px'

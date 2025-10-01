@@ -11,7 +11,7 @@ import type {
 
 import {
   useAppStore
-} from '../../store';
+} from '@/store';
 
 import {
   ContentDockPanel
@@ -37,7 +37,7 @@ function ContentArea(): ReactNode {
   return (
     <div className={ clsx(
       'flex flex-col flex-auto p-2 items-center justify-center',
-      'bg-bg-neutral-default'
+      'bg-bg-neutral-dark'
     ) }>
       { content }
     </div>
