@@ -47,7 +47,9 @@ function InputArea(props: InputArea.Props): ReactNode {
   ));
 
   // Fetch the tool names from the store.
-  const allTools = useAppStore(store => store.tools);
+  const allTools = useAppStore(useShallow(
+    store => store.tools.map(tool => tool.name)
+  ));
 
   // Fetch the most recently selected model name from the store.
   const recentModel = useAppStore(store => {
@@ -75,7 +77,7 @@ function InputArea(props: InputArea.Props): ReactNode {
 
   // Set up the state to track the list of selected tools
   const [selectedTools, setSelectedTools] =
-    useState<Hrafnar.Tool[]>([]);
+    useState<string[]>([]);
 
   // Set up the state to track the selected files.
   // const [selectedFiles, setSelectedFiles] =
@@ -110,16 +112,13 @@ function InputArea(props: InputArea.Props): ReactNode {
     // // Convert the files into file ids.
     // const fileIds = selectedFiles.map(f => f.id);
 
-    // Extract the tool names.
-    const toolNames = tools.map(tool => tool.name);
-
     // Submit the chat for completion.
     submitChat({
       id: chatId,
       model,
       prompt,
       files: [],
-      tools: toolNames
+      tools: tools
     });
   };
 

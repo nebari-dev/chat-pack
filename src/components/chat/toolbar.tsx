@@ -64,12 +64,12 @@ namespace ToolBar {
     /**
      *
      */
-    readonly tools: Hrafnar.Tool[];
+    readonly tools: string[];
 
     /**
      *
      */
-    readonly setTools: (tools: Hrafnar.Tool[]) => void;
+    readonly setTools: (tools: string[]) => void;
 
     /**
      * The click handler for the submit button.
