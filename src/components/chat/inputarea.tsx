@@ -87,7 +87,7 @@ function InputArea(props: InputArea.Props): ReactNode {
   const model = selectedModel || recentModel || allModels[0];
 
   // Calculate tool to display in the tools selector.
-  const tools = selectedTools.length ? selectedTools : (allTools.length ? [allTools[0]] : []);
+  const tools = selectedTools.length ? selectedTools : [];
 
   // The handler for submitting a request from the `UserTextInput`.
   const handleSubmit = (event: FormEvent) => {
