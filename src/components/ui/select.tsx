@@ -41,6 +41,11 @@ function SelectTrigger({
       {...props}
     >
       {children}
+
+      { /* Allow the user to provide their own icon */ }
+{/*      <SelectPrimitive.Icon asChild>
+        <ChevronDownIcon className="size-4 opacity-50" />
+      </SelectPrimitive.Icon>*/}
     </SelectPrimitive.Trigger>
   )
 }
