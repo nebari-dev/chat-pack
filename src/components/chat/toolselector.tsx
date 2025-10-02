@@ -1,169 +1,291 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2025-present, OpenTeams Inc.
+|----------------------------------------------------------------------------*/
 import {
-  useState
-} from "react";
+  clsx
+} from 'clsx';
 
 import {
-  useAppStore
-} from "@/store";
-
-import {
-  Settings
+  Globe, Wrench
 } from "lucide-react";
 
-import clsx from "clsx";
+import type {
+  ComponentProps, ReactNode
+} from 'react';
 
 import {
   useShallow
 } from 'zustand/react/shallow';
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+
+import {
   Switch
 } from "@/components/ui/switch";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  useAppStore
+} from "@/store";
 
-/**
- * Returns a react component which renders the list of tools.
- */
-function ToolMenuItems({
-  selected,
-  onToggle,
-}: {
-  selected: string[];
-  onToggle: (name: string) => void;
-}) {
-  
-  const availableTools = useAppStore((store) => store.tools);
-  return (
-    <>
-      {availableTools.map((tool) => {
-        const isChecked = selected.includes(tool.name);
-
-        return (
-          <DropdownMenuItem
-            key={tool.name}
-            onSelect={(e) => {
-              e.preventDefault();
-              onToggle(tool.name);
-            }}
-            className="flex justify-between"
-          >
-            <span>{tool.display_name}</span>
-            <Switch
-              checked={isChecked}
-              className="pointer-events-none data-[state=checked]:!bg-bg-brand-default"
-            />
-          </DropdownMenuItem>
-        );
-      })}
-    </>
-  );
-}
 
 /**
  * A React component which renders the tool selector dropdown.
- *
- * This component hooks into the store to get the available tools.
  */
 export
-function ToolSelector(props: ToolSelector.Props) {
+function ToolSelector(props: ToolSelector.Props): ReactNode {
+  // Extract the props.
   const { tools, setTools } = props;
 
-  const allToolNames = useAppStore(useShallow((store) => store.tools.map((tool) => tool.name)));
+  // Fetch all of the tool names from the store.
+  const allToolNames = useAppStore(useShallow(store =>
+    store.tools.map(tool => tool.name)
+  ));
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  const selectedCount = tools.length;
-  const hasAnySelected = selectedCount > 0;
-
-  // Toggle selection for a tool by name.
-  const toggleToolSelection = (toolName: string) => {
-    if (tools.includes(toolName)) {
-      setTools(tools.filter(tool => tool !== toolName));
+  // Set up the callback to toggle a tool.
+  const toggleTool = (name: string) => {
+    if (tools.includes(name)) {
+      setTools(tools.filter(tool => tool !== name));
     } else {
-      setTools([...tools, toolName]);
+      setTools([...tools, name]);
     }
   };
 
+  // Set up the callback to select all tools.
+  const selectAll = () => { setTools([...allToolNames]); };
+
+  // Set up the callback to clear all tools.
+  const clearAll = () => { setTools([]); };
+
+  // Create the tool items.
+  const toolItems = allToolNames.map(name =>
+    <ToolItem
+      key={ name }
+      name={ name }
+      isChecked={ tools.includes(name) }
+      onToggle={ toggleTool } />
+  );
 
   // Return the rendered component.
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu >
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          onClick={() => setIsOpen((prev) => !prev)}
-          className={clsx(
-            "inline-flex items-center gap-2 rounded-md border text-sm font-medium",
-            "h-8 px-3 box-border shadow-sm"
-          )}
-        >
-          <Settings className="!text-text-neutral-default size-5 shrink-0" />
-          <span>Tools</span>
-
-          {selectedCount > 0 && (
-            <span
-              className={clsx(
-                "inline-flex h-5 w-5 items-center justify-center",
-                "rounded-full text-xs",
-                "bg-bg-brand-default",
-                "text-text-brand-on-brand"
-              )}
-            >
-              {selectedCount}
-            </span>
-          )}
-        </button>
+        <TriggerButton enabledCount={ tools.length } />
       </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="start">
-        <DropdownMenuLabel>
-          Available tools
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-
-        <ToolMenuItems
-          selected={tools}
-          onToggle={toggleToolSelection}
-        />
-
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            if (hasAnySelected) setTools([]);
-            else setTools(allToolNames);
-          }}
-        >
-          {hasAnySelected ? "Clear all" : "Select all"}
-        </DropdownMenuItem>
+      <DropdownMenuContent align='start' className='w-75'>
+        { toolItems }
+        <DropdownMenuSeparator className='mx-0' />
+        <SelectClearItem
+          enabledCount={ tools.length }
+          selectAll={ selectAll }
+          clearAll={ clearAll } />
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
+
+/**
+ * The namespace for the `ToolSelector` component statics
+ */
 export
 namespace ToolSelector {
-
   /**
    * A type alias for the `ToolSelector` props.
    */
   export
   type Props = {
     /**
-     * The selected tool for the selector.
+     * The selected tools for the selector.
      */
-    readonly tools: string[];
+    readonly tools: readonly string[];
+
     /**
-     * The callback to set the selected tool.
+     * The callback to set the selected tools.
      */
-    readonly setTools: (tools: string[]) => void;
+    readonly setTools: (tools: readonly string[]) => void;
   };
+}
+
+
+/**
+ * A React component that renders a tool as a dropdown menu item.
+ */
+function ToolItem(props: ToolItem.Props): ReactNode {
+  // Extract the props.
+  const { name, isChecked, onToggle } = props;
+
+  // Fetch the tool from the store.
+  const tool = useAppStore(store => store.tools.find(t => t.name === name)!);
+
+  // Set up the select event handler.
+  const handleSelect = (event: Event) => {
+    // Prevent the menu from closing.
+    event.preventDefault();
+
+    // Toggle the tool.
+    onToggle(name);
+  };
+
+  // Return the rendered component.
+  return (
+    <DropdownMenuItem onSelect={ handleSelect }>
+      { getIconForTool(name) }
+      <div className='flex-auto flex flex-col gap-1'>
+        <div className='font-semibold'>
+          { tool.display_name }
+        </div>
+        <div className='text-xs text-muted-foreground'>
+          { tool.description }
+        </div>
+      </div>
+      <Switch
+        checked={ isChecked }
+        className='data-[state=checked]:bg-bg-brand-default' />
+    </DropdownMenuItem>
+  );
+}
+
+
+/**
+ * The namespace for the `ToolItem` component statics.
+ */
+namespace ToolItem {
+  /**
+   * A type alias for the `ToolItem` props.
+   */
+  export
+  type Props = {
+    /**
+     * The name of the tool.
+     */
+    readonly name: string;
+
+    /**
+     * Whether the tool is checked.
+     */
+    readonly isChecked: boolean;
+
+    /**
+     * A callback to toggle the state of the tool.
+     */
+    readonly onToggle: (name: string) => void;
+  };
+}
+
+
+/**
+ * A React component that renders the tools trigger button.
+ */
+function TriggerButton(props: TriggerButton.Props): ReactNode {
+  // Extract the props.
+  const { enabledCount, ...rest } = props;
+
+  // Return the rendered component.
+  return (
+    <button { ...rest } className={ clsx(
+      'flex-none h-8 px-3 flex flex-row gap-2 items-center justify-center',
+      'rounded-sm border border-bd-neutral-default bg-bg-neutral-default',
+      'cursor-pointer' ) }>
+      <Wrench className='size-4' />
+      Tools
+      <span className={ clsx(
+        'w-4 items-center justify-center rounded-full text-xs',
+        'bg-bg-brand-default text-text-brand-on-brand',
+        enabledCount === 0 ? 'hidden' : 'inline-flex' ) }>
+        { enabledCount }
+      </span>
+    </button>
+  );
+}
+
+
+/**
+ * The namespace for the `TriggerButton` component statics.
+ */
+namespace TriggerButton {
+  /**
+   * A type alias for the `TriggerButton` props.
+   */
+  export
+  type Props = {
+    /**
+     * The number of enabled tools.
+     */
+    readonly enabledCount: number;
+  } & ComponentProps<'button'>
+}
+
+
+/**
+ * A React component that renders the select-all/clear-all item.
+ */
+function SelectClearItem(props: SelectClearItem.Props): ReactNode {
+  // Extract the props.
+  const { enabledCount, selectAll, clearAll, ...rest } = props;
+
+  // Set up the select event handler.
+  const handleSelect = (event: Event) => {
+    // Prevent the dropdown menu from closing.
+    event.preventDefault();
+
+    // Select or clear the items based on the current enabled count.
+    if (enabledCount === 0) {
+      selectAll();
+    } else {
+      clearAll();
+    }
+  };
+
+  // Return the rendered component.
+  return (
+    <DropdownMenuItem { ...rest } onSelect={ handleSelect }>
+      { enabledCount === 0 ? 'Select All' : 'Clear All' }
+    </DropdownMenuItem>
+  );
+}
+
+
+/**
+ * The namespace for the `SelectClearItem` component statics.
+ */
+namespace SelectClearItem {
+  /**
+   * A type alias for the `SelectClearItem` props.
+   */
+  export
+  type Props = {
+    /**
+     * The number of enabled tools.
+     */
+    readonly enabledCount: number;
+
+    /**
+     * A callback to select all of the tools.
+     */
+    readonly selectAll: () => void;
+
+    /**
+     * A callback to clear all the enabled tools.
+     */
+    readonly clearAll: () => void;
+  } & ComponentProps<typeof DropdownMenuItem>;
+}
+
+
+/**
+ * Get the icon for a well-known tool name.
+ */
+function getIconForTool(name: string): ReactNode {
+  switch (name) {
+  case 'duckduckgo-search':
+    return <Globe className='size-5' />;
+  default:
+    return null;
+  }
 }
