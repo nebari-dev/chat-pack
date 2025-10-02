@@ -1,0 +1,59 @@
+sources:
+  austin-permits-db:
+    kind: postgres
+    host: "${POSTGRES_HOST}"
+    port: "${POSTGRES_PORT}"
+    database: "${POSTGRES_DATABASE}"
+    user: "${POSTGRES_USER}"
+    password: "${POSTGRES_PASSWORD}"
+
+tools:
+  describe-schema:
+    kind: postgres-sql
+    source: austin-permits-db
+    description: "🚨 STEP 1: ALWAYS START HERE! Get complete schema information for all tables. Shows table names, column names, and data types. Essential before any other operation."
+    statement: |
+      SELECT
+        t.table_name,
+        c.column_name,
+        c.data_type,
+        c.is_nullable,
+        c.ordinal_position
+      FROM information_schema.tables t
+      JOIN information_schema.columns c ON t.table_name = c.table_name
+      WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
+      ORDER BY t.table_name, c.ordinal_position;
+
+  sample-data:
+    kind: postgres-sql
+    source: austin-permits-db
+    description: "🔍 STEP 2: Explore sample data from all tables to understand data structure and format. Use after describe-schema."
+    statement: |
+      (SELECT 'applicant' as table_name, * FROM applicant LIMIT 3)
+      UNION ALL
+      (SELECT 'contractor' as table_name, * FROM contractor LIMIT 3)
+      UNION ALL
+      (SELECT 'construction_permit' as table_name, * FROM construction_permit LIMIT 3);
+
+  explore-values:
+    kind: postgres-sql
+    source: austin-permits-db
+    description: "⚠️ MANDATORY STEP 3: MUST run this before execute-sql! Explore unique values in key columns for filtering. Shows work_class, permit types, and statuses. Required to understand valid WHERE clause values."
+    statement: |
+      (SELECT 'work_class' as column_name, work_class as value, COUNT(*) as count
+       FROM construction_permit WHERE work_class IS NOT NULL
+       GROUP BY work_class ORDER BY count DESC LIMIT 10)
+      UNION ALL
+      (SELECT 'permit_type_desc' as column_name, permit_type_desc as value, COUNT(*) as count
+       FROM construction_permit WHERE permit_type_desc IS NOT NULL
+       GROUP BY permit_type_desc ORDER BY count DESC LIMIT 10)
+      UNION ALL
+      (SELECT 'status_current' as column_name, status_current as value, COUNT(*) as count
+       FROM construction_permit WHERE status_current IS NOT NULL
+       GROUP BY status_current ORDER BY count DESC LIMIT 5)
+      ORDER BY column_name, count DESC;
+
+  execute-sql:
+    kind: postgres-execute-sql
+    source: austin-permits-db
+    description: "🚫 BLOCKED UNTIL STEP 3 COMPLETE! Execute custom SQL queries ONLY after running explore-values first. MANDATORY LIMITS: For MAP visualizations use LIMIT 10 ONLY! For tables/charts use LIMIT 100 max. Cannot use this tool without first exploring valid column values!"
