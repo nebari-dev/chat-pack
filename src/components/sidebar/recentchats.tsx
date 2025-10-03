@@ -55,7 +55,7 @@ function RecentChats(): ReactNode {
       ) }>
         Recent Chats
       </h3>
-      <ul className='flex-auto flex flex-col gap-px overflow-y-auto'>
+      <ul className='flex-auto flex flex-col gap-1 overflow-y-auto'>
         { items }
       </ul>
     </div>
@@ -108,7 +108,7 @@ function ChatItem(props: ChatItem.Props): ReactNode {
       onClick={ handleClick }
       className={ clsx(
       'px-2 h-8 flex-none flex flex-row items-center justify-between',
-      'whitespace-nowrap text-ellipsis rounded cursor-pointer',
+      'whitespace-nowrap text-ellipsis rounded-xs cursor-pointer',
       isOpen ? 'bg-bg-brand-secondary' : 'hover:bg-bg-neutral-dark'
     ) }>
       <span className='flex-auto'>

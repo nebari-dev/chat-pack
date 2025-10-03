@@ -75,7 +75,7 @@ function ContentDockPanel(): ReactNode {
       tabBarInnerClassName='gap-0.5'
       tabClassName={ clsx(
         'px-2 py-1 w-40 bg-bg-neutral-default border-x border-t',
-        'border-bd-neutral-default bg-bg-neutral-default ',
+        'border-bd-neutral-default rounded-xs bg-bg-neutral-default ',
         'data-[selected]:bg-bg-white data-[selected]:translate-y-px'
       ) }
       overlayClassName={ clsx(

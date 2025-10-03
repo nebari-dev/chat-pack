@@ -144,7 +144,7 @@ function InputArea(props: InputArea.Props): ReactNode {
         onSubmit={ handleSubmit }
         className={ clsx(
           'w-full p-4 flex flex-col gap-4 shadow-md',
-          'border border-bd-neutral-secondary rounded-lg'
+          'border border-bd-neutral-secondary rounded-xs'
         ) }>
         <TextArea
           chatId={ chatId }

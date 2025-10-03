@@ -73,11 +73,11 @@ function ToolSelector(props: ToolSelector.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <DropdownMenu >
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <TriggerButton enabledCount={ tools.length } />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align='start' className='w-75'>
+      <DropdownMenuContent align='start' className='w-75 rounded-xs'>
         { toolItems }
         <DropdownMenuSeparator className='mx-0' />
         <SelectClearItem
@@ -134,7 +134,7 @@ function ToolItem(props: ToolItem.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <DropdownMenuItem onSelect={ handleSelect }>
+    <DropdownMenuItem onSelect={ handleSelect } className='rounded-xs'>
       { getIconForTool(name) }
       <div className='flex-auto flex flex-col gap-1'>
         <div className='font-semibold'>
@@ -190,7 +190,7 @@ function TriggerButton(props: TriggerButton.Props): ReactNode {
   return (
     <button { ...rest } className={ clsx(
       'flex-none h-8 px-3 flex flex-row gap-2 items-center justify-center',
-      'rounded-sm border border-bd-neutral-default bg-bg-neutral-default',
+      'rounded-xs border border-bd-neutral-default bg-bg-neutral-default',
       'cursor-pointer' ) }>
       <Wrench className='size-4' />
       Tools
@@ -244,7 +244,10 @@ function SelectClearItem(props: SelectClearItem.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <DropdownMenuItem { ...rest } onSelect={ handleSelect }>
+    <DropdownMenuItem
+      { ...rest }
+      onSelect={ handleSelect }
+      className='rounded-xs'>
       { enabledCount === 0 ? 'Select All' : 'Clear All' }
     </DropdownMenuItem>
   );

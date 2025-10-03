@@ -80,7 +80,7 @@ function Button(props: Button.Props): ReactNode {
       onClick={ onClick }
       className={ clsx(
       'h-9 px-1 flex flex-row gap-2 items-center cursor-pointer',
-      'rounded-sm whitespace-nowrap overflow-hidden', className
+      'rounded-xs whitespace-nowrap overflow-hidden', className
       ) }>
       <span className='flex-none w-6'>
         { icon }

@@ -31,7 +31,10 @@ function ModelSelector(props: ModelSelector.Props) {
 
   // Create the select items.
   const content = models.map(model =>
-    <SelectItem key={ model.name } value={ model.name }>
+    <SelectItem
+      key={ model.name }
+      value={ model.name }
+      className='rounded-xs'>
       { model.display_name }
     </SelectItem>
   );
@@ -42,13 +45,13 @@ function ModelSelector(props: ModelSelector.Props) {
       <SelectTrigger
         size='sm'
         className={ clsx(
-          'bg-bg-neutral-default rounded-sm border-bd-neutral-default',
+          'bg-bg-neutral-default rounded-xs border-bd-neutral-default',
           'cursor-pointer'
         ) }>
         <SlidersVertical className='text-text-neutral-default' />
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className='rounded-xs'>
         { content }
       </SelectContent>
     </Select>
