@@ -55,7 +55,7 @@ function ChatPanel(props: ChatPanel.Props): ReactNode {
     empty ?
     <div className={ clsx(
       'flex-auto bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)]',
-      'bg-[auto_240px] bg-center bg-no-repeat h-[240px]'
+      'bg-[auto_240px] bg-center bg-no-repeat h-60'
     ) }/> :
     <CompletionAreaMemo chatId={ chatId } />
   );
