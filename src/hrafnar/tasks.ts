@@ -284,6 +284,33 @@ async function getTasks(): Promise<readonly Task[]> {
 
 
 /**
+ * Load an existing task from Hrafnar.
+ *
+ * @param id - The unique id of the task.
+ *
+ * @returns The requested task object.
+ */
+export
+async function getTask(id: string): Promise<Task> {
+  // Create the tasks from the server.
+  const response = await fetch(`/api/tasks/${id}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: null
+  });
+
+  // Throw an error if the request failed.
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  // Convert the tasks to a JSON array.
+  return await response.json() as Task;
+}
+
+
+/**
  * Create a new empty chat on Hrafnar.
  *
  * @returns A new empty chat task.

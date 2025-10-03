@@ -170,5 +170,40 @@ const createChatsSlice:
         }
       }));
     }
+
+    // Fetch the updated chat from the store.
+    const chat = get().chats.find(chat => chat.id === options.id)!;
+
+    // If the chat is already named, there's nothing else to do.
+    if (chat.display_name) {
+      return;
+    }
+
+    // Set up the variable to hold the computed display name.
+    let display_name = '';
+
+    // Create a polling loop to fetch the computed display name.
+    while (!display_name) {
+      // Create a delay for 1s.
+      const delay = new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Await the delay.
+      await delay;
+
+      // Fetch the task from Hrafnar.
+      const task = await Hrafnar.getTask(options.id);
+
+      // Extract the display name from the task.
+      display_name = task.display_name;
+    }
+
+    // Update the chat with the computed display name.
+    set(produce((draft: Draft<ChatsSlice>) => {
+      // Fetch the chat object.
+      const chat = draft.chats.find(chat => chat.id === options.id)!;
+
+      // Set the chat display name.
+      chat.display_name = display_name;
+    }));
   }
 });

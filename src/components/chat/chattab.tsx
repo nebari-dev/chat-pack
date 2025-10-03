@@ -77,7 +77,7 @@ function ChatTab(props: ChatTab.Props): ReactNode {
   return (
     <div className='flex flex-row w-full h-full items-center'>
       <span className='flex-1 min-w-0 overflow-hidden text-ellipsis'>
-        { chatName }
+        { chatName || 'Untitled' }
       </span>
       <span
         ref={ closeRef }

@@ -113,7 +113,7 @@ function ChatItem(props: ChatItem.Props): ReactNode {
     ) }>
       <span className=
         'flex-auto whitespace-nowrap text-ellipsis overflow-hidden'>
-        { name }
+        { name || 'Untitled' }
       </span>
       <span onClick={ handleDelete } className='flex-none'>
         <EllipsisVertical className='m-auto' size={ 16 } />
