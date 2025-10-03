@@ -27,10 +27,16 @@ import {
  */
 export
 function RecentChats(): ReactNode {
-  // Fetch the chat ids from the store.
-  const chatIds = useAppStore(useShallow(store =>
-    store.chats.map(chat => chat.id)
-  ));
+  // Fetch the ordered chat ids from the store.
+  const chatIds = useAppStore(useShallow(store => {
+    // Sort the chats into most-recent-first order.
+    const chats = store.chats.toSorted((a, b) =>
+      b.timestamp.localeCompare(a.timestamp)
+    );
+
+    // Return the ordered chat ids.
+    return chats.map(chat => chat.id);
+  }));
 
   // Extract the `sideBarState` from the store.
   const sidebarState = useAppStore(store => store.sidebarState);

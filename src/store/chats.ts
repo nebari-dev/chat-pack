@@ -117,13 +117,11 @@ const createChatsSlice:
 
     // Add the chat and the panel spec to the store.
     set(produce((draft: Draft<ChatsSlice & UISlice>) => {
-      // Insert the new chat at the beginning of the array.
-      //
-      // This maintains the order of most-recent-chat-first.
-      draft.chats.unshift(castDraft(chat));
+      // Add the chat to the draft.
+      draft.chats.push(castDraft(chat));
 
       // Create the panel for the chat.
-      draft.panelSpecs.unshift({ type: 'chat-panel', id: chat.id });
+      draft.panelSpecs.push({ type: 'chat-panel', id: chat.id });
     }));
 
     // Open the panel for the chat.
