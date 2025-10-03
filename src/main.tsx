@@ -70,6 +70,7 @@ function App(): ReactNode {
     //   })();
     // }
     (async () => {
+      await fetch("/auth/oauth-callback", { credentials: "include" });
       await initialize();
     })();
   }, [initialize]);

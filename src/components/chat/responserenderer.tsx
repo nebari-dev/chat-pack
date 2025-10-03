@@ -61,7 +61,7 @@ function ResponseRenderer(props: ResponseRenderer.Props): ReactNode {
   // Return the rendered component.
   return (
     <div className={ clsx(
-      'p-3 select-text rounded-lg bg-bg-neutral-white',
+      'p-3 select-text rounded-xs bg-bg-neutral-white',
       'border border-bd-neutral-default overflow-x-auto'
     ) }>
       { children }

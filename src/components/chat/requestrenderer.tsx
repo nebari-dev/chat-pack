@@ -58,7 +58,7 @@ function RequestRenderer(props: RequestRenderer.Props): ReactNode {
   return (
     <div className='flex flex-col items-end gap-2 overflow-hidden'>
       <div className=
-        'p-3 bg-bg-neutral-default rounded-lg select-text max-w-2xl'>
+        'p-3 bg-bg-neutral-default rounded-xs select-text max-w-2xl'>
         <p>{ requestText }</p>
       </div>
       <AttachmentsRendererMemo chatId={ chatId } runId={ runId }/>

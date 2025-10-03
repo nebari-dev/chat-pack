@@ -26,7 +26,7 @@ import {
 } from './textarea';
 
 import {
-  ToolBar
+  Toolbar
 } from './toolbar';
 
 
@@ -70,9 +70,8 @@ function InputArea(props: InputArea.Props): ReactNode {
   // Set up the state to track the selected model.
   const [selectedModel, setSelectedModel] = useState<string>('');
 
-  // Set up the state to track the list of selected tools
-  const [selectedTools, setSelectedTools] =
-    useState<string[]>([]);
+  // Set up the state to track the list of selected tools.
+  const [selectedTools, setSelectedTools] = useState<readonly string[]>([]);
 
   // Set up the state to track the selected files.
   // const [selectedFiles, setSelectedFiles] =
@@ -108,13 +107,7 @@ function InputArea(props: InputArea.Props): ReactNode {
     // const fileIds = selectedFiles.map(f => f.id);
 
     // Submit the chat for completion.
-    submitChat({
-      id: chatId,
-      model,
-      prompt,
-      files: [],
-      tools: tools
-    });
+    submitChat({ id: chatId, model, prompt, files: [], tools });
   };
 
   // Set up the event handler for the text area keyboard events.
@@ -151,17 +144,17 @@ function InputArea(props: InputArea.Props): ReactNode {
         onSubmit={ handleSubmit }
         className={ clsx(
           'w-full p-4 flex flex-col gap-4 shadow-md',
-          'border border-bd-neutral-secondary rounded-lg'
+          'border border-bd-neutral-secondary rounded-xs'
         ) }>
         <TextArea
           chatId={ chatId }
           ref={ textAreaRef }
           onKeyDown={ handleKeyDown } />
-        <ToolBar
+        <Toolbar
           model={ model }
           setModel={ setSelectedModel }
-          tools={selectedTools} 
-          setTools={setSelectedTools}
+          tools={ selectedTools }
+          setTools={ setSelectedTools }
           onSubmit={ handleClick } />
       </form>
     </div>

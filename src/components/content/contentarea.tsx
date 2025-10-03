@@ -17,10 +17,6 @@ import {
   ContentDockPanel
 } from './contentdockpanel';
 
-import {
-  Onboarding
-} from './onboarding';
-
 
 /**
  * A React component which renders the chat app content area.
@@ -31,13 +27,20 @@ function ContentArea(): ReactNode {
   const empty = useAppStore(store => store.dockLayout === null);
 
   // Create the content based on whether a dock layout exists.
-  const content = empty ? <Onboarding /> : <ContentDockPanel />;
+  const content = (
+    empty ?
+    <div className={ clsx(
+      'w-150 h-60 bg-center bg-no-repeat',
+      'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)]'
+      ) } /> :
+    <ContentDockPanel />
+  );
 
   // Return the rendered content.
   return (
     <div className={ clsx(
       'flex flex-col flex-auto p-1 items-center justify-center',
-      'bg-bg-neutral-dark'
+      'bg-bg-neutral-dark min-w-0 min-h-0'
     ) }>
       { content }
     </div>

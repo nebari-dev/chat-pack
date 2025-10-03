@@ -27,7 +27,7 @@ function SubmitButton(props: SubmitButton.Props): ReactNode {
     <button onClick={ onClick } className={ clsx(
       'flex-none px-3 h-8 flex flex-row gap-2 items-center justify-center',
       'whitespace-nowrap cursor-pointer bg-bg-brand-default',
-      'text-text-brand-on-brand border border-bd-brand-default rounded-sm'
+      'text-text-brand-on-brand border border-bd-brand-default rounded-xs'
     ) }>
       Send
       <Send size={ 16 } />

@@ -20,12 +20,6 @@ import {
 
 /**
  * A React component which renders the model selector dropdown.
- *
- * This component hooks into the store to get the available models.
- *
- * #### Notes
- * This is an uncontrolled component and the consumer will provide a ref
- * for the `<select>` element in order to retrieve its current value.
  */
 export
 function ModelSelector(props: ModelSelector.Props) {
@@ -37,7 +31,10 @@ function ModelSelector(props: ModelSelector.Props) {
 
   // Create the select items.
   const content = models.map(model =>
-    <SelectItem key={ model.name } value={ model.name }>
+    <SelectItem
+      key={ model.name }
+      value={ model.name }
+      className='rounded-xs'>
       { model.display_name }
     </SelectItem>
   );
@@ -46,15 +43,15 @@ function ModelSelector(props: ModelSelector.Props) {
   return (
     <Select value={ model } onValueChange={ setModel }>
       <SelectTrigger
-        size={ 'sm' }
+        size='sm'
         className={ clsx(
-          'bg-bg-neutral-default rounded-sm border-bd-neutral-default',
-          '!text-text-neutral-default cursor-pointer'
+          'bg-bg-neutral-default rounded-xs border-bd-neutral-default',
+          'cursor-pointer'
         ) }>
-        <SlidersVertical className='!text-text-neutral-default'/>
+        <SlidersVertical className='text-text-neutral-default' />
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className='rounded-xs'>
         { content }
       </SelectContent>
     </Select>

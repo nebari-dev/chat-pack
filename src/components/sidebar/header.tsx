@@ -50,7 +50,7 @@ function Header(): ReactNode {
       </div>
       <button
         onClick={ handleClick }
-        className='cursor-pointer w-8 rounded-sm hover:bg-bg-neutral-dark'>
+        className='cursor-pointer w-8 rounded-xs hover:bg-bg-neutral-dark'>
         <PanelLeft size={ 20 } className='m-auto'/>
       </button>
     </div>

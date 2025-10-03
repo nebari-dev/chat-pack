@@ -19,35 +19,33 @@ import {
 
 
 /**
- * A React component that renders a chat tool bar.
+ * A React component that renders a chat toolbar.
  */
 export
-function ToolBar(props: ToolBar.Props): ReactNode {
+function Toolbar(props: Toolbar.Props): ReactNode {
   // Extract the props.
   const { model, setModel, setTools, tools, onSubmit} = props;
 
   // Return the rendered component.
   return (
-    <div className='flex flex-row gap-3'>
+    <div className='flex flex-row gap-3 items-end overflow-hidden'>
       <div className='flex flow-row flex-wrap flex-1 items-start gap-3'>
         <ModelSelector model={ model } setModel={ setModel } />
-        <ToolSelector tools={tools} setTools={setTools} />
+        <ToolSelector tools={ tools } setTools={ setTools } />
       </div>
-      <div className="flex flex-col justify-end">
-        <SubmitButton onClick={onSubmit} />
-      </div>
+      <SubmitButton onClick={ onSubmit } />
     </div>
   );
 }
 
 
 /**
- * The namespace for the `ToolBar` component statics.
+ * The namespace for the `Toolbar` component statics.
  */
 export
-namespace ToolBar {
+namespace Toolbar {
   /**
-   * A type alias for the `ToolBar` props.
+   * A type alias for the `Toolbar` props.
    */
   export
   type Props = {
@@ -62,14 +60,14 @@ namespace ToolBar {
     readonly setModel: (model: string) => void;
 
     /**
-     *
+     * The names of the enabled tools.
      */
-    readonly tools: string[];
+    readonly tools: readonly string[];
 
     /**
-     *
+     * A callback to set the enabled tools.
      */
-    readonly setTools: (tools: string[]) => void;
+    readonly setTools: (tools: readonly string[]) => void;
 
     /**
      * The click handler for the submit button.

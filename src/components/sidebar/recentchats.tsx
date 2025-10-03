@@ -55,7 +55,7 @@ function RecentChats(): ReactNode {
       ) }>
         Recent Chats
       </h3>
-      <ul className='flex-auto flex flex-col gap-px overflow-y-auto'>
+      <ul className='flex-auto flex flex-col gap-1 overflow-y-auto'>
         { items }
       </ul>
     </div>
@@ -95,7 +95,7 @@ function ChatItem(props: ChatItem.Props): ReactNode {
 
   // Set up the click handler to delete the chat.
   const handleDelete = (event: MouseEvent) => {
-    // Stop propagation of the event.
+    // Stop propagation so that it doesn't select the chat.
     event.stopPropagation();
 
     // Delete the chat.
@@ -108,10 +108,11 @@ function ChatItem(props: ChatItem.Props): ReactNode {
       onClick={ handleClick }
       className={ clsx(
       'px-2 h-8 flex-none flex flex-row items-center justify-between',
-      'whitespace-nowrap text-ellipsis rounded cursor-pointer',
+      'rounded-xs cursor-pointer',
       isOpen ? 'bg-bg-brand-secondary' : 'hover:bg-bg-neutral-dark'
     ) }>
-      <span className='flex-auto'>
+      <span className=
+        'flex-auto whitespace-nowrap text-ellipsis overflow-hidden'>
         { name }
       </span>
       <span onClick={ handleDelete } className='flex-none'>
