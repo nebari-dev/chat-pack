@@ -203,6 +203,11 @@ type ChatTask = {
   readonly id: string;
 
   /**
+   * The timestamp for when the chat was created.
+   */
+  readonly timestamp: string;
+
+  /**
    * The graph type for the task.
    */
   readonly graph: 'chat';
