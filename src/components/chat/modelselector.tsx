@@ -50,7 +50,8 @@ function ModelSelector(props: ModelSelector.Props): ReactNode {
      <Button className={clsx(
         'h-8 px-3 gap-2 flex flex-row items-center bg-bg-neutral-default',
         'rounded-xs border border-bd-neutral-default cursor-pointer',
-        'outline-none data-focused:border-bd-brand-default')}>
+        'outline-none data-focused:border-bd-brand-default',
+        'whitespace-nowrap')}>
         <SlidersVertical className='size-4' />
         <SelectValue>
           {rp => rp.selectedText}
