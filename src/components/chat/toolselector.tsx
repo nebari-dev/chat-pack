@@ -58,7 +58,8 @@ function ToolSelector(props: ToolSelector.Props): ReactNode {
       <Button className={clsx(
         'h-8 px-3 gap-2 flex flex-row items-center bg-bg-neutral-default',
         'rounded-xs border border-bd-neutral-default cursor-pointer',
-        'outline-none data-focused:border-bd-brand-default')}>
+        'outline-none data-focused:border-bd-brand-default',
+        'whitespace-nowrap')}>
         <Wrench className='size-4' />
         Tools
         {toolCount > 0 &&
