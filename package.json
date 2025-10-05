@@ -25,6 +25,7 @@
     "marked-highlight": "^2.2.2",
     "otui": "github:openteams-ai/otui",
     "react": "^19.1.1",
+    "react-aria-components": "^1.13.0",
     "react-dom": "^19.1.1",
     "tailwind-merge": "^3.3.1",
     "zustand": "^5.0.8"

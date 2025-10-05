@@ -36,6 +36,7 @@ body {
 @theme {
   /* Background Colors */
   --color-bg-neutral-dark: #EDEDED;
+  --color-bg-neutral-xdark: #D5D5D5;
   --color-bg-neutral-default: #F5F5F5;
   --color-bg-neutral-white: #FBFBFB;
   --color-bg-brand-default: #9B3DCC;
