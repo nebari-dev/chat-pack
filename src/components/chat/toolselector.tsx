@@ -49,6 +49,9 @@ function ToolSelector(props: ToolSelector.Props): ReactNode {
     }
   };
 
+  // Determine the count of selected tools.
+  const toolCount = tools.length;
+
   // Return the rendered component.
   return (
     <MenuTrigger aria-label='Tool Selector'>
@@ -58,6 +61,13 @@ function ToolSelector(props: ToolSelector.Props): ReactNode {
         'outline-none data-focused:border-bd-brand-default')}>
         <Wrench className='size-4' />
         Tools
+        {toolCount > 0 &&
+          <span className={clsx(
+            'w-4 h-4 flex items-center justify-center rounded-full',
+            'bg-bg-brand-default text-text-brand-on-brand text-xs')}>
+            {toolCount}
+          </span>
+        }
       </Button>
       <Popover className={clsx(
         'min-w-(--trigger-width) p-1 bg-bg-white rounded-xs',
