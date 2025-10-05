@@ -152,56 +152,36 @@ const createChatsSlice:
     const stream = Hrafnar.submitChat(options);
 
     // Iterate the Hrafnar stream.
-    for await (const run of stream) {
-      set(produce((draft: Draft<ChatsSlice>) => {
-        // Get the chat runs.
-        const runs = draft.chats.find(chat => chat.id === options.id)!.runs;
+    for await (const evt of stream) {
+      switch (evt.type) {
+      case 'run-update':
+        set(produce((draft: Draft<ChatsSlice>) => {
+          // Get the chat runs.
+          const runs = draft.chats.find(chat => chat.id === options.id)!.runs;
 
-        // Find the index of the most recent matching run.
-        const i = runs.findLastIndex(r => r.id === run.id);
+          // Find the index of the most recent matching run.
+          const i = runs.findLastIndex(r => r.id === evt.run.id);
 
-        // Update the existing run or push a new one.
-        if (i !== -1) {
-          runs[i] = castDraft(run);
-        } else {
-          runs.push(castDraft(run));
-        }
-      }));
+          // Update the existing run or push a new one.
+          if (i !== -1) {
+            runs[i] = castDraft(evt.run);
+          } else {
+            runs.push(castDraft(evt.run));
+          }
+        }));
+        break;
+      case 'task-rename':
+        set(produce((draft: Draft<ChatsSlice>) => {
+          // Fetch the chat object.
+          const chat = draft.chats.find(chat => chat.id === options.id)!;
+
+          // Set the chat display name.
+          chat.display_name = evt.name;
+        }));
+        break;
+      default:
+        break;
+      }
     }
-
-    // Fetch the updated chat from the store.
-    const chat = get().chats.find(chat => chat.id === options.id)!;
-
-    // If the chat is already named, there's nothing else to do.
-    if (chat.display_name) {
-      return;
-    }
-
-    // Set up the variable to hold the computed display name.
-    let display_name = '';
-
-    // Create a polling loop to fetch the computed display name.
-    while (!display_name) {
-      // Create a delay for 1s.
-      const delay = new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Await the delay.
-      await delay;
-
-      // Fetch the task from Hrafnar.
-      const task = await Hrafnar.getTask(options.id);
-
-      // Extract the display name from the task.
-      display_name = task.display_name;
-    }
-
-    // Update the chat with the computed display name.
-    set(produce((draft: Draft<ChatsSlice>) => {
-      // Fetch the chat object.
-      const chat = draft.chats.find(chat => chat.id === options.id)!;
-
-      // Set the chat display name.
-      chat.display_name = display_name;
-    }));
   }
 });

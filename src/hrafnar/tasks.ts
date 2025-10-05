@@ -264,6 +264,47 @@ type ChatSubmitOptions = {
 
 
 /**
+ * A type alias for a stream event that updates the run.
+ */
+export
+type RunUpdate = {
+  /**
+   * The discriminated type of the event.
+   */
+  readonly type: 'run-update';
+
+  /**
+   * The updated run object.
+   */
+  readonly run: Run;
+};
+
+
+/**
+ * A type alias for a stream event that renames a task.
+ */
+export
+type TaskRename = {
+  /**
+   * The discriminated type of the event.
+   */
+  readonly type: 'task-rename';
+
+  /**
+   * The new name for the task.
+   */
+  readonly name: string;
+};
+
+
+/**
+ * A type union of the support stream event types.
+ */
+export
+type StreamEvent = RunUpdate | TaskRename;
+
+
+/**
  * Load the existing tasks from Hrafnar.
  *
  * @returns An array of the tasks stored on the server.
@@ -370,7 +411,7 @@ async function deleteChat(id: string): Promise<void> {
  * @returns An async generator which yields the patched/updated `Run`.
  */
 export
-async function* submitChat(options: ChatSubmitOptions): AsyncGenerator<Run> {
+async function* submitChat(options: ChatSubmitOptions): AsyncGenerator<StreamEvent> {
   // Extract the options.
   const { id, model, prompt, files, tools } = options;
 
@@ -391,7 +432,7 @@ async function* submitChat(options: ChatSubmitOptions): AsyncGenerator<Run> {
   const json = await response.json();
 
   // Yield the initial run.
-  yield json.run as Run;
+  yield { type: 'run-update', run: json.run as Run };
 
   // Fetch the completion stream from the server.
   const stream = await fetch(json.stream.path, {
@@ -418,7 +459,13 @@ async function* submitChat(options: ChatSubmitOptions): AsyncGenerator<Run> {
 
   // Iterate the SSE stream and yield the completion parts.
   for await (const event of sseStream) {
-    // Ignore non-default message types for now.
+    // Handle the task rename event.
+    if (event.type === 'hrafnar:taskRename') {
+      yield { type: 'task-rename', name: event.data };
+      continue;
+    }
+
+    // Ignore other event types for now.
     if (event.type !== 'message') {
       continue;
     }
@@ -430,6 +477,6 @@ async function* submitChat(options: ChatSubmitOptions): AsyncGenerator<Run> {
     run = applyOperation(run, patch, undefined, false).newDocument;
 
     // Yield the patched run.
-    yield run as Run;
+    yield { type: 'run-update', run: run as Run };
   }
 }
