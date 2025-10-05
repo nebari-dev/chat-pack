@@ -415,6 +415,9 @@ async function* submitChat(options: ChatSubmitOptions): AsyncGenerator<StreamEve
   // Extract the options.
   const { id, model, prompt, files, tools } = options;
 
+  // Debug Log.
+  console.log('calling hrafnar with model:', model);
+
   // Start the completion on the server.
   const response = await fetch(`/api/tasks/${id}/run`, {
     method: 'POST',
