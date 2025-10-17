@@ -1,61 +1,17 @@
 services:
-  # traefik:
-  #   image: traefik:v3.5.2
-  #   command:
-  #     - "--api.insecure=true"
-  #     - "--providers.docker=true"
-  #     - "--providers.docker.exposedbydefault=false"
-  #     - "--entrypoints.web.address=:80"
-  #     - "--entrypoints.websecure.address=:443"
-  #     - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-  #     - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-  #     - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-  #     - "--providers.file.directory=/etc/traefik/dynamic"
-  #     - "--providers.file.watch=true"
-  #     - "--log.level=INFO"
-  #     - "--accesslog=true"
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #     - "8080:8080"  # Traefik dashboard
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #     - ./traefik:/etc/traefik/dynamic:ro
-  #     - ./certs:/certs:ro
-  #   networks:
-  #     - openteams
-  #   container_name: dev-traefik
-
-  # Hrafnar - Backend API service
+  
   hrafnar:
     image: quay.io/reiemp/hrafnar:latest
     platform: linux/amd64
     ports: 
       - "8751:8751"
-    # labels:
-      # - "traefik.enable=true"
-      # - "traefik.http.routers.hrafnar.rule=Host(`hrafnar.openteams.com`)"
-      # - "traefik.http.routers.hrafnar.entrypoints=websecure"
-      # - "traefik.http.routers.hrafnar.tls=true"
-      # - "traefik.http.services.hrafnar.loadbalancer.server.port=80"
-      # # HTTP redirect to HTTPS
-      # - "traefik.http.routers.hrafnar-http.rule=Host(`hrafnar.openteams.com`)"
-      # - "traefik.http.routers.hrafnar-http.entrypoints=web"
-      # - "traefik.http.routers.hrafnar-http.middlewares=redirect-to-https"
-      # - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-    # environment:
-    #   - POCKETBASE_URL=http://pocketbase:8080
     env_file:
       - ./dev-deps/hrafnar-config/.hrafnar.env
     volumes:
       - ./dev-deps/hrafnar-config/config.yml:/etc/hrafnar/config.yml
-      # - ./dev-deps/hrafnar-plugins/plugins:/var/hrafnar/plugins
     restart: unless-stopped
     networks:
       - openteams
-    # depends_on:
-      # - pocketbase
-      # - traefik
 
   postgres-mcp:
     image: us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest
@@ -69,8 +25,6 @@ services:
       - ./dev-deps/mcp-config:/config
     networks:
       - openteams
-    # depends_on:
-    #   - traefik
 
 networks:
   openteams:
