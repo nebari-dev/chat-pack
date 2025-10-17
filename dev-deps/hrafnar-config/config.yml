@@ -73,6 +73,6 @@ toolsets:
       toolset:
         cls_or_fn: pydantic_ai.mcp.MCPServerStreamableHTTP
         params:
-          url: http://127.0.0.1:8001/mcp
+          url: http://postgres-mcp:5000/mcp
       display_name: Austin Permits Database
       description: Explore the Austin Permits SQL DB
