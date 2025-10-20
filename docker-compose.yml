@@ -1,45 +1,30 @@
 services:
-  traefik:
-    image: traefik:v3.5.2
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
-      - "--providers.file.directory=/etc/traefik/dynamic"
-      - "--providers.file.watch=true"
-      - "--log.level=INFO"
-      - "--accesslog=true"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"  # Traefik dashboard
+  
+  hrafnar:
+    image: quay.io/reiemp/hrafnar:latest
+    platform: linux/amd64
+    ports: 
+      - "8751:8751"
+    env_file:
+      - ./dev-deps/hrafnar-config/.hrafnar.env
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik:/etc/traefik/dynamic:ro
-      - ./certs:/certs:ro
+      - ./dev-deps/hrafnar-config/config.yml:/etc/hrafnar/config.yml
+    restart: unless-stopped
     networks:
       - openteams
-    container_name: dev-traefik
 
   postgres-mcp:
     image: us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest
     platform: linux/amd64
-    command: toolbox --tools-file /config/tools.yaml --address 0.0.0.0
+    command: toolbox --tools-file /config/tools.yml --address 0.0.0.0
     ports:
       - "8001:5000"
     env_file:
-      - ./.mcp.env
+      - ./dev-deps/mcp-config/.mcp.env
     volumes:
-      - ./mcp_config:/config
+      - ./dev-deps/mcp-config:/config
     networks:
       - openteams
-    depends_on:
-      - traefik
 
 networks:
   openteams:
