@@ -23,7 +23,7 @@ import {
 
 import {
   DuckDuckGoOutputMemo,
-  DescribeSchemaOutputMemo,
+  QueryResultOutputMemo,
   FallbackOutputMemo,
   ToolInputPanelMemo,
 } from "./tools";
@@ -77,8 +77,14 @@ function ToolCallRenderer(props: ToolCallRenderer.Props): ReactNode {
     switch (tool) {
       case "duckduckgo_search":
         return DuckDuckGoOutputMemo;
-      case "describe-schema":
-        return DescribeSchemaOutputMemo;
+      case "austin-permits-describe-schema":
+        return QueryResultOutputMemo;
+      case "austin-permits-sample-data":
+        return QueryResultOutputMemo;
+      case "austin-permits-explore-values":
+        return QueryResultOutputMemo;
+      case "austin-permits-execute-sql":
+        return QueryResultOutputMemo;
       default:
         return FallbackOutputMemo;
     }
@@ -98,7 +104,7 @@ function ToolCallRenderer(props: ToolCallRenderer.Props): ReactNode {
       <ToolInputPanelMemo part={input_part} />
     </div>
 
-    <div className="chat-ToolCallRenderer-output border p-2 rounded mt-2">
+    <div className="chat-ToolCallRenderer-output border p-2 rounded my-2">
       <div className="font-medium mb-1">
         Tool Call Output
       </div>

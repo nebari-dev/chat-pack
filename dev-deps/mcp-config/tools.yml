@@ -8,7 +8,7 @@ sources:
     password: "${POSTGRES_PASSWORD}"
 
 tools:
-  describe-schema:
+  austin-permits-describe-schema:
     kind: postgres-sql
     source: austin-permits-db
     description: "🚨 STEP 1: ALWAYS START HERE! Get complete schema information for all tables. Shows table names, column names, and data types. Essential before any other operation."
@@ -24,7 +24,7 @@ tools:
       WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
       ORDER BY t.table_name, c.ordinal_position;
 
-  sample-data:
+  austin-permits-sample-data:
     kind: postgres-sql
     source: austin-permits-db
     description: "🔍 STEP 2: Explore sample data from all tables to understand data structure and format. Use after describe-schema."
@@ -35,7 +35,7 @@ tools:
       UNION ALL
       (SELECT 'construction_permit' as table_name, * FROM construction_permit LIMIT 3);
 
-  explore-values:
+  austin-permits-explore-values:
     kind: postgres-sql
     source: austin-permits-db
     description: "⚠️ MANDATORY STEP 3: MUST run this before execute-sql! Explore unique values in key columns for filtering. Shows work_class, permit types, and statuses. Required to understand valid WHERE clause values."
@@ -53,7 +53,7 @@ tools:
        GROUP BY status_current ORDER BY count DESC LIMIT 5)
       ORDER BY column_name, count DESC;
 
-  execute-sql:
+  austin-permits-execute-sql:
     kind: postgres-execute-sql
     source: austin-permits-db
     description: "🚫 BLOCKED UNTIL STEP 3 COMPLETE! Execute custom SQL queries ONLY after running explore-values first. MANDATORY LIMITS: For MAP visualizations use LIMIT 10 ONLY! For tables/charts use LIMIT 100 max. Cannot use this tool without first exploring valid column values!"
