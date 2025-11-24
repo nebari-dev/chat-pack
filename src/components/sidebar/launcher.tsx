@@ -2,11 +2,11 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  clsx
-} from 'clsx';
+  Link
+} from '@tanstack/react-router';
 
 import {
-  Blocks, Database, Files, MessageSquarePlus, MessagesSquare
+  Database, MemoryStick, MessageSquarePlus, MessagesSquare
 } from 'lucide-react';
 
 import type {
@@ -14,94 +14,114 @@ import type {
 } from 'react';
 
 import {
-  useAppStore
-} from '@/store';
+  cn
+} from '@/lib/utils';
 
 
 /**
- * A React component that renders the sidebar launcher buttons.
+ * A React component that renders the sidebar launcher links.
  */
 export
-function Launcher(): ReactNode {
-  // Fetch the sidebar state from the store.
-  const sidebarState = useAppStore(store => store.sidebarState);
-
-  // Fetch the `createChat` function from the store.
-  const createChat = useAppStore(store => store.createChat);
-
-  // Determine whether the sidebar is collapsed.
-  const collapsed = sidebarState === 'collapsed';
+function Launcher(props: Launcher.Props): ReactNode {
+  // Extract the props.
+  const {isSidebarOpen} = props;
 
   // Return the rendered component.
   return (
     <div className='px-2 flex flex-col flex-none gap-px'>
-      <Button
-        onClick={ createChat }
-        collapsed={ collapsed }
-        icon={ <MessageSquarePlus className='m-auto' size={ 20 } /> }
-        text='New Chat'
-        className=
-          'hover:bg-bg-brand-secondary text-bd-brand-default font-semibold' />
-      <Button
-        collapsed={ collapsed }
-        icon={ <MessagesSquare className='m-auto' size={ 20 } /> }
-        text='Chats'
-        className='hover:bg-bg-neutral-dark' />
-      <Button
-        collapsed={ collapsed }
-        icon={ <Files className='m-auto' size={ 20 } /> }
-        text='Files'
-        className='hover:bg-bg-neutral-dark' />
-      <Button
-        collapsed={ collapsed }
-        icon={ <Database className='m-auto' size={ 20 } /> }
-        text='Datasets'
-        className='hover:bg-bg-neutral-dark' />
-      <Button
-        collapsed={ collapsed }
-        icon={ <Blocks className='m-auto' size={ 20 } /> }
-        text='Artifacts'
-        className='hover:bg-bg-neutral-dark' />
+      <LauncherLink
+        to='/chat'
+        text='Chat'
+        collapsed={!isSidebarOpen}
+        icon={<MessageSquarePlus className='m-auto' size={20} />} />
+      <LauncherLink
+        to='/sessions'
+        text='Sessions'
+        collapsed={!isSidebarOpen }
+        icon={<MessagesSquare className='m-auto' size={20} />} />
+      <LauncherLink
+        to='/knowledge'
+        text='Knowledge'
+        collapsed={!isSidebarOpen}
+        icon={<Database className='m-auto' size={20} />} />
+      <LauncherLink
+        to='/memory'
+        text='Memory'
+        collapsed={!isSidebarOpen}
+        icon={<MemoryStick className='m-auto' size={20} />} />
     </div>
   );
 }
 
 
 /**
- * A React component that renders a launcher button.
+ * The namespace for the `Launcher` component statics.
  */
-function Button(props: Button.Props): ReactNode {
+export
+namespace Launcher {
+  /**
+   * A type alias for the `Launcher` props.
+   */
+  export
+  type Props = {
+    /**
+     * Whether sidebar is open.
+     */
+    readonly isSidebarOpen: boolean;
+  };
+}
+
+
+/**
+ * A React component that renders a launcher link.
+ */
+function LauncherLink(props: LauncherLink.Props): ReactNode {
   // Extract the props.
-  const { collapsed, icon, text, className, onClick } = props;
+  const {to, collapsed, icon, text} = props;
+
+  // Create the active link props.
+  const activeProps = {
+    className: cn(
+      'text-bd-brand-default hover:bg-bg-brand-secondary font-semibold',
+      'pointer-events-none'
+    )
+  };
+
+  // Create the inactive link props.
+  const inactiveProps = {
+    className: 'hover:bg-bg-neutral-dark'
+  };
 
   // Return the rendered component.
   return (
-    <button
-      onClick={ onClick }
-      className={ clsx(
+    <Link
+      to={to}
+      activeProps={activeProps}
+      inactiveProps={inactiveProps}
+      className={cn(
       'h-9 px-1 flex flex-row gap-2 items-center cursor-pointer',
-      'rounded-xs whitespace-nowrap overflow-hidden', className
-      ) }>
-      <span className='flex-none w-6'>
-        { icon }
-      </span>
-      <span className={ collapsed ? 'hidden' : '' }>
-        { text }
-      </span>
-    </button>
+      'rounded-xs whitespace-nowrap overflow-hidden')}>
+      <span className='flex-none w-6'>{icon}</span>
+      <span className={ collapsed ? 'hidden' : '' }>{text}</span>
+    </Link>
   );
 }
 
 
 /**
- * The namespace for the `Button` component statics.
+ * The namespace for the `LauncherLink` component statics.
  */
-namespace Button {
+namespace LauncherLink {
   /**
-   * A type alias for the `Button` props.
+   * A type alias for the `LauncherLink` props.
    */
   export
   type Props = {
+    /**
+     * The route to use for the link.
+     */
+    readonly to: string;
+
     /**
      * Whether the button is collapsed.
      */
@@ -116,15 +136,5 @@ namespace Button {
      * The text for the button.
      */
     readonly text: string;
-
-    /**
-     * The class name to add to the button.
-     */
-    readonly className?: string;
-
-    /**
-     * The click handler for the button.
-     */
-    readonly onClick?: () => void;
   };
 }

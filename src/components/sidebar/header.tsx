@@ -2,8 +2,8 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  clsx
-} from 'clsx';
+  Link
+} from '@tanstack/react-router';
 
 import {
   PanelLeft
@@ -14,45 +14,55 @@ import type {
 } from 'react';
 
 import {
-  useAppStore
-} from '@/store';
+  cn
+} from '@/lib/utils';
 
 
 /**
  * A React component that renders the sidebar header.
  */
 export
-function Header(): ReactNode {
-  // Fetch the `sidebarState` from the store.
-  const sidebarState = useAppStore(store => store.sidebarState);
-
-  // Fetch the `toggleSidebarState` update function from the store..
-  const toggleSidebarState = useAppStore(store => store.toggleSidebarState);
-
-  // Determine whether the sidebar is collapsed.
-  const collapsed = sidebarState === 'collapsed';
-
-  // Create the click handler for the toggle button.
-  const handleClick = () => { toggleSidebarState() };
+function Header(props: Header.Props): ReactNode {
+  // Extract the props.
+  const {isSidebarOpen, toggleSidebar} = props;
 
   // Return the rendered component with the sidebar state.
   return (
-    <div className={ clsx(
+    <div className={cn(
       'flex flex-row flex-none h-12 p-2',
-        collapsed ? 'justify-center' : 'justify-between'
-      ) }>
-      <div className={ clsx(
+      isSidebarOpen ? 'justify-between' : 'justify-center')}>
+      <Link to='/' className={cn(
         'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)] bg-[auto_100px]',
         'bg-center bg-no-repeat w-[100px] cursor-pointer ml-2',
-        collapsed ? 'hidden' : ''
-        ) }>
-        <a className='block w-full h-full' href='/' />
-      </div>
+        isSidebarOpen ? '' : 'hidden')} />
       <button
-        onClick={ handleClick }
+        onClick={toggleSidebar}
         className='cursor-pointer w-8 rounded-xs hover:bg-bg-neutral-dark'>
-        <PanelLeft size={ 20 } className='m-auto'/>
+        <PanelLeft size={20} className='m-auto' />
       </button>
     </div>
   );
+}
+
+
+/**
+ * The namespace for the `Header` component statics.
+ */
+export
+namespace Header {
+  /**
+   * A type alias for the `Header` props.
+   */
+  export
+  type Props = {
+    /**
+     * Whether the sidebar is open.
+     */
+    readonly isSidebarOpen: boolean;
+
+    /**
+     * A callback to toggle the open state of the sidebar.
+     */
+    readonly toggleSidebar: () => void;
+  };
 }

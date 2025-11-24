@@ -1,17 +1,17 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import {
-  clsx
-} from 'clsx';
-
 import type {
   ReactNode
 } from 'react';
 
 import {
-  useAppStore
-} from '@/store';
+  useCallback, useState
+} from 'react';
+
+import {
+  cn
+} from '@/lib/utils';
 
 import {
   Header
@@ -21,32 +21,28 @@ import {
   Launcher
 } from './launcher';
 
-import {
-  RecentChats
-} from './recentchats';
-
 
 /**
  * A React component that renders the chat sidebar.
  */
 export
-function SideBar(): ReactNode {
-  // Extract the `sideBarState` from the store.
-  const sidebarState = useAppStore(store => store.sidebarState);
+function Sidebar(): ReactNode {
+  // Setup the state to track the sidebar open state.
+  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
-  // Determine whether the sidebar is open.
-  const open = sidebarState === 'open';
+  // Create the toggle handler for the sidebar state.
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev);
+  }, []);
 
   // Return the rendered component.
   return (
-    <div className={ clsx(
+    <div className={cn(
       'flex flex-col flex-none gap-3 border-r border-bd-neutral-default',
       'bg-bg-white transition-[width] duration-150',
-      open ? 'w-72' : 'w-12.25'
-    ) }>
-      <Header />
-      <Launcher />
-      <RecentChats />
+      isSidebarOpen ? 'w-72' : 'w-12.25')}>
+      <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <Launcher isSidebarOpen={isSidebarOpen} />
     </div>
   );
 }
