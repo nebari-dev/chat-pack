@@ -103,7 +103,7 @@ type RunEvent = v.InferOutput<typeof runEventSchema>;
 
 export
 const chatHistorySchema = v.object({
-  content: v.string(),
+  content: v.optional(v.string()),  // TODO this schema is not well-typed
   created_at: v.number(),
   from_history: v.boolean(),
   stop_after_tool_call: v.boolean(),

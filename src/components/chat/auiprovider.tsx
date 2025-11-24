@@ -160,13 +160,17 @@ namespace Private {
     const messages: ThreadMessageLike[] = [];
 
     // Convert the chat history into AUI messages.
+    //
+    // TODO handle more message types.
     for (const msg of json.chat_history) {
       if (msg.role === 'user' || msg.role === 'assistant') {
-        messages.push({
-          role: msg.role,
-          content: msg.content,
-          createdAt: new Date(msg.created_at)
-        });
+        if (typeof msg.content === 'string') {
+          messages.push({
+            role: msg.role,
+            content: msg.content,
+            createdAt: new Date(msg.created_at)
+          });
+        }
       }
     }
 
