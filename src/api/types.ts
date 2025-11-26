@@ -79,8 +79,7 @@ const runCompletedEventSchema = v.object({
   created_at: v.number(),
   metrics: runMetricsSchema,
   run_id: v.string(),
-  session_id: v.string(),
-  session_state: v.unknown() // TODO
+  session_id: v.string()
 });
 
 
@@ -102,7 +101,7 @@ type RunEvent = v.InferOutput<typeof runEventSchema>;
 
 
 export
-const chatHistorySchema = v.object({
+const chatHistoryMessageSchema = v.object({
   content: v.optional(v.string()),  // TODO this schema is not well-typed
   created_at: v.number(),
   from_history: v.boolean(),
@@ -112,7 +111,7 @@ const chatHistorySchema = v.object({
 
 
 export
-type ChatHistory = v.InferOutput<typeof chatHistorySchema>;
+type ChatHistoryMessage = v.InferOutput<typeof chatHistoryMessageSchema>;
 
 
 export
@@ -120,9 +119,9 @@ const agentSessionDetailSchema = v.object({
   agent_session_id: v.string(),
   session_id: v.string(),
   session_name: v.string(),
-  user_id: v.optional(v.string()),
-  agent_id: v.optional(v.string()),
-  chat_history: v.array(chatHistorySchema)
+  user_id: v.nullish(v.string()),
+  agent_id: v.nullish(v.string()),
+  chat_history: v.array(chatHistoryMessageSchema)
 });
 
 

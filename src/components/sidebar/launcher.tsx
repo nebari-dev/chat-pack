@@ -82,8 +82,7 @@ function LauncherLink(props: LauncherLink.Props): ReactNode {
   // Create the active link props.
   const activeProps = {
     className: cn(
-      'text-bd-brand-default hover:bg-bg-brand-secondary font-semibold',
-      'pointer-events-none'
+      'text-bd-brand-default hover:bg-bg-brand-secondary font-semibold'
     )
   };
 

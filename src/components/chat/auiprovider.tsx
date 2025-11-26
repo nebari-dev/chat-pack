@@ -10,7 +10,7 @@ import {
 } from '@assistant-ui/react';
 
 import type {
-  MutationFunctionContext, QueryFunctionContext
+  MutationFunctionContext, QueryClient, QueryFunctionContext
 } from '@tanstack/react-query';
 
 import {
@@ -34,17 +34,17 @@ import * as api from '@/api';
 export
 function AUIProvider(props: AUIProvider.Props): ReactNode {
   // Extract the props.
-  const { agent_id, session_id, children } = props;
+  const { session_id, agent_id, setSessionId, children } = props;
 
   // Create and hydrate the thread store.
-  const store = Private.useThreadStore({ session_id, agent_id });
+  const store = Private.useThreadStore({ session_id, agent_id, setSessionId });
 
   // Create the runtime store adapter.
   const runtime = useExternalStoreRuntime(store);
 
   // Return the rendered component.
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
+    <AssistantRuntimeProvider runtime={ runtime }>
       { children }
     </AssistantRuntimeProvider>
   );
@@ -62,14 +62,24 @@ namespace AUIProvider {
   export
   type Props = {
     /**
-     * The id of the session (thread).
+     * The unique id of the session (thread).
+     *
+     * If this is `undefined` a new session will be created on the first
+     * user messages and `setSessionId` will be invoked.
+     *
+     * If this is provided, the session is assumed to exist on the server.
      */
-    readonly session_id: string;
+    readonly session_id: string | undefined;
 
     /**
-     * The id of the agent for the thread.
+     * The id of the agent for processing user messages.
      */
     readonly agent_id: string;
+
+    /**
+     * A callback to set the id for a new session.
+     */
+    readonly setSessionId: (session_id: string) => void;
 
     /**
      * The children for the provider.
@@ -89,14 +99,24 @@ namespace Private {
   export
   type ThreadStoreOptions = {
     /**
-     * The id of the session (thread).
+     * The unique id of the session (thread).
+     *
+     * If this is `undefined` a new session will be created on the first
+     * user messages and `setSessionId` will be invoked.
+     *
+     * If this is provided, the session is assumed to exist on the server.
      */
-    readonly session_id: string;
+    readonly session_id: string | undefined;
 
     /**
-     * The id of the agent for the thread.
+     * The id of the agent for processing user messages.
      */
     readonly agent_id: string;
+
+    /**
+     * A callback to set the id for a new session.
+     */
+    readonly setSessionId: (session_id: string) => void;
   };
 
   /**
@@ -106,26 +126,18 @@ namespace Private {
   function useThreadStore(
     options: ThreadStoreOptions
   ): ExternalStoreAdapter<ThreadMessageLike> {
-    // Extract the options.
-    const { session_id, agent_id } = options;
-
-    // Create the query key.
-    const queryKey = ['sessions', session_id] as const;
-
-    // Create the mutation key.
-    const mutationKey = ['sessions', session_id, agent_id] as const;
-
     // Create the query.
     const query = useQuery({
-      queryKey: queryKey,
+      queryKey: createQueryKey(options.session_id),
       queryFn: loadChatHistory,
-      initialData: []
+      staleTime: 'static',
+      placeholderData: []
     });
 
     // Create the mutation.
     const mutation = useMutation({
-      mutationKey: mutationKey,
-      mutationFn: runUserMessage
+      mutationFn: runUserMessage,
+      meta: options
     });
 
     // Return the store adapter.
@@ -138,44 +150,111 @@ namespace Private {
     };
   }
 
-  // A no-op message converter.
+  /**
+   * A no-op message converter.
+   *
+   * This make the AUI store adapter api happy.
+   */
   const noopMessageConverter = <T,>(msg: T) => msg;
+
+  /**
+   * The various types of a chat query key.
+   */
+  type QueryKey = readonly ['chat', string];
+  type NullQueryKey = readonly ['chat', undefined];
+  type MaybeQueryKey = readonly ['chat', string | undefined];
+
+  /**
+   * A function that creates a chat query key for a session.
+   */
+  function createQueryKey(session_id: string): QueryKey;
+  function createQueryKey(session_id: undefined): NullQueryKey;
+  function createQueryKey(session_id: string | undefined): MaybeQueryKey
+  function createQueryKey(session_id: string | undefined): MaybeQueryKey {
+    return ['chat', session_id];
+  }
+
+  /**
+   * A function which converts an Agno history message to an AUI message.
+   *
+   * @param messge - The Agno chat history message.
+   *
+   * @returns The AUI equivalent message, or `null` if it can't be converted.
+   *
+   * TODO - Handle more Agno message types.
+   */
+  function convertChatHistoryMessage(
+    message: api.ChatHistoryMessage
+  ): ThreadMessageLike | null {
+    if (message.role === 'user' || message.role === 'assistant') {
+      if (typeof message.content === 'string') {
+        return {
+          role: message.role,
+          content: message.content,
+          createdAt: new Date(message.created_at)
+        };
+      }
+    }
+    return null;
+  };
 
   /**
    * A query function which fetches the chat history from the Agno API.
    */
   async function loadChatHistory(
-    context: QueryFunctionContext
+    context: QueryFunctionContext<MaybeQueryKey>
   ): Promise<readonly ThreadMessageLike[]> {
     // Extract the query key from the context.
     const { queryKey } = context;
 
     // Extract the session id from the query key.
-    const session_id = queryKey[1] as string;
+    const session_id = queryKey[1];
 
-    // Fetch the session data.
-    const json = await api.getSessionByID({ session_id });
-
-    // Create the array for the converted messages.
-    const messages: ThreadMessageLike[] = [];
-
-    // Convert the chat history into AUI messages.
-    //
-    // TODO handle more message types.
-    for (const msg of json.chat_history) {
-      if (msg.role === 'user' || msg.role === 'assistant') {
-        if (typeof msg.content === 'string') {
-          messages.push({
-            role: msg.role,
-            content: msg.content,
-            createdAt: new Date(msg.created_at)
-          });
-        }
-      }
+    // Return an empty array if the sesssion id is undefined.
+    if (session_id === undefined) {
+      return [];
     }
 
-    // Return the converted messages.
-    return messages;
+    // Fetch the chat history.
+    const { chat_history } = await api.getSessionByID({ session_id });
+
+    // Return the converted and filtered result.
+    return chat_history
+      .map(convertChatHistoryMessage)
+      .filter(msg => msg !== null);
+  }
+
+  /**
+   * A function which ensures a session is created on the server and that
+   * the query cache is populated with an initial array.
+   *
+   * @param session_id - The id for the session. If this is `undefined`,
+   *   a new session will be created on the server, and the query cache
+   *   will be populated with an array. If this is already a `string`,
+   *   this function is a no-op.
+   *
+   * @param client - The query client to use for updated the query cache.
+   *
+   * @returns The resolved session id.
+   */
+  async function ensureSession(
+    session_id: string | undefined, client: QueryClient
+  ): Promise<string> {
+    // Bail early if the session already exists.
+    //
+    // This assumes the session exists on the server.
+    if (session_id !== undefined) {
+      return session_id;
+    }
+
+    // Create a new session on the server.
+    session_id = await api.createSession();
+
+    // Populate the query cache for the session.
+    client.setQueryData(createQueryKey(session_id), prev => prev ?? []);
+
+    // Return the resolved session id.
+    return session_id;
   }
 
   /**
@@ -184,16 +263,6 @@ namespace Private {
   async function runUserMessage(
     message: AppendMessage, context: MutationFunctionContext
   ): Promise<void> {
-    // Extract the client and mutation key from the context.
-    const { client, mutationKey } = context;
-
-    // Extract the session and agent id from the mutation key.
-    const session_id = mutationKey![1] as string;
-    const agent_id = mutationKey![2] as string;
-
-    // Create the query key for updating the client data.
-    const queryKey = ['sessions', session_id] as const;
-
     // Bail early if the content length is unexpected.
     if (message.content.length !== 1) {
       throw new Error(`Unhandled content length: ${message.content.length}`);
@@ -207,9 +276,23 @@ namespace Private {
       throw new Error(`Unhandled part type: ${part.type}`);
     }
 
+    // Extract the client from the context.
+    const client = context.client;
+
+    // Extract the metadata from the context.
+    const {
+      session_id: $session_id, agent_id, setSessionId
+    } = context.meta as ThreadStoreOptions;
+
+    // Ensure the session and query cache exists.
+    const session_id = await ensureSession($session_id, client);
+
+    // Ensure the page is pointing to the current session.
+    setSessionId(session_id);
+
     // Append a new user messages.
     client.setQueryData<ThreadMessageLike[]>(
-      queryKey,
+      createQueryKey(session_id),
       produce(draft => {
         draft!.push({
           role: 'user',
@@ -225,7 +308,7 @@ namespace Private {
     // Handle the stream events from the Agno API.
     for await (const evt of stream) {
       client.setQueryData<ThreadMessageLike[]>(
-        queryKey,
+        createQueryKey(session_id),
         produce(draft => {
           // Handle the `RunStarted` event.
           if (evt.event === 'RunStarted') {

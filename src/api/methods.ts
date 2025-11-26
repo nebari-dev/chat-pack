@@ -17,6 +17,26 @@ import {
 
 
 /**
+ * A function which creates a new session on the server.
+ *
+ * @returns The unique id of the created session.
+ */
+export
+async function createSession(): Promise<string> {
+  // Fetch the resource.
+  const resp = await fetch('/sessions', { method: 'POST' });
+
+  // Convert the response to json.
+  const json = await resp.json();
+
+  // Return the response.
+  //
+  // TODO make a schema for this response and validate it.
+  return json.session_id;
+}
+
+
+/**
  * A function which executes the Agno Agent Run API.
  *
  * @param options - The options for the API request.
@@ -68,6 +88,7 @@ async function *runAgent(options: runAgent.Options): AsyncGenerator<RunEvent> {
       yield v.parse(runEventSchema, json);
     } catch (e) {
       // TODO log errors and json for unhandled events for now.
+      console.log('Failed to parse in `runAgent()`');
       console.log(e);
       console.log(json);
     }
@@ -98,7 +119,7 @@ namespace runAgent {
     /**
      * The unique id of the existing session for the agent.
      */
-    readonly session_id?: string;
+    readonly session_id: string;
 
     /**
      * The unique id of the user making the request.

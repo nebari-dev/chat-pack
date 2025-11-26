@@ -2,10 +2,6 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  getRouteApi
-} from '@tanstack/react-router';
-
-import {
   type ReactNode
 } from 'react';
 
@@ -18,26 +14,54 @@ import {
 } from './auiprovider';
 
 
-// Get the route API for the `Chat` component.
-const routeApi = getRouteApi('/chat');
-
-
 /**
  * A component that renders the Assistant-UI chat panel.
  */
 export
-function Chat(): ReactNode {
+function Chat(props: Chat.Props): ReactNode {
   // Extract the search params.
-  const { session_id, agent_id } = routeApi.useSearch();
-
-  // TODO handle agent_id and session_id defaults...
+  const { session_id, agent_id, setSessionId } = props;
 
   // Return the rendered component.
   return (
     <AUIProvider
-      agent_id={agent_id ?? ''}
-      session_id={session_id ?? ''}>
+      session_id={ session_id }
+      agent_id={ agent_id }
+      setSessionId={ setSessionId }>
       <Thread />
     </AUIProvider>
   );
+}
+
+
+/**
+ * The namespace for the `Chat` component statics.
+ */
+export
+namespace Chat {
+  /**
+   * A type alias for the `Chat` component props.
+   */
+  export
+  type Props = {
+    /**
+     * The unique id of the session (thread).
+     *
+     * If this is `undefined` a new session will be created on the first
+     * user messages and `setSessionId` will be invoked.
+     *
+     * If this is provided, the session is assumed to exist on the server.
+     */
+    readonly session_id: string | undefined;
+
+    /**
+     * The id of the agent for processing user messages.
+     */
+    readonly agent_id: string;
+
+    /**
+     * A callback to set the id for a new session.
+     */
+    readonly setSessionId: (session_id: string) => void;
+  };
 }

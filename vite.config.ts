@@ -21,11 +21,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/agents/': {
+      '/agents': {
         target: 'http://localhost:7777',
         changeOrigin: true
       },
-      '/sessions/': {
+      '/sessions': {
         target: 'http://localhost:7777',
         changeOrigin: true
       }
