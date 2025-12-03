@@ -8,11 +8,11 @@ import {
 } from '@/lib/sse';
 
 import type {
-  RunEvent, SessionByID
+  RunEvent, SessionByID, MetricsResponse
 } from './types';
 
 import {
-  runEventSchema, sessionByIDSchema
+  runEventSchema, sessionByIDSchema, metricsResponseSchema
 } from './types';
 
 
@@ -197,5 +197,31 @@ namespace getSessionByID {
      * The user id for filtering, if needed.
      */
     readonly user_id?: string;
+  };
+}
+
+export
+async function getMetrics(
+  _options: getMetrics.Options,
+): Promise<MetricsResponse> {
+  const url = '/metrics';
+
+  const resp = await fetch(url);
+
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  const json = await resp.json();
+  return v.parse(metricsResponseSchema, json);
+}
+
+export
+namespace getMetrics {
+  /**
+   * The options object for a `getSessionByID` request.
+   */
+  export
+  type Options = {
   };
 }

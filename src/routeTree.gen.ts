@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as SessionsRouteImport } from './routes/sessions';
+import { Route as MetricsRouteImport } from './routes/metrics';
 import { Route as MemoryRouteImport } from './routes/memory';
 import { Route as KnowledgeRouteImport } from './routes/knowledge';
 import { Route as ChatRouteImport } from './routes/chat';
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index';
 const SessionsRoute = SessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any);
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any);
 const MemoryRoute = MemoryRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/chat': typeof ChatRoute;
   '/knowledge': typeof KnowledgeRoute;
   '/memory': typeof MemoryRoute;
+  '/metrics': typeof MetricsRoute;
   '/sessions': typeof SessionsRoute;
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/chat': typeof ChatRoute;
   '/knowledge': typeof KnowledgeRoute;
   '/memory': typeof MemoryRoute;
+  '/metrics': typeof MetricsRoute;
   '/sessions': typeof SessionsRoute;
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/chat': typeof ChatRoute;
   '/knowledge': typeof KnowledgeRoute;
   '/memory': typeof MemoryRoute;
+  '/metrics': typeof MetricsRoute;
   '/sessions': typeof SessionsRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/' | '/chat' | '/knowledge' | '/memory' | '/sessions';
+  fullPaths:
+    | '/'
+    | '/chat'
+    | '/knowledge'
+    | '/memory'
+    | '/metrics'
+    | '/sessions';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/chat' | '/knowledge' | '/memory' | '/sessions';
-  id: '__root__' | '/' | '/chat' | '/knowledge' | '/memory' | '/sessions';
+  to: '/' | '/chat' | '/knowledge' | '/memory' | '/metrics' | '/sessions';
+  id:
+    | '__root__'
+    | '/'
+    | '/chat'
+    | '/knowledge'
+    | '/memory'
+    | '/metrics'
+    | '/sessions';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -76,6 +98,7 @@ export interface RootRouteChildren {
   ChatRoute: typeof ChatRoute;
   KnowledgeRoute: typeof KnowledgeRoute;
   MemoryRoute: typeof MemoryRoute;
+  MetricsRoute: typeof MetricsRoute;
   SessionsRoute: typeof SessionsRoute;
 }
 
@@ -86,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/sessions';
       fullPath: '/sessions';
       preLoaderRoute: typeof SessionsRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/metrics': {
+      id: '/metrics';
+      path: '/metrics';
+      fullPath: '/metrics';
+      preLoaderRoute: typeof MetricsRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/memory': {
@@ -124,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatRoute: ChatRoute,
   KnowledgeRoute: KnowledgeRoute,
   MemoryRoute: MemoryRoute,
+  MetricsRoute: MetricsRoute,
   SessionsRoute: SessionsRoute,
 };
 export const routeTree = rootRouteImport
