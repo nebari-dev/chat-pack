@@ -17,6 +17,10 @@ import {
   AUIProvider
 } from './auiprovider';
 
+import {
+  Breadcrumbs
+} from './breadcrumbs';
+
 
 /**
  * A component that renders the Assistant-UI chat panel.
@@ -25,6 +29,7 @@ export
 function Chat(): ReactNode {
   return (
     <Stack width='100%' gap={0}>
+      <Breadcrumbs />
       <Box minW={0} minH={0} flexGrow={1}>
         <AUIProvider>
           <Thread />
