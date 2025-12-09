@@ -2,6 +2,10 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
+  ChakraProvider, createSystem, defaultConfig
+} from '@chakra-ui/react';
+
+import {
   StrictMode
 } from 'react';
 
@@ -31,7 +35,9 @@ const queryClient = new QueryClient();
 // Create the main router object.
 const router = createRouter({
   routeTree,
-  defaultPreload: 'intent'
+  defaultPreload: 'intent',
+  defaultPreloadStaleTime: 0,
+  context: { queryClient }
 });
 
 
@@ -43,11 +49,17 @@ declare module '@tanstack/react-router' {
 }
 
 
+// Create a default Chakra system. TODO - define our own for styling.
+const system = createSystem(defaultConfig, { preflight: false });
+
+
 // Render the app into the root element.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <ChakraProvider value={ system }>
+      <QueryClientProvider client={ queryClient }>
+        <RouterProvider router={ router } />
+      </QueryClientProvider>
+    </ChakraProvider>
   </StrictMode>
 );

@@ -40,7 +40,7 @@ function Sidebar(): ReactNode {
     <div className={cn(
       'flex flex-col flex-none gap-3 border-r border-bd-neutral-default',
       'bg-bg-white transition-[width] duration-150',
-      isSidebarOpen ? 'w-72' : 'w-12.25')}>
+      isSidebarOpen ? 'w-60' : 'w-12.25')}>
       <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       <Launcher isSidebarOpen={isSidebarOpen} />
     </div>
