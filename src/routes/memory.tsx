@@ -5,6 +5,10 @@ import {
   createFileRoute
 } from '@tanstack/react-router';
 
+import {
+  Memory
+} from '@/components/memory';
+
 
 export
 const Route = createFileRoute('/memory')({
@@ -12,6 +16,7 @@ const Route = createFileRoute('/memory')({
 });
 
 
+
 function RouteComponent() {
-  return <div>Hello "/memory"!</div>;
+  return <Memory />;
 }
