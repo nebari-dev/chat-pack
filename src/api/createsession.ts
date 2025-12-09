@@ -29,6 +29,11 @@ async function createSession(): Promise<CreateSessionResponse> {
   // Fetch the resource.
   const resp = await fetch('/sessions', { method: 'POST' });
 
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
   // Convert the response to json.
   const json = await resp.json();
 
