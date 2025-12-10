@@ -14,6 +14,30 @@ type ChatType = 'agent' | 'team' | 'workflow';
 
 
 /**
+ * A type alias for the `ChatConfig.update()` options.
+ */
+export
+type ChatConfigUpdateOptions = {
+  /**
+   * The type of the chat.
+   */
+  readonly type: ChatType;
+
+  /**
+   * The id for the agent/team/workflow.
+   */
+  readonly id: string;
+
+  /**
+   * The id for the chat session.
+   *
+   * If this is not provided, the previous session will be cleared.
+   */
+  readonly sessionId?: string;
+};
+
+
+/**
  * The configuration for a chat.
  */
 export
@@ -21,52 +45,22 @@ type ChatConfig = {
   /**
    * The current type of the chat.
    */
-  readonly type: ChatType;
+  readonly type: ChatType | undefined;
 
   /**
-   * A callback to set the type of the chat.
+   * The id for the agent/team/workflow.
    */
-  readonly setType: (type: ChatType) => void;
+  readonly id: string | undefined;
 
   /**
-   * The current agent id for an `agent` chat.
-   */
-  readonly agentId: string | undefined;
-
-  /**
-   * A callback to set the agent id.
-   */
-  readonly setAgentId: (agentId: string) => void;
-
-  /**
-   * The current team id for a `team` chat.
-   */
-  readonly teamId: string | undefined;
-
-  /**
-   * A callback to set the team id.
-   */
-  readonly setTeamId: (teamId: string) => void;
-
-  /**
-   * The current workflow id for a `workflow` chat.
-   */
-  readonly workflowId: string | undefined;
-
-  /**
-   * A callback to set the workflow id.
-   */
-  readonly setWorkflowId: (workflowId: string) => void;
-
-  /**
-   * The current session id for the chat.
+   * The id for the chat session.
    */
   readonly sessionId: string | undefined;
 
   /**
-   * A callback to set the session id.
+   * A callback to update the chat config.
    */
-  readonly setSessionId: (sessionId: string) => void;
+  readonly update: (options: ChatConfigUpdateOptions) => void;
 };
 
 

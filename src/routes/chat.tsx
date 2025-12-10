@@ -12,33 +12,60 @@ import {
 import * as v from 'valibot';
 
 import type {
-  ChatConfig, ChatType
+  ChatConfig, ChatConfigUpdateOptions
 } from '@/components/chat';
 
 import {
   Chat, ChatConfigProvider
 } from '@/components/chat';
 
+import {
+  useConfig
+} from '@/components/common';
 
-/**
- * The schema for the route search params.
- */
-const searchSchema = v.object({
-  type: v.fallback(
-    v.union([
-      v.literal('agent'),
-      v.literal('team'),
-      v.literal('workflow')
-    ]),
-    'agent'
-  ),
-  id: v.optional(
-    v.string()
-  ),
-  sessionId: v.optional(
-    v.pipe(v.string(), v.uuid())
-  ),
+
+// The schema for the agent search params
+const agentSchema = v.object({
+  type: v.literal('agent'),
+  id: v.string(),
+  sessionId: v.optional(v.string())
 });
+
+
+// The schema for the team search params
+const teamSchema = v.object({
+  type: v.literal('team'),
+  id: v.string(),
+  sessionId: v.optional(v.string())
+});
+
+
+// The schema for the workflow search params
+const workflowSchema = v.object({
+  type: v.literal('workflow'),
+  id: v.string(),
+  sessionId: v.optional(v.string())
+});
+
+
+// The schema for empty search params
+const emptySchema = v.object({
+  type: v.undefined(),
+  id: v.undefined(),
+  sessionId: v.undefined()
+});
+
+
+// The schema for the `/chat` route search params
+const searchSchema = v.fallback(
+  v.variant('type', [
+    agentSchema,
+    teamSchema,
+    workflowSchema,
+    emptySchema
+  ]),
+  { type: undefined, id: undefined, sessionId: undefined }
+);
 
 
 /**
@@ -47,7 +74,7 @@ const searchSchema = v.object({
 export
 const Route = createFileRoute('/chat')({
   validateSearch: searchSchema,
-  component: RouteComponent
+  component: RouteComponent,
 });
 
 
@@ -61,48 +88,56 @@ function RouteComponent() {
   // Fetch the navigator.
   const navigate = Route.useNavigate();
 
-  // Create the callback for setting the `type` search param.
-  const setType = useCallback((type: ChatType) => {
-    navigate({ search: { type } });
+  // Fetch the OS config.
+  const { agents, teams, workflows } = useConfig();
+
+  // Create the callback for updating the chat config.
+  const update = useCallback((options: ChatConfigUpdateOptions) => {
+    navigate({ search: { ...options } });
   }, []);
 
-  // Create the callback for setting the "agent id" search param.
-  const setAgentId = useCallback((agentId: string) => {
-    navigate({ search: { type: 'agent', id: agentId } });
-  }, []);
-
-  // Create the callback for setting the "team id" search param.
-  const setTeamId = useCallback((teamId: string) => {
-    navigate({ search: { type: 'team', id: teamId } });
-  }, []);
-
-  // Create the callback for setting the "workflow id" search param.
-  const setWorkflowId = useCallback((workflowId: string) => {
-    navigate({ search: { type: 'workflow', id: workflowId } });
-  }, []);
-
-  // Create the callback setting the `sessionId` search param.
-  const setSessionId = useCallback((sessionId: string) => {
-    navigate({ search: prev => ({ ...prev, sessionId }) });
-  }, []);
-
-  // Create the chat context.
-  const context: ChatConfig = {
-    type,
-    setType,
-    agentId: type === 'agent' ? id : undefined,
-    setAgentId,
-    teamId: type === 'team' ? id : undefined,
-    setTeamId,
-    workflowId: type === 'workflow' ? id : undefined,
-    setWorkflowId,
-    sessionId,
-    setSessionId,
-  };
+  // Create the chat config, filling in defaults when possible.
+  let chatConfig: ChatConfig;
+  if (type && id) {
+    chatConfig = {
+      type,
+      id,
+      sessionId,
+      update
+    };
+  } else if (agents.length > 0) {
+    chatConfig = {
+      type: 'agent',
+      id: agents[0].id!,
+      sessionId: undefined,
+      update
+    };
+  } else if (teams.length > 0) {
+    chatConfig = {
+      type: 'team',
+      id: teams[0].id!,
+      sessionId: undefined,
+      update
+    };
+  } else if (workflows.length > 0) {
+    chatConfig = {
+      type: 'workflow',
+      id: workflows[0].id!,
+      sessionId: undefined,
+      update
+    };
+  } else {
+    chatConfig = {
+      type: undefined,
+      id: undefined,
+      sessionId: undefined,
+      update
+    };
+  }
 
   // Return the rendered component.
   return (
-    <ChatConfigProvider value={ context }>
+    <ChatConfigProvider value={ chatConfig }>
       <Chat />
     </ChatConfigProvider>
   );
