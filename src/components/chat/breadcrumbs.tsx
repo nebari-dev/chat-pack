@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import type {
-  ListCollection
+  ListCollection, SelectValueChangeDetails
 } from '@chakra-ui/react';
 
 import {
@@ -21,6 +21,10 @@ import {
   useConfig
 } from '@/components/common';
 
+import type {
+  ChatType
+} from './chatconfigprovider';
+
 import {
   useChatConfig
 } from './chatconfigprovider';
@@ -38,11 +42,8 @@ function Breadcrumbs(): ReactNode {
       padding={2}
       borderBottom='1px solid var(--color-bd-neutral-default)'>
       <Breadcrumb.List>
-        <Private.BcTypes />
-        <Private.BcAgents />
-        <Private.BcTeams />
-        <Private.BcWorkflows />
-        <Private.BcSessions />
+        <Private.BcSelect />
+        <Private.BcSession />
       </Breadcrumb.List>
     </Breadcrumb.Root>
   );
@@ -54,167 +55,107 @@ function Breadcrumbs(): ReactNode {
  */
 namespace Private {
   /**
-   * A React component that renders the chat type selector.
+   * A React component that renders the chat breadcrumb selector.
    */
   export
-  function BcTypes(): ReactNode {
-    // Fetch the chat config.
-    const chatConfig = useChatConfig();
-
-    // Create the collection for the select.
-    const collection = createListCollection({
-      items: [
-        { label: 'Agents', value: 'agent' as const },
-        { label: 'Teams', value: 'team' as const },
-        { label: 'Workflows', value: 'workflow' as const }
-      ]
-    });
-
-    // Return the rendered component.
-    return (
-      <BcSelect
-        value={ chatConfig.type }
-        setValue={ chatConfig.setType }
-        collection={ collection }
-        labelSuffix='type' />
-    );
-  }
-
-  /**
-   * A React component that renders the agent selector.
-   *
-   * This will be `null` if the chat config `type` is not `agent` or if
-   * there are no agents available in the Agno OS config.
-   */
-  export
-  function BcAgents(): ReactNode {
-    // Fetch the Agno OS config.
+  function BcSelect(): ReactNode {
+    // Fetch the os config.
     const config = useConfig();
 
     // Fetch the chat config.
     const chatConfig = useChatConfig();
 
-    // Bail if the chat config is not `agent`.
-    if (chatConfig.type !== 'agent') {
-      return null;
-    }
+    // Create the array to hold the breadcrumb items.
+    const items: BcItem[] = [];
 
-    // Bail if the OS has no configured agents.
-    if (config.agents.length === 0) {
-      return null;
+    // Populate the breadcrumb items.
+    for (const agent of config.agents) {
+      items.push({ type: 'agent', name: agent.name!, id: agent.id! });
+    }
+    for (const team of config.teams) {
+      items.push({ type: 'team', name: team.name!, id: team.id! });
+    }
+    for (const workflow of config.workflows) {
+      items.push({ type: 'workflow', name: workflow.name!, id: workflow.id! });
     }
 
     // Create the collection for the select.
     const collection = createListCollection({
-      items: config.agents.map(a => ({
-        label: a.name ?? '',
-        value: a.id ?? ''
-      }))
+      items,
+      itemToString: item => item.name,
+      itemToValue: item => `${item.type}:${item.id}`
     });
+
+    // A type alias for the value change details.
+    type Details = SelectValueChangeDetails<BcItem>;
+
+    // Setup the callback to handle the select change.
+    const handleValueChange = (details: Details) => {
+      // Bail if there are no selected items.
+      if (details.items.length === 0) {
+        return;
+      }
+
+      // Throw an error if somehow we got multiple selections.
+      if (details.items.length > 1) {
+        throw new Error('Internal: unhandled multi-select');
+      }
+
+      // Extract the type and id for the selection.
+      const { type, id } = details.items[0];
+
+      // Update the chat config.
+      chatConfig.update({ type, id });
+    };
+
+    // Create the value for the select.
+    const value = (
+      chatConfig.type && chatConfig.id ?
+      `${chatConfig.type}:${chatConfig.id}` :
+      ''
+    );
 
     // Return the rendered component.
     return (
-      <>
-        <Breadcrumb.Separator>/</Breadcrumb.Separator>
-        <BcSelect
-          key={ chatConfig.agentId } // key is needed to reset the control on undefined value.
-          value={ chatConfig.agentId }
-          setValue={ chatConfig.setAgentId }
+      <Breadcrumb.Item>
+        <Select.Root
           collection={ collection }
-          labelSuffix='agent' />
-      </>
-    );
-  }
-
-  /**
-   * A React component that renders the team selector.
-   *
-   * This will be `null` if the chat config `type` is not `team` or if
-   * there are no teams available in the Agno OS config.
-   */
-  export
-  function BcTeams(): ReactNode {
-    // Fetch the Agno OS config.
-    const config = useConfig();
-
-    // Fetch the chat config.
-    const chatConfig = useChatConfig();
-
-    // Bail if the chat config is not `team`.
-    if (chatConfig.type !== 'team') {
-      return null;
-    }
-
-    // Bail if the OS has no configured teams.
-    if (config.teams.length === 0) {
-      return null;
-    }
-
-    // Create the collection for the select.
-    const teams = createListCollection({
-      items: config.teams.map(t => ({
-        label: t.name ?? '',
-        value: t.id ?? ''
-      }))
-    });
-
-    // Return the rendered component.
-    return (
-      <>
-        <Breadcrumb.Separator>/</Breadcrumb.Separator>
-        <BcSelect
-          key={ chatConfig.teamId } // key is needed to reset the control on undefined value.
-          value={ chatConfig.teamId }
-          setValue={ chatConfig.setTeamId }
-          collection={ teams }
-          labelSuffix='team' />
-      </>
-    );
-  }
-
-  /**
-   * A React component that renders the workflow selector.
-   *
-   * This will be `null` if the chat config `type` is not `workflow` or if
-   * there are no workflows available in the Agno OS config.
-   */
-  export
-  function BcWorkflows(): ReactNode {
-    // Fetch the Agno OS config.
-    const config = useConfig();
-
-    // Fetch the chat config.
-    const chatConfig = useChatConfig();
-
-    // Bail if the chat config is not `workflow`.
-    if (chatConfig.type !== 'workflow') {
-      return null;
-    }
-
-    // Bail if the OS has no configured workflows.
-    if (config.workflows.length === 0) {
-      return null;
-    }
-
-    // Create the collection for the select.
-    const collection = createListCollection({
-      items: config.workflows.map(w => ({
-        label: w.name ?? '',
-        value: w.id ?? ''
-      }))
-    });
-
-    // Return the rendered component.
-    return (
-      <>
-        <Breadcrumb.Separator>/</Breadcrumb.Separator>
-        <BcSelect
-          key={ chatConfig.workflowId } // key is needed to reset the control on undefined value.
-          value={ chatConfig.workflowId }
-          setValue={ chatConfig.setWorkflowId }
-          collection={ collection }
-          labelSuffix='workflow' />
-      </>
+          size='sm'
+          width='160px'
+          value={ [value] }
+          onValueChange={ handleValueChange }>
+          <Select.HiddenSelect />
+          <VisuallyHidden>
+            <Select.Label>{ 'Select...' }</Select.Label>
+          </VisuallyHidden>
+          <Select.Control>
+            <Select.Trigger minH='0' border='none' cursor='pointer'>
+              <Select.ValueText placeholder={ 'Select...' } />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              <ChevronsUpDown size={ 16 } />
+            </Select.IndicatorGroup>
+          </Select.Control>
+          <Portal>
+            <Select.Positioner>
+              <Select.Content>
+                <BcGroup
+                  type='agent'
+                  label='Agents'
+                  collection={ collection } />
+                <BcGroup
+                  type='team'
+                  label='Teams'
+                  collection={ collection} />
+                <BcGroup
+                  type='workflow'
+                  label='Workflows'
+                  collection={ collection } />
+              </Select.Content>
+            </Select.Positioner>
+          </Portal>
+        </Select.Root>
+      </Breadcrumb.Item>
     );
   }
 
@@ -224,7 +165,7 @@ namespace Private {
    * TODO - have this render the session name instead of id.
    */
   export
-  function BcSessions(): ReactNode {
+  function BcSession(): ReactNode {
     // Fetch the chat config.
     const chatConfig = useChatConfig();
 
@@ -245,74 +186,78 @@ namespace Private {
   }
 
   /**
-   * A type alias for the `BcSelect` props.
+   * A type alias for an item in the breadrumb select.
    */
-  type BcSelectProps<T extends string> = {
+  type BcItem = {
     /**
-     * The selected value for the item.
+     * The type of the item.
      */
-    readonly value: T | undefined;
+    readonly type: ChatType;
 
     /**
-     * The callback to set the selected value.
+     * The display name of the item.
      */
-    readonly setValue: (value: T) => void;
+    readonly name: string;
 
     /**
-     * The collection for populating the values.
+     * The server id of the item.
      */
-    readonly collection: ListCollection<{ label: string, value: T }>;
-
-    /**
-     * The suffix to add to the `Select ${suffix}` label.
-     */
-    readonly labelSuffix: string;
+    readonly id: string;
   };
 
   /**
-   * A React component that renders a breadcrumb select item.
+   * A type alias for the `BcGroup` props.
    */
-  function BcSelect<T extends string>(props: BcSelectProps<T>): ReactNode {
-    // Extract the props.
-    const { labelSuffix, value, setValue, collection } = props
+  type BcGroupProps = {
+    /**
+     * The chat type for the group.
+     *
+     * Only items with this `type` will be displayed in the group.
+     */
+    readonly type: ChatType;
 
-    // Create the select items from the collection.
-    const items = collection.items.map(item => (
-      <Select.Item key={ item.value } item={ item }>
-        { item.label }
+    /**
+     * The visible label for the group.
+     */
+    readonly label: string;
+
+    /**
+     * The list collection for the select control.
+     */
+    readonly collection: ListCollection<BcItem>
+  };
+
+  /**
+   * A React component that renders a group in the breadcrumb select.
+   */
+  function BcGroup(props: BcGroupProps): ReactNode {
+    // Extract the props.
+    const { type, label, collection } = props;
+
+    // Filter the collection for matching item types.
+    const items = collection.items.filter(item => item.type === type);
+
+    // Bail early if there are no matching items.
+    if (items.length === 0) {
+      return null;
+    }
+
+    // Create the select items for the matching collection items.
+    const bcItems = items.map(item =>
+      <Select.Item item={ item } key={ item.id } paddingLeft='1rem'>
+        { item.name }
       </Select.Item>
-    ));
+    );
 
     // Return the rendered component.
     return (
-      <Breadcrumb.Item>
-        <Select.Root
-          collection={ collection }
-          size='sm'
-          width='160px'
-          value={ value ? [value] : undefined }
-          onValueChange={ e => { setValue(e.value[0] as T) } }>
-          <Select.HiddenSelect />
-          <VisuallyHidden>
-            <Select.Label>{ `Select ${labelSuffix}` }</Select.Label>
-          </VisuallyHidden>
-          <Select.Control>
-            <Select.Trigger minH='0' border='none' cursor='pointer'>
-              <Select.ValueText placeholder={`Select ${labelSuffix}`} />
-            </Select.Trigger>
-            <Select.IndicatorGroup>
-              <ChevronsUpDown size={16} />
-            </Select.IndicatorGroup>
-          </Select.Control>
-          <Portal>
-            <Select.Positioner>
-              <Select.Content>
-                { items }
-              </Select.Content>
-            </Select.Positioner>
-          </Portal>
-        </Select.Root>
-      </Breadcrumb.Item>
+      <Select.ItemGroup>
+        <Select.ItemGroupLabel
+          borderBottom='1px solid var(--color-bd-neutral-default)'>
+          { label }
+        </Select.ItemGroupLabel>
+        { bcItems }
+      </Select.ItemGroup>
     );
   }
 }
