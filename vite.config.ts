@@ -22,7 +22,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/agents': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:7777',
         changeOrigin: true
       },
       '/agno_sessions': {
@@ -40,7 +40,7 @@ export default defineConfig({
         changeOrigin: true
       },
       '/agno_memory': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:7777',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/agno_memory/, '/memories'),
       },
