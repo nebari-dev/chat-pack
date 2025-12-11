@@ -42,7 +42,7 @@ export function MetricsRadialChart({
   const values = series.map((s, index) => {
     const value = Number(data[s.key]) || 0;
     // At the moment the color is set to option 3 just so all the charts are more colorfull
-    // Replace the ince to + 1 if more than 3  options are expected
+    // Replace the index to + 1 if more than 3 options are expected
     const color = `var(--chart-${index + 3})`;
     return { ...s, value, color };
   });
@@ -118,24 +118,6 @@ export function MetricsRadialChart({
                   className="stroke-transparent stroke-2"
                 />
               ))}
-
-              {values.map((v) => (
-                <div
-                  key={v.key}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-block h-2 w-2 rounded-full"
-                      style={{ backgroundColor: v.color }}
-                    />
-                    <span>{v.label}</span>
-                  </div>
-                  <span className="font-medium">
-                    {v.value > 0 ? v.value.toLocaleString() : "-"}
-                  </span>
-                </div>
-              ))}
               </RadialBarChart>
           </ChartContainer>
         ) : (
@@ -147,10 +129,7 @@ export function MetricsRadialChart({
 
       <CardFooter className="flex flex-col gap-1 text-xs">
         {values.map((v) => (
-          <div
-            key={v.key}
-            className="flex items-center justify-between"
-          >
+          <div key={v.key} className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
                 className="inline-block h-2 w-2 rounded-full"
@@ -158,6 +137,9 @@ export function MetricsRadialChart({
               />
               <span>{v.label}</span>
             </div>
+            <span className="font-medium">
+              {v.value > 0 ? v.value.toLocaleString() : "-"}
+            </span>
           </div>
         ))}
       </CardFooter>

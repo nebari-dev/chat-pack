@@ -223,7 +223,7 @@ export function Metrics(): ReactNode {
 
   return (
     <main className="w-full p-5">
-      <div className="w-full h-full max-w-6x1 mx-auto">
+      <div className="h-screen w-full">
         <MonthSelector
           label={monthLabel}
           canGoPrev={canGoPrev}
@@ -232,7 +232,14 @@ export function Metrics(): ReactNode {
           onNext={() => changeMonth(1)}
         />
 
-        <div className="grid h-full grid-cols-3 grid-rows-3 gap-4 pb-10">
+        <div className="grid h-full
+          grid-cols-1
+          lg:grid-cols-2
+          xl:grid-cols-3
+          xl:grid-rows-3
+          gap-2 pb-20
+          overflow-y-auto"
+        >
           {/* 1. Total tokens */}
           <MetricsBarChart
             title="Total tokens"
