@@ -78,5 +78,7 @@ async function getMetrics(): Promise<MetricsResponse> {
     throw new Error(`Response: ${res.status} ${res.statusText}`);
   }
 
-  return res.json() as Promise<MetricsResponse>;
+  const json = await res.json();
+
+  return v.parse(metricsResponseSchema, json);
 }
