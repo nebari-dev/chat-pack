@@ -6,7 +6,7 @@ import type {
 } from '@assistant-ui/react';
 
 import type {
-  MutationFunctionContext, QueryClient, QueryFunctionContext
+  MutationFunctionContext, QueryFunctionContext
 } from '@tanstack/react-query';
 
 import {
@@ -187,15 +187,30 @@ namespace Private {
     }
 
     // Bail early if no agent is defined.
-    if (!config.agentId) {
+    if (!config.id) {
       throw new Error('missing agent id');
     }
 
     // Extract the query client.
     const client = context.client;
 
-    // Create a new session if needed.
-    const sessionId = await maybeCreateSession(config, client);
+    // Extract the session id.
+    let sessionId = config.sessionId;
+
+    // Create a new session, if needed.
+    if (sessionId === undefined) {
+      // Create a new session on the server.
+      const resp = await api.createSession();
+
+      // Extract the session id from the response.
+      sessionId = resp.session_id;
+
+      // Initialize the query cache for the new session.
+      client.setQueryData(createQueryKey(sessionId), []);
+    }
+
+    // Ensure the chat config is synchronized with the session.
+    config.update({ type: config.type, id: config.id, sessionId });
 
     // Create the query key for the run.
     const queryKey = createQueryKey(sessionId);
@@ -215,7 +230,7 @@ namespace Private {
     // Set up the event stream for the Agno API.
     const stream = api.createAgentRun({
       session_id: sessionId,
-      agent_id: config.agentId,
+      agent_id: config.id,
       message: part.text
     });
 
@@ -310,39 +325,6 @@ namespace Private {
    */
   function createTextPart(content: string): TextMessagePart {
     return { type: 'text', text: content };
-  }
-
-  /**
-   * Create new session if one is not defined on the chat config.
-   *
-   * @param config - The current chat config.
-   *
-   * @param client - The query client.
-   *
-   * @returns The pre-existing or newly-created session id.
-   */
-  async function maybeCreateSession(
-    config: ChatConfig, client: QueryClient
-  ): Promise<string> {
-    // If the session id already exists, return that id.
-    if (config.sessionId !== undefined) {
-      return config.sessionId;
-    }
-
-    // Create a new session on the server.
-    const resp = await api.createSession();
-
-    // Extract the session id from the response.
-    const sessionId = resp.session_id;
-
-    // Initialize the query cache for the new session.
-    client.setQueryData(createQueryKey(sessionId), []);
-
-    // Update the config with the new session id.
-    config.setSessionId(sessionId);
-
-    // Return the new session id.
-    return sessionId;
   }
 
   /**

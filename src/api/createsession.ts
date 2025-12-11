@@ -27,7 +27,7 @@ type CreateSessionResponse = v.InferOutput<typeof createSessionResponseSchema>;
 export
 async function createSession(): Promise<CreateSessionResponse> {
   // Fetch the resource.
-  const resp = await fetch('/sessions', { method: 'POST' });
+  const resp = await fetch('/agno_sessions', { method: 'POST' });
 
   // Guard against request failure.
   if (!resp.ok) {
