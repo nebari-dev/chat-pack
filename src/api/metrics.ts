@@ -102,7 +102,7 @@ type MetricsRow = v.InferOutput<typeof metricsRowSchema>;
  */
 export const metricsResponseSchema = v.object({
   metrics: v.array(metricsRowSchema),
-  updated_at: v.string(),
+  updated_at: v.nullable(v.string()),
 });
 
 
@@ -117,9 +117,21 @@ type MetricsResponse = v.InferOutput<typeof metricsResponseSchema>;
  *
  */
 export
-async function getMetrics(): Promise<MetricsResponse> {
+async function getMetrics(options: getMetrics.Options): Promise<MetricsResponse> {
+  //
+  const { starting_date, ending_date } = options;
+
+  const params = new URLSearchParams();
+
+  if (starting_date) {
+    params.append('starting_date', starting_date);
+  }
+  if (ending_date) {
+    params.append('ending_date', ending_date);
+  }
+
   // Fetch the resource.
-  const resp = await fetch('/agno_metrics');
+  const resp = await fetch(`/agno_metrics?${params}`);
 
   // Guard against fetch failure.
   if (!resp.ok) {
@@ -131,4 +143,27 @@ async function getMetrics(): Promise<MetricsResponse> {
 
   // Return the parsed result.
   return v.parse(metricsResponseSchema, json);
+}
+
+
+/**
+ *
+ */
+export
+namespace getMetrics {
+  /**
+   *
+   */
+  export
+  type Options = {
+    /**
+     *
+     */
+    readonly starting_date?: string;
+
+    /**
+     *
+     */
+    readonly ending_date?: string;
+  };
 }

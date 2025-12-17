@@ -5,6 +5,8 @@ import {
   createContext, useContext
 } from 'react';
 
+import * as api from '@/api';
+
 
 /**
  * A type alias for the `MetricsConfig.update()` options.
@@ -31,12 +33,17 @@ type MetricsConfig = {
   /**
    * The month for the queried metrics.
    */
-  readonly month: number | undefined;
+  readonly month: number;
 
   /**
    * The year for the queried metrics.
    */
-  readonly year: number | undefined;
+  readonly year: number;
+
+  /**
+   * The loaded metrics data for the month/year range.
+   */
+  readonly data: api.MetricsResponse;
 
   /**
    * A callback to set the type of the chat.
