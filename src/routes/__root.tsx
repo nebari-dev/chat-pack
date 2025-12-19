@@ -5,10 +5,6 @@ import {
   Outlet, createRootRouteWithContext
 } from '@tanstack/react-router';
 
-import {
-  TanStackRouterDevtools
-} from '@tanstack/react-router-devtools';
-
 import type {
   QueryClient
 } from '@tanstack/react-query';
@@ -32,7 +28,7 @@ import {
  * The root route context.
  */
 type RouteContext = {
-  queryClient: QueryClient;
+  client: QueryClient;
 };
 
 
@@ -47,20 +43,14 @@ const configQuery = {
 
 
 /**
- * The loader function for the config query.
- */
-function loadConfig(client: QueryClient): Promise<api.Config> {
-  return client.ensureQueryData(configQuery);
-}
-
-
-/**
  * The root route.
  */
 export
 const Route = createRootRouteWithContext<RouteContext>()({
-  loader: ({ context }) => loadConfig(context.queryClient),
-  component: RouteComponent
+  component: RouteComponent,
+  loader: ({ context }) => {
+    return context.client.ensureQueryData(configQuery);
+  }
 });
 
 
@@ -76,7 +66,6 @@ function RouteComponent(): ReactNode {
     <ConfigProvider value={ config }>
       <Sidebar />
       <Outlet />
-      <TanStackRouterDevtools position="bottom-right" />
     </ConfigProvider>
   );
 }

@@ -29,7 +29,7 @@ import './main.css';
 
 
 // Create the main query client.
-const queryClient = new QueryClient();
+const client = new QueryClient();
 
 
 // Create the main router object.
@@ -37,7 +37,7 @@ const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
-  context: { queryClient }
+  context: { client }
 });
 
 
@@ -57,7 +57,7 @@ const system = createSystem(defaultConfig, { preflight: false });
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ChakraProvider value={ system }>
-      <QueryClientProvider client={ queryClient }>
+      <QueryClientProvider client={ client }>
         <RouterProvider router={ router } />
       </QueryClientProvider>
     </ChakraProvider>

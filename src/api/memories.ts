@@ -50,7 +50,7 @@ async function getMemories(): Promise<MemoriesResponse> {
     throw new Error(`Response: ${res.status} ${res.statusText}`);
   }
 
-  const json = res.json();
+  const json = await res.json();
 
   return v.parse(MemoriesResponseSchema, json);
 }
