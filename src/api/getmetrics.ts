@@ -5,30 +5,6 @@ import * as v from 'valibot';
 
 
 /**
- * A schema for Agno metrics.
- *
- * TODO rename or move this for message metrics.
- */
-export
-const metricsSchema = v.object({
-  duration: v.number(),
-  input_tokens: v.number(),
-  output_tokens: v.number(),
-  time_to_first_token: v.number(),
-  total_tokens: v.number()
-});
-
-
-/**
- * A type alias for Agno metrics.
- *
- * TODO rename or move this for message metrics.
- */
-export
-type Metrics = v.InferOutput<typeof metricsSchema>;
-
-
-/**
  * A schema for Agno token metrics.
  */
 export
@@ -71,8 +47,9 @@ type ModelMetrics = v.InferOutput<typeof modelMetricSchema>;
 
 
 /**
- * A schema for Agno ...
+ * A schema for an Agno metrics row.
  */
+export
 const metricsRowSchema = v.object({
   id: v.string(),
   agent_runs_count: v.number(),
@@ -91,38 +68,45 @@ const metricsRowSchema = v.object({
 
 
 /**
- * A type alias for Agno ...
+ * A type alias an Agno metrics row.
  */
 export
 type MetricsRow = v.InferOutput<typeof metricsRowSchema>;
 
 
 /**
- *
+ * A schema for Agno metrics.
  */
-export const metricsResponseSchema = v.object({
+export
+const metricsSchema = v.object({
   metrics: v.array(metricsRowSchema),
   updated_at: v.nullable(v.string()),
 });
 
 
 /**
- *
+ * A type alias for Agno metrics.
  */
 export
-type MetricsResponse = v.InferOutput<typeof metricsResponseSchema>;
+type Metrics = v.InferOutput<typeof metricsSchema>;
 
 
 /**
+ * A function which fetches the agno metrics.
  *
+ * @param options - The options for the api request.
+ *
+ * @returns A promise that resolves with the metrics request.
  */
 export
-async function getMetrics(options: getMetrics.Options): Promise<MetricsResponse> {
-  //
+async function getMetrics(options: getMetrics.Options): Promise<Metrics> {
+  // Unpack the options.
   const { starting_date, ending_date } = options;
 
+  // Create the search params for the request.
   const params = new URLSearchParams();
 
+  // Add the requested date range to the search params.
   if (starting_date) {
     params.append('starting_date', starting_date);
   }
@@ -142,27 +126,27 @@ async function getMetrics(options: getMetrics.Options): Promise<MetricsResponse>
   const json = await resp.json();
 
   // Return the parsed result.
-  return v.parse(metricsResponseSchema, json);
+  return v.parse(metricsSchema, json);
 }
 
 
 /**
- *
+ * The namespace for the `getMetrics` statics.
  */
 export
 namespace getMetrics {
   /**
-   *
+   * A type alias for the options to `getMetrics`.
    */
   export
   type Options = {
     /**
-     *
+     * The starting date in `YYYY-MM-DD` UTC format.
      */
     readonly starting_date?: string;
 
     /**
-     *
+     * The ending date in `YYYY-MM-DD` UTC format.
      */
     readonly ending_date?: string;
   };

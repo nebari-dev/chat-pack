@@ -4,23 +4,39 @@
 import * as v from 'valibot';
 
 import {
-  metricsSchema
-} from './metrics';
-
-import {
   toolCallSchema
 } from './tools';
+
+
+/**
+ * A schema for Agno session run metrics.
+ */
+export
+const sessionRunMetricsSchema = v.object({
+  duration: v.number(),
+  input_tokens: v.number(),
+  output_tokens: v.number(),
+  time_to_first_token: v.number(),
+  total_tokens: v.number()
+});
+
+
+/**
+ * A type alias for Agno run metrics.
+ */
+export
+type SessionRunMetrics = v.InferOutput<typeof sessionRunMetricsSchema>;
 
 
 /**
  * A schema for an Agno session run.
  */
 export
-const runSchema = v.object({
+const sessionRunSchema = v.object({
   agent_id: v.string(),
   content: v.string(),
   created_at: v.string(),
-  metrics: metricsSchema,
+  metrics: sessionRunMetricsSchema,
   run_id: v.string(),
   run_input: v.string(),
   tools: v.nullish(v.array(toolCallSchema)),
@@ -32,7 +48,7 @@ const runSchema = v.object({
  * A type alias for an Agno session run.
  */
 export
-type Run = v.InferOutput<typeof runSchema>;
+type SessionRun = v.InferOutput<typeof sessionRunSchema>;
 
 
 /**
@@ -43,7 +59,7 @@ type Run = v.InferOutput<typeof runSchema>;
  * @returns A promise that resolves with the session runs.
  */
 export
-async function getSessionRuns(session_id: string): Promise<Run[]> {
+async function getSessionRuns(session_id: string): Promise<SessionRun[]> {
   // Make the fetch request.
   const resp = await fetch(`/agno_sessions/${session_id}/runs`);
 
@@ -56,5 +72,5 @@ async function getSessionRuns(session_id: string): Promise<Run[]> {
   const json = await resp.json();
 
   // Parse the results.
-  return v.parse(v.array(runSchema), json);
+  return v.parse(v.array(sessionRunSchema), json);
 }

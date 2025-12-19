@@ -53,7 +53,7 @@ type MetricsConfig = {
   /**
    * The loaded metrics data for the year/month.
    */
-  readonly data: api.MetricsResponse;
+  readonly data: api.Metrics;
 
   /**
    * A callback to update the config.

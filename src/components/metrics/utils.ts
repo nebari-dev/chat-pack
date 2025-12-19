@@ -42,7 +42,7 @@ function createDayRange(year: number, month: number): number[] {
  */
 export
 function collectMetricsByDay<T extends keyof api.MetricsRow>(
-  data: api.MetricsResponse, key: T
+  data: api.Metrics, key: T
 ): Map<number, api.MetricsRow[T]> {
   // Create the map to hold the results
   const map = new Map<number, api.MetricsRow[T]>();

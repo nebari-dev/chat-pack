@@ -93,7 +93,7 @@ namespace Private {
    * @returns A mapping of day to workflow runs in the range.
    */
   export
-  function collectModelRuns(data: api.MetricsResponse): Datum[] {
+  function collectModelRuns(data: api.Metrics): Datum[] {
     // Create the map to aggregate the model counts.
     const map = new Map<string, number>();
 

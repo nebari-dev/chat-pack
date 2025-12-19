@@ -8,10 +8,6 @@ import {
 } from '@/lib/sse';
 
 import {
-  metricsSchema
-} from './metrics';
-
-import {
   toolCallSchema
 } from './tools';
 
@@ -86,6 +82,26 @@ type RunContentCompletedEvent = v.InferOutput<typeof runContentCompletedEventSch
 
 
 /**
+ * A schema for Agno run metrics.
+ */
+export
+const runMetricsSchema = v.object({
+  duration: v.number(),
+  input_tokens: v.number(),
+  output_tokens: v.number(),
+  time_to_first_token: v.number(),
+  total_tokens: v.number()
+});
+
+
+/**
+ * A type alias for Agno run metrics.
+ */
+export
+type RunMetrics = v.InferOutput<typeof runMetricsSchema>;
+
+
+/**
  * A schema for the Agno `RunCompleted` event.
  */
 export
@@ -96,7 +112,7 @@ const runCompletedEventSchema = v.object({
   content: v.string(),
   content_type: v.string(),
   created_at: v.number(),
-  metrics: metricsSchema,
+  metrics: runMetricsSchema,
   run_id: v.string(),
   session_id: v.string()
 });
