@@ -1,3 +1,6 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2025-present, OpenTeams Inc.
+|----------------------------------------------------------------------------*/
 import type {
   ReactNode
 } from 'react';
@@ -11,8 +14,10 @@ import {
 } from './agentconfigprovider'
 
 export function ConfigDetails(): ReactNode {
+  // Fetch config
   const data = useDetailConfig();
 
+  // Return rendered component
   return (
     <main className="w-full">
       <h2 className="m-5 text-xl font-bold">{data.name}</h2>

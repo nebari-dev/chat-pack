@@ -1,4 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router';
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2025-present, OpenTeams Inc.
+|----------------------------------------------------------------------------*/
+import {
+  createFileRoute
+} from '@tanstack/react-router';
+
 import type {
   QueryClient
 } from '@tanstack/react-query';
@@ -11,6 +17,9 @@ import {
 import * as v from 'valibot';
 import * as api from '@/api';
 
+/**
+ * The schema for the config page parameters
+ */
 const baseSchema = v.object({
   type: v.union([
     v.literal("agents"),
@@ -20,6 +29,9 @@ const baseSchema = v.object({
   id: v.string(),
 });
 
+/**
+ * Config query definition
+ */
 const configQuery = (type: string, id: string) =>
   ({
     queryKey: ["config", type, id],
@@ -34,6 +46,9 @@ function loadConfig(client: QueryClient, type: string, id: string) {
   return client.ensureQueryData(configQuery(type, id));
 }
 
+/**
+ * The route for the `/config` endpoint.
+ */
 export
 const Route = createFileRoute('/config')({
   validateSearch: baseSchema,
@@ -42,9 +57,14 @@ const Route = createFileRoute('/config')({
   component: RouteComponent,
 });
 
+/**
+ * The component that renders the `/config` route.
+ */
 function RouteComponent() {
+  // Fetch config from the __root
   const config = Route.useLoaderData();
 
+  // Return the rendered component.
   return (
     <ConfigContext value={ config }>
       <ConfigDetails/>
