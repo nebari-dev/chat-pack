@@ -24,19 +24,14 @@ import {
 export
 function MonthSelector(): ReactNode {
   // Fetch the metrics config.
-  const { year, month, update } = useMetricsConfig();
+  const { year, month, atStart, atEnd, update } = useMetricsConfig();
 
-  // Get todays date.
-  const today = new Date();
+  // Get the date for the selection.
+  const selectedTimestamp = Date.UTC(year, month - 1);
+  const selectedDate = new Date(selectedTimestamp);
 
-  // Get the date for the beginning of the current month.
-  const currentMonth = new Date(today.getFullYear(), today.getMonth());
-
-  // Get the date for the beginning of the selected month.
-  //
-  // Note: `Date` objects use 0-based month indexing, the `MetricsConfig`
-  // uses 1-based month indexing.
-  const selectedMonth = new Date(year, month - 1);
+  // Format the label for the selected date.
+  const label = Private.monthFormatter.format(selectedDate);
 
   // Create the callback to navigate to the previous month.
   const handlePrev = () => {
@@ -54,22 +49,16 @@ function MonthSelector(): ReactNode {
     });
   };
 
-  // Format the label for the selected month.
-  const label = Private.monthFormatter.format(selectedMonth);
-
-  // Determine whether the next button should be disabled.
-  const nextDisabled = selectedMonth >= currentMonth;
-
   // Return the rendered component.
   return (
     <div className='flex items-center gap-2'>
-      <Private.Button onClick={ handlePrev }>
+      <Private.Button disabled={ atStart } onClick={ handlePrev }>
         <ChevronLeft />
       </Private.Button>
       <span className='min-w-24 text-center text-sm font-medium'>
         { label }
       </span>
-      <Private.Button disabled={ nextDisabled } onClick={ handleNext }>
+      <Private.Button disabled={ atEnd } onClick={ handleNext }>
         <ChevronRight />
       </Private.Button>
     </div>
@@ -89,7 +78,8 @@ namespace Private {
   export
   const monthFormatter = new Intl.DateTimeFormat(undefined, {
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: 'UTC'
   });
 
   /**

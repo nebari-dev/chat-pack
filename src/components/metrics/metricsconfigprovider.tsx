@@ -41,12 +41,22 @@ type MetricsConfig = {
   readonly year: number;
 
   /**
-   * The loaded metrics data for the month/year range.
+   * Whether the current year/month is the first available.
+   */
+  readonly atStart: boolean;
+
+  /**
+   * Whether the current year/month is the last available.
+   */
+  readonly atEnd: boolean;
+
+  /**
+   * The loaded metrics data for the year/month.
    */
   readonly data: api.MetricsResponse;
 
   /**
-   * A callback to set the type of the chat.
+   * A callback to update the config.
    */
   readonly update: (options: MetricsConfigUpdateOptions) => void;
 };

@@ -23,32 +23,46 @@ import {
 
 
 /**
- * Fetch the current date.
- */
-const today = new Date();
-
-
-/**
- * Fetch the current month using 1-based indexing.
- */
-const currentMonth = today.getMonth() + 1;
-
-
-/**
- * Fetch the current year.
- */
-const currentYear = today.getFullYear();
-
-
-/**
  * The schema for the route search params.
- *
- * TODO - handle min/max year/month clamping.
  */
 const routeSearchSchema = v.object({
-  month: v.fallback(v.number(), currentMonth),
-  year: v.fallback(v.number(), currentYear),
+  month: v.fallback(v.optional(v.number()), undefined),
+  year: v.fallback(v.optional(v.number()), undefined),
 });
+
+
+/**
+ * A function which validates the route search parameters.
+ */
+function validateSearch(search: Record<string, unknown>) {
+  // Parse the initial search parameters.
+  const { year, month } = v.parse(routeSearchSchema, search);
+
+  // Fetch the epoch date.
+  const epoch = new Date(0);
+
+  // Fetch the current date.
+  const today = new Date();
+
+  // Compute the effective selected date.
+  const selectedYear = year ?? today.getUTCFullYear();
+  const selectedMonth = month ?? today.getUTCMonth() + 1;
+  const selectedTimestamp = Date.UTC(selectedYear, selectedMonth - 1);
+  const selected = new Date(selectedTimestamp);
+
+  // Calculate the chosen date via max(epoch, min(selected, today))
+  const chosen = (
+    selected < epoch ? epoch :
+      selected > today ? today :
+        selected
+  );
+
+  // Return the fully processed search params.
+  return {
+    year: chosen.getUTCFullYear(),
+    month: chosen.getUTCMonth() + 1
+  };
+}
 
 
 /**
@@ -57,7 +71,7 @@ const routeSearchSchema = v.object({
 export
 const Route = createFileRoute('/metrics')({
   component: RouteComponent,
-  validateSearch: routeSearchSchema,
+  validateSearch: validateSearch,
   loaderDeps: ({ search }) => search,
   loader: ({ deps, context }) => {
     // Extract the query client from the context.
@@ -66,9 +80,13 @@ const Route = createFileRoute('/metrics')({
     // Unpack the deps.
     const { year, month } = deps;
 
-    // Compute the first and last days in the given month.
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
+    // Compute the UTC timestamps for the first and last days.
+    const firstDayTimestamp = Date.UTC(year, month - 1, 1);
+    const lastDayTimestamp = Date.UTC(year, month, 0);
+
+    // Convert the UTC timestamps to date objects.
+    const firstDay = new Date(firstDayTimestamp);
+    const lastDay = new Date(lastDayTimestamp);
 
     // Create the function to load the metrics for the date range.
     const loadMetrics = () => {
@@ -107,17 +125,35 @@ function RouteComponent() {
   // Fetch the navigator.
   const navigate = Route.useNavigate();
 
+  // Fetch the epoch date.
+  const epoch = new Date(0);
+
+  // Fetch the current date.
+  const today = new Date();
+
+  // Determine whether the selected month is the first available.
+  const atStart = (
+    year === epoch.getUTCFullYear() && (month - 1) === epoch.getUTCMonth()
+  );
+
+  // Determine whether the selected month is the last available.
+  const atEnd = (
+    year === today.getUTCFullYear() && (month - 1) === today.getUTCMonth()
+  );
+
   // Create the callback for updating the config.
   const update = useCallback((options: MetricsConfigUpdateOptions) => {
     navigate({ search: { ...options } });
   }, []);
 
-  // Create the metrics context.
-  const context: MetricsConfig = { month, year, data, update };
+  // Create the metrics config.
+  const config: MetricsConfig = {
+    month, year, atStart, atEnd, data, update
+  };
 
   // Return the rendered component.
   return (
-    <MetricsConfigProvider value={ context }>
+    <MetricsConfigProvider value={ config }>
       <Metrics />
     </MetricsConfigProvider>
   );
