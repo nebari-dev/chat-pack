@@ -45,8 +45,8 @@ function Launcher(props: Launcher.Props): ReactNode {
         collapsed={!isSidebarOpen}
         icon={<Database className='m-auto' size={20} />} />
       <LauncherLink
-        to='/memory'
-        text='Memory'
+        to='/memories'
+        text='Memories'
         collapsed={!isSidebarOpen}
         icon={<MemoryStick className='m-auto' size={20} />} />
       <LauncherLink

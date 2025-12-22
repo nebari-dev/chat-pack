@@ -122,7 +122,7 @@ async function getMetrics(options: getMetrics.Options): Promise<Metrics> {
     throw new Error(`Response: ${resp.status} ${resp.statusText}`);
   }
 
-  // Convert the respon to JSON.
+  // Convert the response to JSON.
   const json = await resp.json();
 
   // Return the parsed result.
