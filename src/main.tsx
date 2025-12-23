@@ -1,12 +1,12 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import type {
-  ReactNode
-} from 'react';
+import {
+  ChakraProvider, createSystem, defaultConfig
+} from '@chakra-ui/react';
 
 import {
-  StrictMode, useEffect
+  StrictMode
 } from 'react';
 
 import {
@@ -14,96 +14,52 @@ import {
 } from 'react-dom/client';
 
 import {
-  ContentArea
-} from './components/content';
+  RouterProvider, createRouter
+} from '@tanstack/react-router';
 
 import {
-  SideBar
-} from './components/sidebar';
-
-// import {
-//   LoginForm
-// } from './components/loginform';
+  QueryClient, QueryClientProvider
+} from '@tanstack/react-query';
 
 import {
-  useAppStore
-} from './store';
+  routeTree
+} from './routeTree.gen';
 
-// import {
-//   authEnabled
-// } from './authConfig';
-
-// import pb from './pocketbase';
-
-import './index.css';
+import './main.css';
 
 
-/**
- * A mockup chat app UI with optional authentication.
- */
-function App(): ReactNode {
-  // Fetch the store initialization function.
-  const initialize = useAppStore(store => store.initialize);
-  // const [user, setUser] = useState(authEnabled ? pb.authStore.record : { email: 'dev@example.com' });
-
-  // Hit the server oauth callback then initialize the store.
-  //
-  // TODO handle loading screen in the future.
-  useEffect(() => {
-    // if (authEnabled) {
-    //   // Listen for auth changes when auth is enabled
-    //   const unsubscribe = pb.authStore.onChange(() => {
-    //     setUser(pb.authStore.record);
-    //   });
-
-    //   // Initialize with auth flow
-    //   (async () => {
-    //     await fetch("/auth/oauth-callback", { credentials: "include" });
-    //     await initialize();
-    //   })();
-
-    //   return unsubscribe;
-    // } else {
-    //   // Initialize without auth flow in development
-    //   (async () => {
-    //     await initialize();
-    //   })();
-    // }
-    (async () => {
-      await fetch("/auth/oauth-callback", { credentials: "include" });
-      await initialize();
-    })();
-  }, [initialize]);
-
-  // // Show login form if auth is enabled and user is not authenticated
-  // if (authEnabled && !user) {
-  //   return (
-  //     <>
-  //       <SideBar />
-  //       <ContentArea />
-  //       <LoginForm />
-  //     </>
-  //   );
-  // }
+// Create the main query client.
+const client = new QueryClient();
 
 
-  // Return the rendered app.
-  return (
-    <>
-      <SideBar />
-      <ContentArea />
-    </>
-  );
+// Create the main router object.
+const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  defaultPreloadStaleTime: 0,
+  context: { client }
+});
+
+
+// Register the router for type safety.
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
 }
 
 
-// Bootstrap the simple example app.
-//
-// Note that examples are run in "strict mode" which will cause additional,
-// but unnecessary re-renders in order to catch bugs. Production versions
-// of an application will run *faster* than the example.
+// Create a default Chakra system. TODO - define our own for styling.
+const system = createSystem(defaultConfig, { preflight: false });
+
+
+// Render the app into the root element.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ChakraProvider value={ system }>
+      <QueryClientProvider client={ client }>
+        <RouterProvider router={ router } />
+      </QueryClientProvider>
+    </ChakraProvider>
   </StrictMode>
 );

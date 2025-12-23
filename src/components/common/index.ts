@@ -1,5 +1,4 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-export * from './chat';
-export * from './chatconfigprovider';
+export * from './configprovider';
