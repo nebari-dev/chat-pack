@@ -16,12 +16,12 @@ import type {
 import * as api from '@/api';
 
 import {
-  Sidebar
-} from '@/components/sidebar';
-
-import {
   ConfigProvider
 } from '@/config';
+
+import {
+  Sidebar
+} from '@/sidebar';
 
 
 /**
