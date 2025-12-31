@@ -34,6 +34,7 @@ function Teams(): ReactNode {
   // Create the cards for the teams.
   const cards = config.teams.map(team =>
     <LinkCard
+      key={ team.id }
       to={ `/chat?type=team&id=${team.id}` }
       title={ `${team.name}` }
       description={ `Create a new chat with the ${team.name} team` }

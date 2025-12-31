@@ -34,6 +34,7 @@ function Workflows(): ReactNode {
   // Create the cards for the workflows.
   const cards = config.workflows.map(workflow =>
     <LinkCard
+      key={ workflow.id }
       to={ `/chat?type=workflow&id=${workflow.id}` }
       title={ `${workflow.name}` }
       description={ `Create a new chat with the ${workflow.name} workflow` }

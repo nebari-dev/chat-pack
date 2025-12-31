@@ -34,6 +34,7 @@ function Agents(): ReactNode {
   // Create the cards for the agents.
   const cards = config.agents.map(agent =>
     <LinkCard
+      key={ agent.id }
       to={ `/chat?type=agent&id=${agent.id}` }
       title={ `${agent.name}` }
       description={ `Create a new chat with the ${agent.name} agent` }
