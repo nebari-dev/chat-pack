@@ -73,7 +73,7 @@ const Route = createFileRoute('/metrics')({
   component: RouteComponent,
   validateSearch: validateSearch,
   loaderDeps: ({ search }) => search,
-  loader: ({ deps, context }) => {
+  loader: ({ context, deps }) => {
     // Extract the query client from the context.
     const { client } = context;
 
