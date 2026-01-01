@@ -128,7 +128,7 @@ namespace Private {
     // Return the rendered component.
     return (
       <Link
-        to={to}
+        to={ to }
         activeProps={ activeProps }
         inactiveProps={ inactiveProps }
         className={ cn(
