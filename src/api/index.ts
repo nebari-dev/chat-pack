@@ -7,7 +7,7 @@ export * from './deletesessions';
 export * from './getconfig';
 export * from './getmemories';
 export * from './getmetrics';
-export * from './getsessions';
+export * from './getsession';
 export * from './getsessionruns';
 export * from './listsessions';
 export * from './tools';
