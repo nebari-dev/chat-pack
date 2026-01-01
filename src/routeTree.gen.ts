@@ -9,18 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root';
-import { Route as SessionsRouteImport } from './routes/sessions';
 import { Route as MetricsRouteImport } from './routes/metrics';
 import { Route as MemoriesRouteImport } from './routes/memories';
 import { Route as KnowledgeRouteImport } from './routes/knowledge';
 import { Route as ChatRouteImport } from './routes/chat';
 import { Route as IndexRouteImport } from './routes/index';
+import { Route as SessionsChar123SessionIdChar125RouteImport } from './routes/sessions.{-$sessionId}';
 
-const SessionsRoute = SessionsRouteImport.update({
-  id: '/sessions',
-  path: '/sessions',
-  getParentRoute: () => rootRouteImport,
-} as any);
 const MetricsRoute = MetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
@@ -46,6 +41,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any);
+const SessionsChar123SessionIdChar125Route =
+  SessionsChar123SessionIdChar125RouteImport.update({
+    id: '/sessions/{-$sessionId}',
+    path: '/sessions/{-$sessionId}',
+    getParentRoute: () => rootRouteImport,
+  } as any);
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute;
@@ -53,7 +54,7 @@ export interface FileRoutesByFullPath {
   '/knowledge': typeof KnowledgeRoute;
   '/memories': typeof MemoriesRoute;
   '/metrics': typeof MetricsRoute;
-  '/sessions': typeof SessionsRoute;
+  '/sessions/{-$sessionId}': typeof SessionsChar123SessionIdChar125Route;
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute;
@@ -61,7 +62,7 @@ export interface FileRoutesByTo {
   '/knowledge': typeof KnowledgeRoute;
   '/memories': typeof MemoriesRoute;
   '/metrics': typeof MetricsRoute;
-  '/sessions': typeof SessionsRoute;
+  '/sessions/{-$sessionId}': typeof SessionsChar123SessionIdChar125Route;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -70,7 +71,7 @@ export interface FileRoutesById {
   '/knowledge': typeof KnowledgeRoute;
   '/memories': typeof MemoriesRoute;
   '/metrics': typeof MetricsRoute;
-  '/sessions': typeof SessionsRoute;
+  '/sessions/{-$sessionId}': typeof SessionsChar123SessionIdChar125Route;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
@@ -80,9 +81,15 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/memories'
     | '/metrics'
-    | '/sessions';
+    | '/sessions/{-$sessionId}';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/' | '/chat' | '/knowledge' | '/memories' | '/metrics' | '/sessions';
+  to:
+    | '/'
+    | '/chat'
+    | '/knowledge'
+    | '/memories'
+    | '/metrics'
+    | '/sessions/{-$sessionId}';
   id:
     | '__root__'
     | '/'
@@ -90,7 +97,7 @@ export interface FileRouteTypes {
     | '/knowledge'
     | '/memories'
     | '/metrics'
-    | '/sessions';
+    | '/sessions/{-$sessionId}';
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
@@ -99,18 +106,11 @@ export interface RootRouteChildren {
   KnowledgeRoute: typeof KnowledgeRoute;
   MemoriesRoute: typeof MemoriesRoute;
   MetricsRoute: typeof MetricsRoute;
-  SessionsRoute: typeof SessionsRoute;
+  SessionsChar123SessionIdChar125Route: typeof SessionsChar123SessionIdChar125Route;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sessions': {
-      id: '/sessions';
-      path: '/sessions';
-      fullPath: '/sessions';
-      preLoaderRoute: typeof SessionsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
     '/metrics': {
       id: '/metrics';
       path: '/metrics';
@@ -146,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    '/sessions/{-$sessionId}': {
+      id: '/sessions/{-$sessionId}';
+      path: '/sessions/{-$sessionId}';
+      fullPath: '/sessions/{-$sessionId}';
+      preLoaderRoute: typeof SessionsChar123SessionIdChar125RouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
@@ -155,7 +162,7 @@ const rootRouteChildren: RootRouteChildren = {
   KnowledgeRoute: KnowledgeRoute,
   MemoriesRoute: MemoriesRoute,
   MetricsRoute: MetricsRoute,
-  SessionsRoute: SessionsRoute,
+  SessionsChar123SessionIdChar125Route: SessionsChar123SessionIdChar125Route,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
