@@ -1,0 +1,71 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      # VITE_API_URL is not directly used by proxy, but if direct calls are made, this would be it.
+      # The proxy in vite.config.ts will need to be updated to target 'http://backend:8000'
+      - VITE_BACKEND_HOST=backend
+      - VITE_BACKEND_PORT=8000
+    networks:
+      - app-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "7777:8000" # Map host 7777 to container 8000 for Agno OS
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - CALENDAR_MCP_URL=http://calendar-mcp:5555 # For backend to talk to calendar-mcp service
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    ports:
+      - "5432:5432" # Expose for local debugging if needed
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data # Persistent data
+    networks:
+      - app-network
+
+  # calendar-mcp: # TODO: re-enable after troubleshooting
+  #   image: oven/bun:1.1.17-alpine # TODO: Specify a version for consistency
+  #   working_dir: /app
+  #   volumes:
+  #     - ./services/google-calendar-mcp:/app
+  #   command: bun run dev
+  #   ports:
+  #     - "5555:5555"
+  #   environment:
+  #     - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+  #     - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+  #     - GOOGLE_REDIRECT_URI=http://localhost:5555/auth/callback # Use localhost for initial OAuth flow
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db_data:

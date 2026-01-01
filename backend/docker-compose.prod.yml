@@ -1,0 +1,46 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - VITE_BACKEND_HOST=backend
+      - VITE_BACKEND_PORT=8000
+
+  backend:
+    build: ./backend
+    ports:
+      - "7777:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - CALENDAR_MCP_URL=http://calendar-mcp:5555
+      # Production DB Connection (External)
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    env_file:
+      - .env
+
+  calendar-mcp:
+    image: oven/bun:1.1.17-alpine
+    working_dir: /app
+    # In prod, we copy source instead of volume mounting
+    # volumes:
+    #   - ./services/google-calendar-mcp:/app
+    volumes:
+       - ./services/google-calendar-mcp:/app # Keeping volume for now as we don't have a separate Dockerfile for this yet, but ideally this would be a COPY in a Dockerfile
+    command: bun run dev # In prod, this should likely be 'bun run start'
+    ports:
+      - "5555:5555"
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI} # Likely different in prod
+    env_file:
+      - .env
