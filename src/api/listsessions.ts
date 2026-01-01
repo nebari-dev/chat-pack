@@ -64,6 +64,8 @@ type SessionsList = v.InferOutput<typeof sessionsListSchema>;
 /**
  * A function which fetches the agno sessions list.
  *
+ * @param options - The options for the request.
+ *
  * @returns A promise that resolves with the sessions request.
  */
 export
