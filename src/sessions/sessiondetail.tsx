@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  X
+  ExternalLink, X
 } from 'lucide-react';
 
 import {
@@ -41,7 +41,10 @@ function SessionDetail(props: SessionDetail.Props): ReactNode {
       <Private.Header
         title={ detail.session_name }
         tabId={ tabId }
-        setTabId={ setTabId } />
+        setTabId={ setTabId }
+        type={ detail.type }
+        sessionId={ detail.session_id }
+        actorId={ detail.agent_id } />
     </div>
   );
 }
@@ -94,6 +97,21 @@ namespace Private {
      * A callback to set the selected tab id.
      */
     readonly setTabId: (id: TabId) => void;
+
+    /**
+     * The type of the session detail.
+     */
+    readonly type: 'agent' | 'team' | 'workflow';
+
+    /**
+     * The unique id of the session.
+     */
+    readonly sessionId: string;
+
+    /**
+     * The unique id for the actor in the session.
+     */
+    readonly actorId: string;
   };
 
   /**
@@ -102,7 +120,16 @@ namespace Private {
   export
   function Header(props: HeaderProps): ReactNode {
     // Extract the props.
-    const { title, tabId, setTabId } = props;
+    const { title, tabId, setTabId, type, sessionId, actorId } = props;
+
+    // Create the search params for launching the chat.
+    const params = new URLSearchParams();
+    params.append('type', type);
+    params.append('sessionId', sessionId);
+    params.append('id', actorId);
+
+    // Create the URL for navigating to the chat.
+    const chatUrl = `/chat?${params}`;
 
     // Return the rendered component.
     return (
@@ -111,13 +138,21 @@ namespace Private {
           <h2 className='text-lg font-semibold'>
             { title }
           </h2>
-          <Link
-            className='p-1 rounded-sm hover:bg-bg-neutral-dark'
-            aria-label='close'
-            to='..'
-            search={ prev => prev }>
-            <X size={ 20 } />
-          </Link>
+          <div className='flex flex-row gap-2'>
+            <Link
+              to={ chatUrl }
+              className='p-1 rounded-sm hover:bg-bg-neutral-dark'
+              aria-label='open chat'>
+              <ExternalLink size={ 20 } />
+            </Link>
+            <Link
+              className='p-1 rounded-sm hover:bg-bg-neutral-dark'
+              aria-label='close'
+              to='..'
+              search={ prev => prev }>
+              <X size={ 20 } />
+            </Link>
+          </div>
         </div>
         <ToggleGroup
           className='py-2 px-4'

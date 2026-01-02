@@ -39,6 +39,7 @@ export
 const agentSessionDetailSchema = v.object({
   ...sessionDetailCommonSchema.entries,
   type: v.literal('agent'),
+  agent_id: v.string(),
   metrics: metricsSchema,
   total_tokens: v.number(),
 });
