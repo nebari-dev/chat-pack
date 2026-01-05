@@ -5,7 +5,7 @@ import * as v from 'valibot';
 
 
 /**
- * A schema for the details common to all agent/team/workflow.
+ * A schema for the details common to agent/team/workflow sessions.
  */
 const sessionDetailCommonSchema = v.object({
   created_at: v.string(),
@@ -33,7 +33,7 @@ const metricsSchema = v.object({
 
 
 /**
- * A schema for an agent session.
+ * A schema for an `agent` session.
  */
 export
 const agentSessionDetailSchema = v.object({
@@ -42,47 +42,67 @@ const agentSessionDetailSchema = v.object({
   agent_id: v.string(),
   metrics: metricsSchema,
   total_tokens: v.number(),
+  agent_data: v.object({
+    name: v.string(),
+    agent_id: v.string(),
+    model: v.object({
+      id: v.string(),
+      name: v.string(),
+      provider: v.string()
+    })
+  })
 });
 
 
 /**
- * A type alias for an agent session.
+ * A type alias for an `agent` session.
  */
 export
 type AgentSessionDetail = v.InferOutput<typeof agentSessionDetailSchema>;
 
 
 /**
- * A schema for a team session.
+ * A schema for a `team` session.
  */
 export
 const teamSessionDetailSchema = v.object({
   ...sessionDetailCommonSchema.entries,
   type: v.literal('team'),
+  team_id: v.string(),
   metrics: metricsSchema,
-  total_tokens: v.number()
+  total_tokens: v.number(),
+  team_data: v.object({
+    name: v.string(),
+    team_id: v.string(),
+    model: v.object({
+      id: v.string(),
+      name: v.string(),
+      provider: v.string()
+    })
+  })
 });
 
 
 /**
- * A type alias for a team session.
+ * A type alias for a `team` session.
  */
 export
 type TeamSessionDetail = v.InferOutput<typeof teamSessionDetailSchema>;
 
 
 /**
- * A schema for a workflow session.
+ * A schema for a `workflow` session.
  */
 export
 const workflowSessionDetailSchema = v.object({
   ...sessionDetailCommonSchema.entries,
   type: v.literal('workflow'),
+  workflow_id: v.string(),
 });
 
 
 /**
- * A type alias for a workflow session.
+ * A type alias for a `workflow` session.
  */
 export
 type WorkflowSessionDetail = v.InferOutput<typeof workflowSessionDetailSchema>;
