@@ -33,6 +33,26 @@ const metricsSchema = v.object({
 
 
 /**
+ * A schema for a chat history message.
+ */
+const chatHistoryMessageSchema = v.object({
+  created_at: v.number(),
+  content: v.optional(v.string()),
+  role: v.union([
+    v.literal('assistant'),
+    v.literal('user')
+  ])
+});
+
+
+/**
+ * A type alias for a chat history message.
+ */
+export
+type ChatHistoryMessage = v.InferOutput<typeof chatHistoryMessageSchema>;
+
+
+/**
  * A schema for an `agent` session.
  */
 export
@@ -50,7 +70,8 @@ const agentSessionDetailSchema = v.object({
       name: v.string(),
       provider: v.string()
     })
-  })
+  }),
+  chat_history: v.array(chatHistoryMessageSchema)
 });
 
 

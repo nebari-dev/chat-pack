@@ -44,7 +44,7 @@ function SessionDetail(props: SessionDetail.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='border-l border-bd-neutral-default'>
+    <div className='border-l border-bd-neutral-default flex flex-col min-h-0'>
       <DetailHeader detail={ detail } tabId={ tabId } setTabId={ setTabId } />
       <ContentRenderer detail={ detail } />
     </div>

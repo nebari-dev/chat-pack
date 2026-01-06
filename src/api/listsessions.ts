@@ -74,7 +74,7 @@ async function listSessions(options: listSessions.Options): Promise<SessionsList
   const { type } = options;
 
   // Fetch the resource.
-  const resp = await fetch(`/api/sessions?type=${type}`);
+  const resp = await fetch(`/api/sessions?type=${type}&sort_by=updated_at`);
 
   // Guard against fetch failure.
   if (!resp.ok) {
