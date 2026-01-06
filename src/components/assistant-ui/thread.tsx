@@ -224,7 +224,7 @@ const ComposerAction: FC = () => {
             type="submit"
             variant="default"
             size="icon"
-            className="aui-composer-send size-[34px] rounded-full p-1"
+            className="aui-composer-send size-[34px] rounded-full p-1 bg-bd-brand-default hover:bg-bd-brand-default/90 hover:cursor-pointer"
             aria-label="Send message"
           >
             <ArrowUpIcon className="aui-composer-send-icon size-5" />
