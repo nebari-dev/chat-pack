@@ -259,7 +259,7 @@ namespace Private {
     const { table } = props;
 
     // Fetch the sessions config.
-    const { deleteSessions } = useSessionsConfig();
+    const { type, deleteSessions } = useSessionsConfig();
 
     // Fetch the needed info from the table.
     const rowCount = table.getRowModel().rows.length;
@@ -280,13 +280,16 @@ namespace Private {
     const handleDelete = () => {
       // Fetch the ids of the memories to delete.
       const rows = table.getSelectedRowModel().rows;
-      const ids = rows.map(row => row.original.session_id);
+      const session_ids = rows.map(row => row.original.session_id);
+
+      // Create the array of session types.
+      const session_types = (new Array(session_ids.length)).fill(type);
 
       // Clear the selected rows.
       table.resetRowSelection();
 
       // Delete the memories on the server.
-      deleteSessions(ids);
+      deleteSessions({ session_ids, session_types });
     };
 
     // Return the rendered component.

@@ -6,7 +6,7 @@ import type {
 } from '@tanstack/react-query';
 
 import {
-  createFileRoute, useRouter
+  createFileRoute, redirect, useRouter
 } from '@tanstack/react-router';
 
 import * as v from 'valibot';
@@ -109,6 +109,19 @@ const Route = createFileRoute('/sessions/{-$sessionId}')({
     // Fetch the sessions list.
     const sessions = await listSessions(client, type);
 
+    // Redirect if the specified session id does not exist.
+    //
+    // TODO this is not fully correct because `listSessions` returns
+    // a paginated response which might not include the otherwise valid
+    // session id.
+    if (sessionId && !sessions.data.find(s => s.session_id === sessionId)) {
+      throw redirect({
+        to: '/sessions/{-$sessionId}',
+        params: { sessionId: undefined },
+        search: s => s
+      });
+    }
+
     // Fetch the session detail, if needed.
     const detail = (
       sessionId !== undefined ?
@@ -133,9 +146,11 @@ function RouteComponent() {
   const { type, sessions, detail } = Route.useLoaderData();
 
   // Create the handler for deleting sessions.
-  const deleteSessions = async (ids: readonly string[]) => {
+  const deleteSessions = async (options: api.deleteSessions.Options) => {
     // Delete the sessions on the server.
-    await api.deleteSessions(ids);
+    await api.deleteSessions(options);
+
+    // TODO delete the query cache for these sessions and chats.
 
     // Force the router to reload the current data.
     await router.invalidate();

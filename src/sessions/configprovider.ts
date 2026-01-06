@@ -33,7 +33,7 @@ type SessionsConfig = {
   /**
    * A function that deletes the provided sessions by id.
    */
-  readonly deleteSessions: (ids: readonly string[]) => Promise<void>;
+  readonly deleteSessions: (options: api.deleteSessions.Options) => Promise<void>;
 };
 
 
