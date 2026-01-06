@@ -19,6 +19,7 @@ function Knowledge(): ReactNode {
         </h2>
       </div>
       <div className='p-4 grow min-h-0 overflow-y-auto'>
+        This page is not yet implemented.
       </div>
     </main>
   );
