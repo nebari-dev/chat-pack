@@ -34,6 +34,7 @@ function AUIProvider(props: AUIProvider.Props): ReactNode {
     isLoading: thread.isFetching,
     isRunning: thread.isPending,
     onNew: thread.onNewCallback,
+    onResumeToolCall: thread.onResumeToolCall,
     convertMessage: Private.noopMessageConverter
   });
 

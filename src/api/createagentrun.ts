@@ -61,6 +61,93 @@ type RunContentEvent = v.InferOutput<typeof runContentEventSchema>;
 
 
 /**
+ * A schema for an Agno tool execution.
+ */
+export
+const toolExecutionSchema = v.object({
+  confirmation_note: v.nullish(v.string()),
+  confirmed: v.nullish(v.boolean()),
+  created_at: v.number(),
+  external_execution_required: v.nullish(v.boolean()),
+  requires_confirmation: v.nullish(v.boolean()),
+  requires_user_input: v.nullish(v.boolean()),
+  tool_args: v.looseObject({}),
+  tool_call_id: v.string(),
+  tool_name: v.string(),
+  user_input_schema: v.nullish(v.looseObject({}))
+});
+
+
+/**
+ * A type alias for an Agno tool execution.
+ */
+export
+type ToolExecution = v.InferOutput<typeof toolExecutionSchema>;
+
+
+/**
+ * A schema for an Agno run requirement.
+ */
+export
+const runRequirementSchema = v.object({
+  created_at: v.string(),
+  id: v.string(),
+  tool_execution: toolExecutionSchema
+});
+
+
+/**
+ * A type alias for an Agno run requirement.
+ */
+export
+type RunRequirement = v.InferOutput<typeof runRequirementSchema>
+
+
+/**
+ * A schema for the Agno `RunPaused` event.
+ */
+export
+const runPausedEventSchema = v.object({
+  event: v.literal('RunPaused'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  content: v.string(),
+  created_at: v.number(),
+  requirements: v.array(runRequirementSchema),
+  run_id: v.string(),
+  session_id: v.string()
+});
+
+
+/**
+ * A type alias for the Agno `RunPaused` event.
+ */
+export
+type RunPausedEvent = v.InferOutput<typeof runPausedEventSchema>;
+
+
+/**
+ * A schema for the Agno `RunContinued` event.
+ */
+export
+const runContinuedEventSchema = v.object({
+  event: v.literal('RunContinued'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string()
+});
+
+
+/**
+ * A type alias for the Agno `RunContinued` event.
+ */
+export
+type RunContinuedEvent = v.InferOutput<typeof runContinuedEventSchema>;
+
+
+/**
  * A schema for the Agno `RunContentCompleted` event.
  */
 export
@@ -180,6 +267,8 @@ export
 const runEventSchema = v.union([
   runStartedEventSchema,
   runContentEventSchema,
+  runPausedEventSchema,
+  runContinuedEventSchema,
   runContentCompletedEventSchema,
   runCompletedEventSchema,
   toolCallStartedEventSchema,
@@ -272,5 +361,91 @@ namespace createAgentRun {
      * The unique id of the existing session for the agent.
      */
     readonly session_id: string;
+  };
+}
+
+
+/**
+ * A function which continues an Agno agent run for HITL interaction.
+ *
+ * @param options - The options for the api request.
+ *
+ * @returns An async generator of run events.
+ */
+export
+async function *continueAgentRun(
+  options: continueAgentRun.Options
+): AsyncGenerator<RunEvent> {
+  // Extract the options.
+  const { agent_id, run_id, session_id, tools } = options;
+
+  // Create the form data for the request.
+  const fd = new FormData();
+  fd.append('session_id', session_id);
+  fd.append('tools', JSON.stringify(tools));
+
+  // Fetch the endpoint.
+  const resp = await fetch(`/api/agents/${agent_id}/runs/${run_id}/continue`, {
+    method: 'POST',
+    body: fd
+  });
+
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Setup the SSE stream parser.
+  const stream = resp.body!
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new SSEParserStream());
+
+  // Yield the run events.
+  for await (const evt of stream) {
+    // Parse the SSE data into json.
+    const json = JSON.parse(evt.data);
+
+    // Validate the JSON against the schema.
+    try {
+      yield v.parse(runEventSchema, json);
+    } catch (e) {
+      // TODO log errors and json for unhandled events for now.
+      console.log('Failed to parse in `continueAgentRun()`');
+      console.log(e);
+      console.log(json);
+    }
+  }
+}
+
+
+/**
+ * The namespace for the `createAgentRun` statics.
+ */
+export
+namespace continueAgentRun {
+  /**
+   * An options object for a `createAgentRun` request.
+   */
+  export
+  type Options = {
+    /**
+     * The unique id of the agent.
+     */
+    readonly agent_id: string;
+
+    /**
+     * The unique id of the run.
+     */
+    readonly run_id: string;
+
+    /**
+     * The unique id of the session.
+     */
+    readonly session_id: string;
+
+    /**
+     * The array of tool executions.
+     */
+    readonly tools: readonly ToolExecution[];
   };
 }

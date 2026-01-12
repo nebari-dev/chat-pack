@@ -37,7 +37,7 @@ import {
 export
 function Header(): ReactNode {
   return (
-    <div className='p-2 flex flex-row border-b border-bd-neutral-default'>
+    <div className='px-4 py-2 flex flex-row border-b border-bd-neutral-default'>
       <Private.ChatSelect />
       <Private.ChatSession />
       <div className='grow' />
@@ -140,8 +140,8 @@ namespace Private {
         <SelectTrigger
           size='sm'
           className={ cn(
-            'w-[220px] rounded-sm shadow-none focus-visible:ring-0',
-            'focus-visible:border-bd-brand-default'
+            'w-[200px] rounded-sm shadow-none focus-visible:ring-0',
+            'focus-visible:border-bd-brand-default data-[size=sm]:h-7'
           ) }>
           <SelectValue placeholder='Select...' />
         </SelectTrigger>

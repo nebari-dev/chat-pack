@@ -37,6 +37,25 @@ import {
 
 
 /**
+ * A type alias for the `onResumeToolCall` options.
+ *
+ * AUI should expose this type, but doesn't, so it's repeated here.
+ */
+export
+type ResumeToolCallOptions = {
+  /**
+   * The unique id of the tool call.
+   */
+  readonly toolCallId: string;
+
+  /**
+   * The payload for resuming the tool call.
+   */
+  readonly payload: unknown;
+};
+
+
+/**
  * A type alias for the result of the `useThreadMessages` hoook.
  */
 export
@@ -59,7 +78,12 @@ type UseThreadMessagesResult = {
   /**
    * A callback to post a new user message and start a run.
    */
-  readonly onNewCallback: (message: AppendMessage) => Promise<void>
+  readonly onNewCallback: (message: AppendMessage) => Promise<void>;
+
+  /**
+   * A callback to resume a HITL tool call.
+   */
+  readonly onResumeToolCall: (options: ResumeToolCallOptions) => void;
 };
 
 
@@ -72,7 +96,7 @@ function useThreadMessages(): UseThreadMessagesResult {
   const config = useChatConfig();
 
   // Create the history query.
-  const { data, isFetching } = useQuery({
+  const loadHistory = useQuery({
     queryKey: Private.createQueryKey(config.sessionId),
     queryFn: Private.loadHistory,
     staleTime: 'static',
@@ -80,17 +104,43 @@ function useThreadMessages(): UseThreadMessagesResult {
   });
 
   // Create the mutation for creating runs.
-  const { isPending, mutateAsync } = useMutation({
+  const createRun = useMutation({
     mutationFn: Private.createRun
+  });
+
+  // Create the mutation for continuing runs.
+  const continueRun = useMutation({
+    mutationFn: Private.continueRun
   });
 
   // Create the callback for running a new AUI user message.
   const onNewCallback = useCallback(async (message: AppendMessage) => {
-    await mutateAsync({ message, config });
-  }, [mutateAsync, config]);
+    await createRun.mutateAsync({ message, config });
+  }, [createRun.mutateAsync, config]);
+
+  // Create the callback from resuming a tool call.
+  const onResumeToolCall = useCallback((options: ResumeToolCallOptions) => {
+    // Extract the paylaoad.
+    const { toolCallId, payload } = options;
+
+    // Guard against tool calls we don't know how to resume.
+    if (toolCallId !== 'application/vnd.openteams-agno-hitl') {
+      console.log('Ignoring resume tool:', toolCallId);
+      return;
+    }
+
+    // Invoke the mutation function.
+    continueRun.mutate(payload as Private.ContinueRunArgs);
+  }, [continueRun.mutateAsync]);
 
   // Return the results.
-  return { messages: data!, isFetching, isPending, onNewCallback };
+  return {
+    messages: loadHistory.data!,
+    isFetching: loadHistory.isFetching,
+    isPending: createRun.isPending || continueRun.isPending,
+    onNewCallback,
+    onResumeToolCall
+  };
 }
 
 
@@ -230,6 +280,62 @@ namespace Private {
   }
 
   /**
+   * A type alias for the arguments to `continueRun`.
+   */
+  export
+  type ContinueRunArgs = {
+    /**
+     * The unique agent id.
+     */
+    readonly agentId: string;
+
+    /**
+     * The unique run id.
+     */
+    readonly runId: string;
+
+    /**
+     * The unique session id.
+     */
+    readonly sessionId: string;
+
+    /**
+     * The array of updated tool executions.
+     */
+    readonly tools: readonly api.ToolExecution[];
+  };
+
+  /**
+   * A mutation function which continues a run after HITL interaction.
+   */
+  export
+  async function continueRun(
+    args: ContinueRunArgs, context: MutationFunctionContext
+  ): Promise<void> {
+    // Extract the args.
+    const { agentId, runId, sessionId, tools } = args;
+
+    // Extract the query client.
+    const client = context.client;
+
+    // Set up the event stream for the Agno API.
+    const stream = api.continueAgentRun({
+      agent_id: agentId,
+      run_id: runId,
+      session_id: sessionId,
+      tools
+    });
+
+    // Handle the stream events from the Agno API.
+    for await (const evt of stream) {
+      client.setQueryData<ThreadMessageLike[]>(
+        createQueryKey(sessionId),
+        produce(draft => { processEvent(evt, draft!); })
+      );
+    }
+  }
+
+  /**
    * Convert an Agno run into AUI thread messages.
    *
    * @param run - The Agno api run of interest.
@@ -333,6 +439,12 @@ namespace Private {
     case 'RunContent':
       evtRunContent(evt, draft);
       break;
+    case 'RunPaused':
+      evtRunPaused(evt, draft);
+      break;
+    case 'RunContinued':
+      evtRunContinued(evt, draft);
+      break;
     case 'RunContentCompleted': // no need to handle this event
       break;
     case 'RunCompleted': // no need to handle this event
@@ -380,6 +492,68 @@ namespace Private {
     } else {
       content.push({ type: 'text', text: evt.content });
     }
+  }
+
+  /**
+   * Handle the `RunPaused` Agno event.
+   */
+  function evtRunPaused(evt: api.RunPausedEvent, draft: Draft): void {
+    // Find the most recent assistant content.
+    const content = findLastAssistantContent(draft);
+
+    // Bail if the content was not found.
+    if (!content) {
+      return;
+    }
+
+    // Find the insert location for the tool call.
+    //
+    // Part ordering is [...tool-parts, text-part]
+    const i = content.findLastIndex(part => part.type === 'tool-call') + 1;
+
+    // Create the tool call message part.
+    const part: ToolCallMessagePart = {
+      type: 'tool-call',
+      toolCallId: 'application/vnd.openteams-agno-hitl',
+      toolName: 'HITL',
+      args: {},
+      argsText: '',
+      result: JSON.stringify({
+        mimeType: 'application/vnd.openteams-agno-hitl',
+        data: { event: evt }
+      })
+    };
+
+    // Insert the tool part into the content.
+    //
+    // The cast is needed to prevent TS "excessively deep type insantiation"
+    // errors. Likely because `ToolCallMessagePart` recursively references
+    // the `ThreadMessage` type, but I'm not entirely sure right now.
+    (content as any[]).splice(i, 0, part);
+  }
+
+  /**
+   * Handle the `RunContinued` Agno event.
+   */
+  function evtRunContinued(_evt: api.RunContinuedEvent, draft: Draft): void {
+    // Find the most recent assistant content.
+    const content = findLastAssistantContent(draft);
+
+    // Bail if the content was not found.
+    if (!content) {
+      return;
+    }
+
+    // Find the location of the tool call to remove.
+    const i = content.findLastIndex(part => {
+      return (
+        part.type === 'tool-call' &&
+        part.toolCallId === 'application/vnd.openteams-agno-hitl'
+      );
+    });
+
+    // Remove the HITL tool call.
+    content.splice(i, 1);
   }
 
   /**

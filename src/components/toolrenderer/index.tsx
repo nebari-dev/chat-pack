@@ -17,6 +17,10 @@ import {
   EChartRenderer
 } from './echartrenderer';
 
+import {
+  HITLRenderer
+} from './hitlrenderer';
+
 
 /**
  * A react component that renders all tool calls for AUI threads.
@@ -47,6 +51,8 @@ function ToolRenderer(props: ToolCallMessagePartProps): ReactNode {
   switch (mimeResult.mimeType) {
   case 'application/vnd.openteams-echart':
     return <EChartRenderer result={ mimeResult } />;
+  case 'application/vnd.openteams-agno-hitl':
+    return <HITLRenderer result={ mimeResult } />;
   default:
     throw 'unreachable';
   }
@@ -58,33 +64,13 @@ function ToolRenderer(props: ToolCallMessagePartProps): ReactNode {
  */
 namespace Private {
   /**
-   * A type alias for the known mime types.
-   *
-   * These are all custom vendor types that we *know* how to render.
+   * A type alias for the known mime results.
    */
   export
-  type KnownMimeType = (
-    'application/vnd.openteams-echart'
+  type MimeResult = (
+    EChartRenderer.MimeResult |
+    HITLRenderer.MimeResult
   );
-
-  /**
-   * A type alias for a known mime result.
-   */
-  export
-  type MimeResult = {
-    /**
-     * The known mime type of the result.
-     */
-    readonly mimeType: KnownMimeType;
-
-    /**
-     * The data for the result.
-     *
-     * The form of the data will be specific to the mime type, but can
-     * be assumed to be well-formed based on the given mime type.
-     */
-    readonly data: any;
-  };
 
   /**
    * A function that will safely cast an unknown tool result to a mime result.
@@ -138,6 +124,7 @@ namespace Private {
     // Dispatch on the mime type.
     switch (result.mimeType) {
     case 'application/vnd.openteams-echart':
+    case 'application/vnd.openteams-agno-hitl':
       return { mimeType: result.mimeType, data: result.data as any };
     default:
       return null;
