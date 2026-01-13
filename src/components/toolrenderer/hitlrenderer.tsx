@@ -3,18 +3,14 @@
 |----------------------------------------------------------------------------*/
 import {
   useAssistantApi
-} from  '@assistant-ui/react';
-
-import {
-  Ban, Check
-} from 'lucide-react';
+} from '@assistant-ui/react';
 
 import type {
-  ReactNode
+  ChangeEvent, FormEvent, ReactNode
 } from 'react';
 
 import {
-  useState
+  memo, useCallback, useState, Fragment
 } from 'react';
 
 import * as api from '@/api';
@@ -36,6 +32,14 @@ import {
 } from '@/components/ui/card';
 
 import {
+  Field, FieldGroup, FieldLabel, FieldSeparator
+} from '@/components/ui/field';
+
+import {
+  Input
+} from '@/components/ui/input';
+
+import {
   ToggleGroup, ToggleGroupItem
 } from '@/components/ui/toggle-group';
 
@@ -51,74 +55,99 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   // Fetch the assistant API.
   const assistantApi = useAssistantApi();
 
-  // Create the state to hold the confirmations.
-  const [confirmations, setConfirmations] = (
-    useState<Record<string, Private.Confirmation>>({ })
+  // Create the state to hold the executions.
+  const [executions, setExecutions] = (
+    useState<Record<string, api.ToolExecution>>({ })
   );
 
-  // Create the callback to set a confirmation.
-  const setConfirmation = (id: string, value: Private.Confirmation) => {
-    setConfirmations(prev => ({ ...prev, [id]: value }));
-  };
+  // Create the callback to set an updated tool execution.
+  const setExecution = useCallback((exc: api.ToolExecution) => {
+    setExecutions(prev => ({ ...prev, [exc.tool_call_id]: exc }));
+  }, []);
 
   // Determine whether the submit button should be enabled.
   //
-  // The button is only enabled if all tool calls have a confirmation.
-  const isEnabled = event.requirements.every(req => {
-    return req.tool_execution.tool_call_id in confirmations;
+  // The button is enabled if all executions have been updated.
+  const canSubmit = event.requirements.every(req => {
+    return req.tool_execution.tool_call_id in executions;
   });
 
-  // Create the callback to handle the submit.
-  const handleSubmit = () => {
-    // Extra check just to be safe.
-    if (!isEnabled) {
+  // Create the callback to handle the submit and resume the tool call.
+  const handleSubmit = (evt: FormEvent<HTMLFormElement>) => {
+    // Prevent default form submission.
+    evt.preventDefault();
+    evt.stopPropagation();
+
+    // Sanity check the submission-ability.
+    if (!canSubmit) {
       return;
     }
 
-    // Create a copy of the tools with their confirmation state.
-    const tools = event.requirements.map(req => {
-      const c = confirmations[req.tool_execution.tool_call_id];
-      const confirmed = c === 'yes' ? true : false;
-      return { ...req.tool_execution, confirmed };
-    });
-
-    // Resume the tool calls with the payload.
+    // Resume the tool call with the user input result.
     assistantApi.part().resumeToolCall({
       agentId: event.agent_id,
       runId: event.run_id,
       sessionId: event.session_id,
-      tools
+      tools: Object.values(executions)
     });
   };
 
-  // Set up the array to hold the content nodes.
-  const content: ReactNode[] = [];
+  // Render the tools based on their interaction requirements.
+  const content = event.requirements.map(requirement => {
+    // Fetch the tool execution.
+    const exc = requirement.tool_execution;
 
-  // Render the tool(s) based on their interaction requirements.
-  for (const req of event.requirements) {
-    const exc = req.tool_execution;
+    // Render a confirmation tool.
     if (exc.requires_confirmation) {
-      content.push(
-        <Private.ConfirmationTool
-          key={ req.id }
-          toolCallId={ exc.tool_call_id }
-          toolName={ exc.tool_name }
-          toolArgs={ exc.tool_args }
-          confirmation={ confirmations[exc.tool_call_id] ?? '' }
-          setConfirmation={ setConfirmation } />
+      return (
+        <Fragment key={ exc.tool_call_id }>
+          <FieldGroup>
+            <Private.ConfirmationToolMemo
+              execution={ executions[exc.tool_call_id] ?? exc }
+              setExecution={ setExecution } />
+          </FieldGroup>
+          <FieldSeparator />
+        </Fragment>
       );
     }
-  }
+
+    // Render a user input tool.
+    if (exc.requires_user_input) {
+      return (
+        <Fragment key={ exc.tool_call_id }>
+          <FieldGroup>
+            <Private.UserInputToolMemo
+              execution={ executions[exc.tool_call_id] ?? exc }
+              setExecution={ setExecution } />
+          </FieldGroup>
+          <FieldSeparator />
+        </Fragment>
+      );
+    }
+
+    // Log unhandled tool executions.
+    console.error('unhandled tool execution', exc);
+
+    // This should be unreachable.
+    return null;
+  });
 
   // Return the rendered component.
   return (
     <div className='p-4 border rounded-md flex flex-col gap-4'>
-      { content }
+      <form
+        id={ `form-${event.run_id}` }
+        onSubmit={ handleSubmit }>
+        <FieldGroup className='gap-4'>
+          { content }
+        </FieldGroup>
+      </form>
       <Button
+        type='submit'
+        form={ `form-${event.run_id}` }
         variant='outline'
         className='rounded-md'
-        disabled={ !isEnabled }
-        onClick={ handleSubmit }>
+        disabled={ !canSubmit }>
         Submit
       </Button>
     </div>
@@ -170,67 +199,56 @@ namespace HITLRenderer {
  */
 namespace Private {
   /**
-   * A type alias for the confirmation state.
+   * A common type alias for HITL tool props.
    */
   export
-  type Confirmation = 'yes' | 'no';
-
-  /**
-   * A type alias for the `ConfirmationTool` props.
-   */
-  export
-  type ConfirmationToolProps = {
+  type ToolProps = {
     /**
-     * The unique id for the tool call.
+     * The tool execution object to render.
      */
-    readonly toolCallId: string;
+    readonly execution: api.ToolExecution;
 
     /**
-     * The name of the tool that needs confirmation.
+     * The callback to set the updated tool execution state.
      */
-    readonly toolName: string;
-
-    /**
-     * The arguments for the tool that needs confirmation.
-     */
-    readonly toolArgs: Record<string, unknown>;
-
-    /**
-     * The state of the confirmation.
-     *
-     * The not-yet-chosen state is `''`.
-     */
-    readonly confirmation: Confirmation | '';
-
-    /**
-     * A callback to set the state of the confirmation.
-     */
-    readonly setConfirmation: (id: string, value: Confirmation) => void;
+    readonly setExecution: (exc: api.ToolExecution) => void;
   };
 
   /**
    * A react component that renders a tool that requires confirmation.
    */
   export
-  function ConfirmationTool(props: ConfirmationToolProps): ReactNode {
+  function ConfirmationTool(props: ToolProps): ReactNode {
     // Extract the props.
-    const {
-      toolCallId, toolName, toolArgs, confirmation, setConfirmation
-    } = props;
+    const { execution, setExecution } = props;
+
+    // Convert the confirmation state to a toggle value.
+    const value = (
+      execution.confirmed === true ? 'yes' :
+      execution.confirmed === false ? 'no' :
+      ''
+    );
 
     // Create the callback to handle the value change.
-    const handleValueChange = (value: Confirmation | '') => {
-      if (value) {
-        setConfirmation(toolCallId, value);
+    const handleValueChange = (value: 'yes' | 'no' | '') => {
+      // Do not allow the toggle to be deselected.
+      if (!value) {
+        return;
       }
+
+      // Convert the toggle value to a boolean.
+      const confirmed = value === 'yes' ? true : false;
+
+      // Update the tool execution state.
+      setExecution({ ...execution, confirmed });
     };
 
     // Return the rendered component.
     return (
-      <Card className='rounded-md shadow-none'>
-        <CardHeader>
+      <Card className='p-0 gap-4 border-none shadow-none'>
+        <CardHeader className='px-0'>
           <CardTitle>
-            { toolName.toUpperCase() }
+            { execution.tool_name.toUpperCase() }
           </CardTitle>
           <CardDescription>
             Tool requires confirmation
@@ -238,24 +256,24 @@ namespace Private {
           <CardAction>
             <ToggleGroup
               type='single'
-              size='sm'
-              spacing={ 2 }
-              value={ confirmation }
+              size='lg'
+              variant='outline'
+              value={ value }
               onValueChange={ handleValueChange }>
               <ToggleGroupItem
                 value='no'
                 className='shadow-none px-2 data-[state=on]:text-red-600'>
-                <Ban />
+                Deny
               </ToggleGroupItem>
               <ToggleGroupItem
                 value='yes'
                 className='shadow-none px-2 data-[state=on]:text-green-600'>
-                <Check />
+                Confirm
               </ToggleGroupItem>
             </ToggleGroup>
           </CardAction>
         </CardHeader>
-        <CardContent>
+        <CardContent className='px-0'>
           <Accordion
             type='single'
             collapsible
@@ -266,7 +284,7 @@ namespace Private {
                 ARGUMENTS
               </AccordionTrigger>
               <AccordionContent>
-                <KVTable data={ toolArgs } />
+                <KVTable data={ execution.tool_args } />
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -274,4 +292,151 @@ namespace Private {
       </Card>
     );
   }
+
+  /**
+   * A memoized version of `ConfirmationTool`.
+   */
+  export
+  const ConfirmationToolMemo = memo(ConfirmationTool);
+
+  /**
+   * A react component that renders a tool requiring user input.
+   */
+  export
+  function UserInputTool(props: ToolProps): ReactNode {
+    // Extract the props.
+    const { execution, setExecution } = props;
+
+    // Create the callback to update the schema.
+    const setSchema = useCallback(
+      (index: number, schema: api.UserInputSchema) => {
+        // Clone the input schema array.
+        const user_input_schema = [ ...execution.user_input_schema! ];
+
+        // Overwrite the modified schema.
+        user_input_schema[index] = schema;
+
+        // Update the tool execution.
+        setExecution({ ...execution, user_input_schema });
+      }
+    , [setExecution]);
+
+    // Create the input schema components.
+    const content = execution.user_input_schema!.map((schema, i) => {
+      return (
+        <UserInputSchemaMemo
+          key={ i }
+          index={ i }
+          schema={ schema }
+          setSchema={ setSchema } />
+      );
+    });
+
+    // Return the rendered component.
+    return (
+      <Card className='p-0 border-none gap-4 shadow-none'>
+        <CardHeader className='px-0'>
+          <CardTitle>
+            { execution.tool_name.toUpperCase() }
+          </CardTitle>
+          <CardDescription>
+            Tool requires user input
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='px-0 flex flex-col gap-4'>
+          { content }
+        </CardContent>
+      </Card>
+    );
+  }
+
+  /**
+   * A memoized version of `UserInputTool`.
+   */
+  export
+  const UserInputToolMemo = memo(UserInputTool);
+
+  /**
+   * A type alias for the `UserInputSchema` props.
+   */
+  type UserInputSchemaProps = {
+    /**
+     * The index of the schema in the schemas array.
+     */
+    readonly index: number;
+
+    /**
+     * The user input schema to render.
+     */
+    readonly schema: api.UserInputSchema;
+
+    /**
+     * A callback to set the updated schema data.
+     */
+    readonly setSchema: (index: number, schema: api.UserInputSchema) => void;
+  };
+
+  /**
+   * A react component that renders a user input schema.
+   */
+  function UserInputSchema(props: UserInputSchemaProps): ReactNode {
+    // Extract the props.
+    const { index, schema, setSchema } = props;
+
+    // Guard against unhandled field types.
+    if (schema.field_type !== 'str') {
+      return (
+        <>
+          <FieldLabel className='text-xs text-muted-foreground'>
+            <span>
+              { `${schema.name.toUpperCase()}:` }
+            </span>
+            <span>
+              { schema.description }
+            </span>
+          </FieldLabel>
+          <Field>
+            { `Unhandled field type: ${schema.field_type}` }
+          </Field>
+        </>
+      );
+    }
+
+    // Create the border color for the input.
+    const borderColor = (
+      schema.value !== null ?
+      'focus-visible:border-bd-brand-default' :
+      'border-red-500 focus-visible:border-red-500'
+    );
+
+    // Create the change handler callback.
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+      setSchema(index, { ...schema, value: event.target.value });
+    };
+
+    // Return the rendered component.
+    return (
+      <>
+        <FieldLabel className='text-xs text-muted-foreground flex gap-2'>
+          <span>
+            { `${schema.name.toUpperCase()}:` }
+          </span>
+          <span>
+            { schema.description }
+          </span>
+        </FieldLabel>
+        <Field>
+          <Input
+            className={ `rounded-xs focus-visible:ring-0 ${borderColor}` }
+            value={ schema.value ?? '' }
+            onChange={ handleChange } />
+        </Field>
+      </>
+    );
+  }
+
+  /**
+   * A memoized version of `UserInputSchema`.
+   */
+  const UserInputSchemaMemo = memo(UserInputSchema);
 }

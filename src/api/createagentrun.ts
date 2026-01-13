@@ -61,6 +61,25 @@ type RunContentEvent = v.InferOutput<typeof runContentEventSchema>;
 
 
 /**
+ * A schema for a user input.
+ */
+export
+const userInputSchemaSchema = v.object({
+  name: v.string(),
+  field_type: v.string(),
+  description: v.string(),
+  value: v.any()
+});
+
+
+/**
+ * A type alias for a user input schema.
+ */
+export
+type UserInputSchema = v.InferOutput<typeof userInputSchemaSchema>;
+
+
+/**
  * A schema for an Agno tool execution.
  */
 export
@@ -74,7 +93,7 @@ const toolExecutionSchema = v.object({
   tool_args: v.looseObject({}),
   tool_call_id: v.string(),
   tool_name: v.string(),
-  user_input_schema: v.nullish(v.looseObject({}))
+  user_input_schema: v.nullish(v.array(userInputSchemaSchema))
 });
 
 
