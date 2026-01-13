@@ -62,7 +62,9 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
     useState<Record<string, api.ToolExecution>>(() => {
       const record: Record<string, api.ToolExecution> = {};
       for (const tool of event.tools) {
-        record[tool.tool_call_id] = tool;
+        if (tool.requires_confirmation || tool.requires_user_input) {
+          record[tool.tool_call_id] = tool;
+        }
       }
       return record;
     })
@@ -118,7 +120,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
       );
     }
 
-    // Skip already confirmed tools.
+    // Skip tools that don't need HITL.
     return null;
   });
 
@@ -164,7 +166,7 @@ namespace HITLRenderer {
      */
     readonly data: {
       /**
-       * The option object for configuring the echart.
+       * The run paused event for handling HITL tools.
        */
       readonly event: api.RunPausedEvent;
     };
