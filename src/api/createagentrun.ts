@@ -105,24 +105,6 @@ type ToolExecution = v.InferOutput<typeof toolExecutionSchema>;
 
 
 /**
- * A schema for an Agno run requirement.
- */
-export
-const runRequirementSchema = v.object({
-  created_at: v.string(),
-  id: v.string(),
-  tool_execution: toolExecutionSchema
-});
-
-
-/**
- * A type alias for an Agno run requirement.
- */
-export
-type RunRequirement = v.InferOutput<typeof runRequirementSchema>
-
-
-/**
  * A schema for the Agno `RunPaused` event.
  */
 export
