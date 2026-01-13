@@ -105,24 +105,6 @@ type ToolExecution = v.InferOutput<typeof toolExecutionSchema>;
 
 
 /**
- * A schema for an Agno run requirement.
- */
-export
-const runRequirementSchema = v.object({
-  created_at: v.string(),
-  id: v.string(),
-  tool_execution: toolExecutionSchema
-});
-
-
-/**
- * A type alias for an Agno run requirement.
- */
-export
-type RunRequirement = v.InferOutput<typeof runRequirementSchema>
-
-
-/**
  * A schema for the Agno `RunPaused` event.
  */
 export
@@ -132,9 +114,9 @@ const runPausedEventSchema = v.object({
   agent_name: v.string(),
   content: v.string(),
   created_at: v.number(),
-  requirements: v.array(runRequirementSchema),
   run_id: v.string(),
-  session_id: v.string()
+  session_id: v.string(),
+  tools: v.array(toolExecutionSchema)
 });
 
 

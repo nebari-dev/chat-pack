@@ -56,8 +56,16 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   const assistantApi = useAssistantApi();
 
   // Create the state to hold the executions.
+  //
+  // TODO I don't like this state initialization.
   const [executions, setExecutions] = (
-    useState<Record<string, api.ToolExecution>>({ })
+    useState<Record<string, api.ToolExecution>>(() => {
+      const record: Record<string, api.ToolExecution> = {};
+      for (const tool of event.tools) {
+        record[tool.tool_call_id] = tool;
+      }
+      return record;
+    })
   );
 
   // Create the callback to set an updated tool execution.
@@ -65,23 +73,11 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
     setExecutions(prev => ({ ...prev, [exc.tool_call_id]: exc }));
   }, []);
 
-  // Determine whether the submit button should be enabled.
-  //
-  // The button is enabled if all executions have been updated.
-  const canSubmit = event.requirements.every(req => {
-    return req.tool_execution.tool_call_id in executions;
-  });
-
   // Create the callback to handle the submit and resume the tool call.
   const handleSubmit = (evt: FormEvent<HTMLFormElement>) => {
     // Prevent default form submission.
     evt.preventDefault();
     evt.stopPropagation();
-
-    // Sanity check the submission-ability.
-    if (!canSubmit) {
-      return;
-    }
 
     // Resume the tool call with the user input result.
     assistantApi.part().resumeToolCall({
@@ -93,17 +89,14 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   };
 
   // Render the tools based on their interaction requirements.
-  const content = event.requirements.map(requirement => {
-    // Fetch the tool execution.
-    const exc = requirement.tool_execution;
-
+  const content = event.tools.map(tool => {
     // Render a confirmation tool.
-    if (exc.requires_confirmation) {
+    if (tool.requires_confirmation) {
       return (
-        <Fragment key={ exc.tool_call_id }>
+        <Fragment key={ tool.tool_call_id }>
           <FieldGroup>
             <Private.ConfirmationToolMemo
-              execution={ executions[exc.tool_call_id] ?? exc }
+              execution={ executions[tool.tool_call_id] ?? tool }
               setExecution={ setExecution } />
           </FieldGroup>
           <FieldSeparator />
@@ -112,12 +105,12 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
     }
 
     // Render a user input tool.
-    if (exc.requires_user_input) {
+    if (tool.requires_user_input) {
       return (
-        <Fragment key={ exc.tool_call_id }>
+        <Fragment key={ tool.tool_call_id }>
           <FieldGroup>
             <Private.UserInputToolMemo
-              execution={ executions[exc.tool_call_id] ?? exc }
+              execution={ executions[tool.tool_call_id] ?? tool }
               setExecution={ setExecution } />
           </FieldGroup>
           <FieldSeparator />
@@ -125,10 +118,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
       );
     }
 
-    // Log unhandled tool executions.
-    console.error('unhandled tool execution', exc);
-
-    // This should be unreachable.
+    // Skip already confirmed tools.
     return null;
   });
 
@@ -146,8 +136,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
         type='submit'
         form={ `form-${event.run_id}` }
         variant='outline'
-        className='rounded-md'
-        disabled={ !canSubmit }>
+        className='rounded-md'>
         Submit
       </Button>
     </div>
