@@ -120,7 +120,10 @@ async function getMetrics(options: getMetrics.Options): Promise<Metrics> {
   //
   // TODO - if this POST becomes a performance problem, we may need to
   // implement a caching strategy, refresh on a timer, etc.
-  await fetch('/api/metrics/refresh', { method: 'POST' });
+  await fetch('/api/metrics/refresh', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
+  });
 
   // Fetch the resource.
   const resp = await fetch(`/api/metrics?${params}`, {

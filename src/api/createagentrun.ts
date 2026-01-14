@@ -311,8 +311,8 @@ async function *createAgentRun(
   // Fetch the endpoint.
   const resp = await fetch(`/api/agents/${agent_id}/runs`, {
     method: 'POST',
-    body: fd,
-    headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
+    headers: { 'Authorization': `Bearer ${pb.authStore.token}` },
+    body: fd
   });
 
   // Guard against request failure.
@@ -393,6 +393,7 @@ async function *continueAgentRun(
   // Fetch the endpoint.
   const resp = await fetch(`/api/agents/${agent_id}/runs/${run_id}/continue`, {
     method: 'POST',
+    headers: { 'Authorization': `Bearer ${pb.authStore.token}` },
     body: fd
   });
 
