@@ -511,6 +511,11 @@ namespace Private {
     // Part ordering is [...tool-parts, text-part]
     const i = content.findLastIndex(part => part.type === 'tool-call') + 1;
 
+    // Filter the tools for those that need HITL interaction.
+    const tools = evt.tools.filter(tool =>
+      tool.requires_confirmation || tool.requires_user_input
+    );
+
     // Create the tool call message part.
     const part: ToolCallMessagePart = {
       type: 'tool-call',
@@ -520,7 +525,12 @@ namespace Private {
       argsText: '',
       result: JSON.stringify({
         mimeType: 'application/vnd.openteams-agno-hitl',
-        data: { event: evt }
+        data: {
+          agentId: evt.agent_id,
+          runId: evt.run_id,
+          sessionId: evt.session_id,
+          tools
+        }
       })
     };
 

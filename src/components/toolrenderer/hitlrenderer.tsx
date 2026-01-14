@@ -49,24 +49,21 @@ import {
  */
 export
 function HITLRenderer(props: HITLRenderer.Props): ReactNode {
-  // Extract the api event from the props.
-  const event = props.result.data.event;
+  // Extract the data from the props.
+  const { agentId, runId, sessionId, tools } = props.result.data;
 
   // Fetch the assistant API.
   const assistantApi = useAssistantApi();
 
   // Create the state to hold the executions.
   //
-  // TODO I don't like this state initialization.
+  // TODO - I don't like this state initialization. It assumes that
+  // `tools` does not change for the lifetime of the renderer.
   const [executions, setExecutions] = (
     useState<Record<string, api.ToolExecution>>(() => {
-      const record: Record<string, api.ToolExecution> = {};
-      for (const tool of event.tools) {
-        if (tool.requires_confirmation || tool.requires_user_input) {
-          record[tool.tool_call_id] = tool;
-        }
-      }
-      return record;
+      return tools.reduce((obj, item) => (
+        { ...obj, [item.tool_call_id]: item }
+      ), {});
     })
   );
 
@@ -83,15 +80,12 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
 
     // Resume the tool call with the user input result.
     assistantApi.part().resumeToolCall({
-      agentId: event.agent_id,
-      runId: event.run_id,
-      sessionId: event.session_id,
-      tools: Object.values(executions)
+      agentId, runId, sessionId, tools: Object.values(executions)
     });
   };
 
   // Render the tools based on their interaction requirements.
-  const content = event.tools.map(tool => {
+  const content = tools.map(tool => {
     // Render a confirmation tool.
     if (tool.requires_confirmation) {
       return (
@@ -120,7 +114,10 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
       );
     }
 
-    // Skip tools that don't need HITL.
+    // The AUI messages hook should already skip non-HITL tools.
+    console.error('Unhandled tool execution:', tool);
+
+    // Skip unhandled tools.
     return null;
   });
 
@@ -128,7 +125,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   return (
     <div className='p-4 border rounded-md flex flex-col gap-4'>
       <form
-        id={ `form-${event.run_id}` }
+        id={ `form-${runId}` }
         onSubmit={ handleSubmit }>
         <FieldGroup className='gap-4'>
           { content }
@@ -136,7 +133,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
       </form>
       <Button
         type='submit'
-        form={ `form-${event.run_id}` }
+        form={ `form-${runId}` }
         variant='outline'
         className='rounded-md'>
         Submit
@@ -166,9 +163,24 @@ namespace HITLRenderer {
      */
     readonly data: {
       /**
+       * The agent id for the run.
+       */
+      readonly agentId: string;
+
+      /**
+       * The unique run id.
+       */
+      readonly runId: string;
+
+      /**
+       * The unique id of the session for the run.
+       */
+      readonly sessionId: string;
+
+      /**
        * The run paused event for handling HITL tools.
        */
-      readonly event: api.RunPausedEvent;
+      readonly tools: readonly api.ToolExecution[];
     };
   };
 
@@ -313,7 +325,7 @@ namespace Private {
     // Create the input schema components.
     const content = execution.user_input_schema!.map((schema, i) => {
       return (
-        <UserInputSchemaMemo
+        <UserInputSchema
           key={ i }
           index={ i }
           schema={ schema }
@@ -423,9 +435,4 @@ namespace Private {
       </>
     );
   }
-
-  /**
-   * A memoized version of `UserInputSchema`.
-   */
-  const UserInputSchemaMemo = memo(UserInputSchema);
 }
