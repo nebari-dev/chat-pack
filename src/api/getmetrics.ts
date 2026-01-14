@@ -2,7 +2,9 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import * as v from 'valibot';
-
+import {
+  pb
+} from './pb'
 
 /**
  * A schema for Agno token metrics.
@@ -121,7 +123,9 @@ async function getMetrics(options: getMetrics.Options): Promise<Metrics> {
   await fetch('/api/metrics/refresh', { method: 'POST' });
 
   // Fetch the resource.
-  const resp = await fetch(`/api/metrics?${params}`);
+  const resp = await fetch(`/api/metrics?${params}`, {
+    headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
+  });
 
   // Guard against fetch failure.
   if (!resp.ok) {

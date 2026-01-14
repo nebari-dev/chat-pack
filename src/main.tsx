@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  StrictMode
+  StrictMode, useEffect
 } from 'react';
 
 import {
@@ -12,6 +12,10 @@ import {
 import {
   RouterProvider, createRouter
 } from '@tanstack/react-router';
+
+import {
+  AuthProvider, useAuth
+} from './login/authconfigprovider'
 
 import {
   QueryClient, QueryClientProvider
@@ -27,13 +31,21 @@ import './main.css';
 // Create the main query client.
 const client = new QueryClient();
 
+// Inject auth state into the router context
+function App() {
+  const auth = useAuth()
+  return <RouterProvider router={router} context={{ auth }} />
+}
 
 // Create the main router object.
 const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
-  context: { client }
+  context: { 
+    client,
+    auth: undefined!,
+  }
 });
 
 
@@ -48,8 +60,10 @@ declare module '@tanstack/react-router' {
 // Render the app into the root element.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={ client }>
-      <RouterProvider router={ router } />
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={ client }>
+        <App />
+      </QueryClientProvider>
+    </AuthProvider>
   </StrictMode>
 );

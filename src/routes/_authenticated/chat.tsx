@@ -72,7 +72,7 @@ const searchSchema = v.fallback(
  * The route for the `/chat` endpoint.
  */
 export
-const Route = createFileRoute('/chat')({
+const Route = createFileRoute('/_authenticated/chat')({
   validateSearch: searchSchema,
   component: RouteComponent,
 });

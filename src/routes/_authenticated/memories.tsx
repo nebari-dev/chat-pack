@@ -29,7 +29,7 @@ const memoriesQuery = {
  * The route for the `/memories` endpoint.
  */
 export
-const Route = createFileRoute('/memories')({
+const Route = createFileRoute('/_authenticated/memories')({
   component: RouteComponent,
   loader: ({ context }) => {
     return context.client.fetchQuery(memoriesQuery);

@@ -11,6 +11,10 @@ import {
   toolCallSchema
 } from './tools';
 
+import {
+  pb
+} from './pb'
+
 
 /**
  * A schema for the Agno `RunStarted` event.
@@ -307,7 +311,8 @@ async function *createAgentRun(
   // Fetch the endpoint.
   const resp = await fetch(`/api/agents/${agent_id}/runs`, {
     method: 'POST',
-    body: fd
+    body: fd,
+    headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
   });
 
   // Guard against request failure.

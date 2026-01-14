@@ -18,7 +18,7 @@ import {
  * The route definition for the home page.
  */
 export
-const Route = createFileRoute('/')({
+const Route = createFileRoute('/_authenticated/')({
   component: RouteComponent
 });
 

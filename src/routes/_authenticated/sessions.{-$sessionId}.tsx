@@ -92,7 +92,7 @@ async function getSession(
  * The route for the `/sessions` endpoint.
  */
 export
-const Route = createFileRoute('/sessions/{-$sessionId}')({
+const Route = createFileRoute('/_authenticated/sessions/{-$sessionId}')({
   component: RouteComponent,
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,

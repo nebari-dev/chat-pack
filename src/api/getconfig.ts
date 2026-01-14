@@ -2,7 +2,9 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import * as v from 'valibot';
-
+import {
+  pb
+} from './pb'
 
 /**
  * The schema for the Agno config detail.
@@ -56,7 +58,9 @@ type Config = v.InferOutput<typeof configSchema>;
 export
 async function getConfig(): Promise<Config> {
   // Fetch the resource.
-  const resp = await fetch('/api/config');
+  const resp = await fetch('/api/config', {
+    headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
+  });
 
   // Guard against request failure.
   if (!resp.ok) {

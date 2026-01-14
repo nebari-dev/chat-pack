@@ -18,7 +18,7 @@ import {
  * The route for the `/knowledge` endpoint.
  */
 export
-const Route = createFileRoute('/knowledge')({
+const Route = createFileRoute('/_authenticated/knowledge')({
   component: RouteComponent
 });
 

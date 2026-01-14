@@ -69,7 +69,7 @@ function validateSearch(search: Record<string, unknown>) {
  * The route for the `/metrics` endpoint.
  */
 export
-const Route = createFileRoute('/metrics')({
+const Route = createFileRoute('/_authenticated/metrics')({
   component: RouteComponent,
   validateSearch: validateSearch,
   loaderDeps: ({ search }) => search,

@@ -13,8 +13,6 @@ import type {
   ReactNode
 } from 'react';
 
-import * as api from '@/api';
-
 import {
   ConfigProvider
 } from '@/config';
@@ -23,23 +21,28 @@ import {
   Sidebar
 } from '@/sidebar';
 
+import type {
+  RecordModel
+} from 'pocketbase';
+
+
+/**
+ * Auth state interface
+ */
+type AuthState = {
+  isAuthenticated: boolean;
+  user: RecordModel | null;
+  login: (options: {email: string, password: string}) => Promise<RecordModel | null>;
+  logout: () => void;
+}
 
 /**
  * The root route context.
  */
 type RouteContext = {
+  auth: AuthState;
   client: QueryClient;
 };
-
-
-/**
- * The query params for loading the Agno config.
- */
-const configQuery = {
-  queryKey: ['config'],
-  queryFn: api.getConfig,
-  staleTime: 'static'
-} as const;
 
 
 /**
@@ -48,9 +51,6 @@ const configQuery = {
 export
 const Route = createRootRouteWithContext<RouteContext>()({
   component: RouteComponent,
-  loader: ({ context }) => {
-    return context.client.ensureQueryData(configQuery);
-  }
 });
 
 
