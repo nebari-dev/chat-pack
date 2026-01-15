@@ -73,7 +73,7 @@ function UserInfo(props: UserInfo.Props): ReactNode {
             className='h-12 cursor-pointer w-full rounded-none'>
             <Avatar>
               <AvatarImage src={ user.avatar } />
-              <AvatarFallback>
+              <AvatarFallback className='bg-black text-muted'>
                 { userName.charAt(0).toUpperCase() }
               </AvatarFallback>
             </Avatar>
