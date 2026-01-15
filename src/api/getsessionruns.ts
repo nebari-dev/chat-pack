@@ -8,6 +8,10 @@ import {
 } from './pb'
 
 import {
+  runEventSchema
+} from './createagentrun';
+
+import {
   toolCallSchema
 } from './tools';
 
@@ -40,6 +44,7 @@ const sessionRunSchema = v.object({
   agent_id: v.string(),
   content: v.string(),
   created_at: v.string(),
+  events: v.nullish(v.array(runEventSchema)),
   metrics: sessionRunMetricsSchema,
   run_id: v.string(),
   run_input: v.string(),

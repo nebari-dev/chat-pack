@@ -377,7 +377,11 @@ namespace Private {
    */
   function createAssistantMessage(run: api.SessionRun): ThreadMessageLike {
     // Create the tool call parts.
-    const tools = (run.tools ?? []).map(createToolCallPart);
+    const tools = (run.events ?? []).filter(evt => {
+      return evt.event === 'ToolCallCompleted';
+    }).map(evt => {
+      return createToolCallPart(evt.tool);
+    });
 
     // Create the text part.
     const text = createTextPart(run.content);
@@ -447,10 +451,10 @@ namespace Private {
       break;
     case 'RunContentCompleted': // no need to handle this event
       break;
-    case 'RunCompleted': // no need to handle this event
+    case 'RunCompleted':
+      evtRunCompleted(evt, draft);
       break
-    case 'ToolCallStarted':
-      evtToolCallStarted(evt, draft);
+    case 'ToolCallStarted': // no need to handle this event
       break;
     case 'ToolCallCompleted':
       evtToolCallCompleted(evt, draft);
@@ -567,10 +571,33 @@ namespace Private {
   }
 
   /**
-   * Handle the `ToolCallStarted` Agno event.
+   * Handle the `RunCompleted` Agno event.
    */
-  function evtToolCallStarted(
-    evt: api.ToolCallStartedEvent, draft: Draft
+  function evtRunCompleted(evt: api.RunCompletedEvent, draft: Draft): void {
+    // Find the most recent assistant content.
+    const content = findLastAssistantContent(draft);
+
+    // Bail if the content was not found.
+    if (!content) {
+      return;
+    }
+
+    // Find the most recent text part.
+    const part = content.findLast(part => part.type === 'text');
+
+    // Update the text message part, or create a new one.
+    if (part) {
+      part.text = evt.content;
+    } else {
+      content.push({ type: 'text', text: evt.content });
+    }
+  }
+
+  /**
+   * Handle the `ToolCallCompleted` Agno event.
+   */
+  function evtToolCallCompleted(
+    evt: api.ToolCallCompletedEvent, draft: Draft
   ): void {
     // Find the most recent assistant content.
     const content = findLastAssistantContent(draft);
@@ -592,41 +619,9 @@ namespace Private {
       toolName: evt.tool.tool_name,
       args: evt.tool.tool_args as {},
       argsText: JSON.stringify(evt.tool.tool_args),
-      result: ''
+      result: evt.tool.result
     };
 
-    // Insert the tool part into the content.
-    //
-    // The cast is needed to prevent TS "excessively deep type insantiation"
-    // errors. Likely because `ToolCallMessagePart` recursively references
-    // the `ThreadMessage` type, but I'm not entirely sure right now.
-    (content as any[]).splice(i, 0, part);
-  }
-
-  /**
-   * Handle the `ToolCallCompleted` Agno event.
-   */
-  function evtToolCallCompleted(
-    evt: api.ToolCallCompletedEvent, draft: Draft
-  ): void {
-    // Find the most recent assistant content.
-    const content = findLastAssistantContent(draft);
-
-    // Bail if the content was not found.
-    if (!content) {
-      return;
-    }
-
-    // Find the matching tool call part.
-    const part = content.find(part =>
-      part.type === 'tool-call' && part.toolCallId === evt.tool.tool_call_id
-    );
-
-    // Log an error if the part is not found.
-    if (!part) {
-      console.error(`Assistant tool call not found: ${evt.tool.tool_call_id}`);
-      return;
-    }
 
     // We already know `type` is 'tool-call', but TS fails to fully narrow
     // the type in the call to `find()` above, and attempting to cast to
@@ -636,8 +631,12 @@ namespace Private {
       return;
     }
 
-    // Update the result of the tool call.
-    part.result = evt.tool.result;
+    // Insert the tool part into the content.
+    //
+    // The cast is needed to prevent TS "excessively deep type insantiation"
+    // errors. Likely because `ToolCallMessagePart` recursively references
+    // the `ThreadMessage` type, but I'm not entirely sure right now.
+    (content as any[]).splice(i, 0, part);
   }
 
   /**
