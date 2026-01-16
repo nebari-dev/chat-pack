@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, fix/typescript-build-errors]
+    branches: [main]
   pull_request:
     branches: [main]
 
