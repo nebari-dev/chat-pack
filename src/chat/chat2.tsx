@@ -6,12 +6,16 @@ import {
 } from 'react';
 
 import {
-  Thread
-} from '@/components/assistant-ui/thread';
+  ChatProvider
+} from './chatprovider';
 
 import {
-  AUIProvider
-} from './auiprovider';
+  ChatInput
+} from './chatinput';
+
+import {
+  ChatOutput
+} from './chatoutput';
 
 import {
   Header
@@ -19,17 +23,18 @@ import {
 
 
 /**
- * A component that renders the Assistant-UI chat panel.
+ * A component that renders the chat panel.
  */
 export
 function Chat(): ReactNode {
   return (
     <main className='grow flex flex-col'>
       <Header />
-      <div className='grow min-h-0'>
-        <AUIProvider>
-          <Thread />
-        </AUIProvider>
+      <div className='px-4 grow min-h-0 flex flex-col gap-6 overflow-y-auto'>
+        <ChatProvider>
+          <ChatOutput />
+          <ChatInput />
+        </ChatProvider>
       </div>
     </main>
   );

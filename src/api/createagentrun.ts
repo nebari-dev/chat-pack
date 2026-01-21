@@ -266,6 +266,27 @@ type ToolCallCompletedEvent = v.InferOutput<typeof toolCallCompletedEventSchema>
 
 
 /**
+ * A schema for the Agno `CustomeEvent` event.
+ */
+export
+const customEventSchema = v.looseObject({
+  event: v.literal('CustomEvent'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string()
+});
+
+
+/**
+ * A type alias for the Agno `CustomEvent` event.
+ */
+export
+type CustomEvent = v.InferOutput<typeof customEventSchema>;
+
+
+/**
  * A schema union of the Agno run events.
  */
 export
@@ -277,7 +298,8 @@ const runEventSchema = v.union([
   runContentCompletedEventSchema,
   runCompletedEventSchema,
   toolCallStartedEventSchema,
-  toolCallCompletedEventSchema
+  toolCallCompletedEventSchema,
+  customEventSchema
 ]);
 
 
