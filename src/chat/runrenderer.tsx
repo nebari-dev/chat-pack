@@ -16,7 +16,7 @@ import {
 } from './runinput';
 
 import {
-  RunOutputMemo
+  RunOutput
 } from './runoutput';
 
 
@@ -30,9 +30,9 @@ function RunRenderer(props: RunRenderer.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='mt-6 flex flex-col gap-6'>
+    <div className='mt-12 flex flex-col gap-6'>
       <RunInputMemo prompt={ run.run_input } />
-      <RunOutputMemo run={ run } />
+      <RunOutput events={ run.events ?? [] } />
     </div>
   );
 }

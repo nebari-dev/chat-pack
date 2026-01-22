@@ -15,7 +15,7 @@ import {
 
 
 /**
- * A react component that renders the chat output.
+ * A react component that renders the chat output for the session.
  */
 export
 function ChatOutput(): ReactNode {
@@ -23,11 +23,9 @@ function ChatOutput(): ReactNode {
   const { runs } = useChatRuntime();
 
   // Create the content for the runs.
-  const content = runs.map(run => {
-    return (
-      <RunRendererMemo key={ run.run_id } run={ run } />
-    );
-  });
+  const content = runs.map(run =>
+    <RunRendererMemo key={ run.run_id } run={ run } />
+  );
 
   // Return the rendered component.
   return (

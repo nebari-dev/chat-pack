@@ -82,7 +82,6 @@ async function getSessionRuns(session_id: string): Promise<SessionRun[]> {
   // Convert the response to JSON.
   const json = await resp.json();
 
-  console.log(json);
   // Parse the results.
   return v.parse(v.array(sessionRunSchema), json);
 }

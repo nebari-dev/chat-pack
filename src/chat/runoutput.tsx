@@ -5,11 +5,15 @@ import type {
   ReactNode
 } from 'react';
 
-import {
-  memo
-} from 'react';
-
 import * as api from '@/api';
+
+import {
+  ContentRenderer
+} from './contentrenderer';
+
+import {
+  ToolsRenderer
+} from './toolsrenderer';
 
 
 /**
@@ -18,12 +22,13 @@ import * as api from '@/api';
 export
 function RunOutput(props: RunOutput.Props): ReactNode {
   // Extract the props.
-  const { run } = props;
+  const { events } = props;
 
   // Return the rendered component.
   return (
-    <div>
-      { run.content }
+    <div className='flex flex-col gap-4'>
+      <ToolsRenderer events={ events } />
+      <ContentRenderer events={ events } />
     </div>
   );
 }
@@ -42,13 +47,6 @@ namespace RunOutput {
     /**
      * The session run for rendering the user input.
      */
-    readonly run: api.SessionRun;
+    readonly events: readonly api.RunEvent[];
   };
 }
-
-
-/**
- * A memoized version of `RunOutput`.
- */
-export
-const RunOutputMemo = memo(RunOutput);

@@ -218,6 +218,59 @@ type RunCompletedEvent = v.InferOutput<typeof runCompletedEventSchema>;
 
 
 /**
+ *
+ */
+export
+const modelRequestStartedEventSchema = v.object({
+  event: v.literal('ModelRequestStarted'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string(),
+  model: v.optional(v.string()),
+  model_provider: v.optional(v.string())
+});
+
+
+/**
+ *
+ */
+export
+type ModelRequestStartedEvent = v.InferOutput<typeof modelRequestStartedEventSchema>;
+
+
+/**
+ *
+ */
+export
+const modelRequestCompletedEventSchema = v.object({
+  event: v.literal('ModelRequestCompleted'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string(),
+  model: v.optional(v.string()),
+  model_provider: v.optional(v.string()),
+  input_tokens: v.optional(v.number()),
+  output_tokens: v.optional(v.number()),
+  total_tokens: v.optional(v.number()),
+  time_to_first_token: v.optional(v.number()),
+  reasoning_tokens: v.optional(v.number()),
+  cache_read_tokens: v.optional(v.number()),
+  cache_write_tokens: v.optional(v.number())
+});
+
+
+/**
+ *
+ */
+export
+type ModelRequestCompletedEvent = v.InferOutput<typeof modelRequestCompletedEventSchema>;
+
+
+/**
  * The common schema for tool call events.
  */
 const toolCallEventCommonSchema = v.object({
@@ -299,6 +352,8 @@ const runEventSchema = v.union([
   runCompletedEventSchema,
   toolCallStartedEventSchema,
   toolCallCompletedEventSchema,
+  modelRequestStartedEventSchema,
+  modelRequestCompletedEventSchema,
   customEventSchema
 ]);
 

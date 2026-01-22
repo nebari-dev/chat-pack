@@ -32,6 +32,9 @@ import {
 export
 function ChatInput(): ReactNode {
   // Fetch the chat runtime.
+  //
+  // TODO figure out a way to cache this so the input doesnt
+  // re-render on every assistant chunk update.
   const { onUserSubmit } = useChatRuntime();
 
   // Create the ref for the form element.

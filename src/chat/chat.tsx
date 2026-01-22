@@ -1,17 +1,21 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import {
-  type ReactNode
+import type {
+  ReactNode
 } from 'react';
 
 import {
-  Thread
-} from '@/components/assistant-ui/thread';
+  ChatInput
+} from './chatinput';
 
 import {
-  AUIProvider
-} from './auiprovider';
+  ChatOutput
+} from './chatoutput';
+
+import {
+  ChatRuntimeProvider
+} from './chatruntimeprovider';
 
 import {
   Header
@@ -19,17 +23,18 @@ import {
 
 
 /**
- * A component that renders the Assistant-UI chat panel.
+ * A component that renders the chat panel.
  */
 export
 function Chat(): ReactNode {
   return (
     <main className='grow flex flex-col'>
       <Header />
-      <div className='grow min-h-0'>
-        <AUIProvider>
-          <Thread />
-        </AUIProvider>
+      <div className='px-4 grow min-h-0 flex flex-col gap-6 overflow-y-auto'>
+        <ChatRuntimeProvider>
+          <ChatOutput />
+          <ChatInput />
+        </ChatRuntimeProvider>
       </div>
     </main>
   );
