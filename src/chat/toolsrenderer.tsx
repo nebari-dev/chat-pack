@@ -158,9 +158,10 @@ namespace Private {
         <Button
           size='sm'
           variant='outline'
+          aria-label='Open tools viewer'
           onClick={ handleClick }
           className={ cn(
-            'h-6 rounded-full text-xs bg-bg-neutral-dark cursor-pointer',
+            'h-6 rounded-md text-xs bg-bg-neutral-dark cursor-pointer',
             'hover:bg-bg-neutral-default shadow-none' ) }>
           { `Used ${count} Tool${count === 1 ? '' : 's'}` }
           <ChevronRight />
@@ -201,7 +202,7 @@ namespace Private {
       return null;
     }
 
-    // Cast the mime data to known type.
+    // Cast the mime data to the known type.
     const option = (mimeResult.data as any).option as EChartsOption;
 
     // Return the rendered component.
