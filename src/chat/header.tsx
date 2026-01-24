@@ -39,7 +39,7 @@ function Header(): ReactNode {
   return (
     <div className='px-4 py-2 flex flex-row border-b border-bd-neutral-default'>
       <Private.ChatSelect />
-      <Private.ChatSession />
+      {/*<Private.ChatSession />*/}
       <div className='grow' />
       <Private.NewChatLink />
     </div>
@@ -140,7 +140,7 @@ namespace Private {
         <SelectTrigger
           size='sm'
           className={ cn(
-            'w-[200px] rounded-sm shadow-none focus-visible:ring-0',
+            'w-[180px] rounded-sm shadow-none focus-visible:ring-0',
             'focus-visible:border-bd-brand-default data-[size=sm]:h-7'
           ) }>
           <SelectValue placeholder='Select...' />

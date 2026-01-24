@@ -14,8 +14,13 @@ import {
 } from './auiprovider';
 
 import {
+  Dashboard
+} from './dashboard';
+
+import {
   Header
 } from './header';
+
 
 /**
  * A component that renders the Assistant-UI chat panel.
@@ -23,12 +28,17 @@ import {
 export
 function Chat(): ReactNode {
   return (
-    <main className='grow flex flex-col'>
-      <Header />
-      <div className='grow min-h-0'>
-        <AUIProvider>
-          <Thread />
-        </AUIProvider>
+    <main className='grow flex flex-row'>
+      <div className='p-2 grow bg-bg-neutral-default overflow-auto'>
+        <Dashboard />
+      </div>
+      <div className='flex flex-col w-120 shrink-0 border-l'>
+        <Header />
+        <div className='grow min-h-0'>
+          <AUIProvider>
+            <Thread />
+          </AUIProvider>
+        </div>
       </div>
     </main>
   );

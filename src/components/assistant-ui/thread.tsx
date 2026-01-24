@@ -198,12 +198,12 @@ const ThreadSuggestions: FC = () => {
 const Composer: FC = () => {
   return (
     <div className="aui-composer-wrapper sticky bottom-0 mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 overflow-visible rounded-t-md bg-background pb-4 md:pb-6">
-      <ThreadScrollToBottom />
+      {/*<ThreadScrollToBottom />*/}
       <ComposerPrimitive.Root className="aui-composer-root group/input-group relative flex w-full flex-col rounded-md border border-input bg-background px-1 pt-2 shadow-sm transition-[color,box-shadow] outline-none has-[textarea:focus-visible]:border-bd-brand-default dark:bg-background">
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Send a message..."
-          className="aui-composer-input mb-1 max-h-32 min-h-16 w-full resize-none bg-transparent px-3.5 pt-1.5 pb-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-0"
+          className="aui-composer-input max-h-32 min-h-12 w-full resize-none bg-transparent px-3.5 pt-1.5 pb-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-0"
           rows={1}
           autoFocus
           aria-label="Message input"
@@ -216,7 +216,7 @@ const Composer: FC = () => {
 
 const ComposerAction: FC = () => {
   return (
-    <div className="aui-composer-action-wrapper relative mx-1 mt-2 mb-2 flex items-center justify-between">
+    <div className="aui-composer-action-wrapper relative mx-1 mb-2 flex items-center justify-between">
       <ComposerAddAttachment />
 
       <ThreadPrimitive.If running={false}>
