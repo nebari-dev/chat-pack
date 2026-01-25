@@ -94,7 +94,7 @@ namespace Private {
   /**
    * Hard-coded sensor ids for the demo.
    */
-  const SENSOR_IDS = ['EO1', 'E02', 'R1', 'R2'];
+  const SENSOR_IDS = ['EO1', 'EO2', 'R1', 'R2'];
 
   /**
    * Select a random sensor id.
