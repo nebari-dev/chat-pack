@@ -8,6 +8,10 @@ import type {
 } from 'react';
 
 import {
+  createRoot
+} from 'react-dom/client';
+
+import {
   useEffect, useRef
 } from 'react';
 
@@ -18,6 +22,10 @@ import {
 import {
   Card, CardContent, CardHeader, CardTitle
 } from '@/components/ui/card';
+
+import {
+  Table, TableBody, TableCell, TableRow
+} from '@/components/ui/table';
 
 import {
   cn
@@ -109,11 +117,88 @@ namespace Private {
   // TODO adjust this as needed to get an approximation of km radius needed.
   const INCURSION_RING_SIZE = 75;
 
+  // Create the offscreen state to render the tooltip component.
+  const tooltipDiv = document.createElement('div');
+  const tooltipRoot = createRoot(tooltipDiv);
+
+  /**
+   * A offscreen component that the renders the tooltip table for a track.
+   */
+  function TrackStateTooltipTable(props: TrackStateTooltipTable.Props): ReactNode {
+    // Extract the props.
+    const { state } = props;
+
+    // Compute the total velocity of the track.
+    const velocity = Math.sqrt(state.vx**2 + state.vy**2);
+
+    // Convert the velocity to a display string.
+    const velocityStr = velocity.toFixed(0) + ' m/s';
+
+    // Return the rendered component.
+    return (
+      <Table>
+        <TableBody>
+          <TableRow>
+            <TableCell>
+              Track ID
+            </TableCell>
+            <TableCell>
+              { state.track_id }
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              Velocity
+            </TableCell>
+            <TableCell>
+              { velocityStr }
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              Classification
+            </TableCell>
+            <TableCell>
+              { state.classification }
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>
+              Confidence
+            </TableCell>
+            <TableCell>
+              { state.track_confidence }
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    );
+  }
+
+  /**
+   * The namespace for the `TrackStateTooltipTable` statics.
+   */
+  namespace TrackStateTooltipTable {
+    /**
+     * A type alias for the `TrackStateTooltipTable` props.
+     */
+    export
+    type Props = {
+      /**
+       * The track state to render.
+       */
+      readonly state: TrackState;
+    };
+  }
+
   /**
    * The base option for the tracks chart.
    */
   const baseOption: echarts.EChartsOption = {
     animation: false,
+    tooltip: {
+      trigger: 'item'
+    },
     geo: {
       id: 'london',
       map: 'london',
@@ -121,6 +206,9 @@ namespace Private {
       center: [LONDON_CENTER_X, LONDON_CENTER_Y],
       itemStyle: {
         areaColor: '#e7e8ea'
+      },
+      tooltip: {
+        show: false
       }
     },
     dataset: {
@@ -162,6 +250,16 @@ namespace Private {
         encode: {
           lng: 'x',
           lat: 'y'
+        },
+        tooltip: {
+          show: true,
+          formatter: params => {
+            // Definitely not the most efficient way to do this tooltip.
+            // But it works for the demo, and gives us consistent styling.
+            const state = params.data as TrackState;
+            tooltipRoot.render(<TrackStateTooltipTable state={ state } />);
+            return tooltipDiv.innerHTML;
+          }
         }
       }
     ]
