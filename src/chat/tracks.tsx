@@ -107,7 +107,7 @@ namespace Private {
   // when zooming.
   //
   // TODO adjust this as needed to get an approximation of km radius needed.
-  const INCURSION_RING_SIZE = 100;
+  const INCURSION_RING_SIZE = 75;
 
   /**
    * The base option for the tracks chart.
@@ -245,7 +245,7 @@ namespace Private {
       };
 
       // Setup the polling interval.
-      const intervalId = setInterval(poller, 5000);
+      const intervalId = setInterval(poller, 2000);
 
       // Create the resize observer.
       const observer = new ResizeObserver(([entry]) => {

@@ -101,13 +101,11 @@ namespace Private {
   const statusColumn = columnHelper.accessor('status', {
     header: 'Status',
     cell: cellContext => {
-      const severity = cellContext.row.original.severity;
+      const label = cellContext.getValue().toUpperCase();
       const className = (
-        severity === 'high' ?
+        label === 'ACTIVE' ?
         'text-red-600' :
-        severity === 'med' ?
-        'text-orange-600' :
-        severity === 'low' ?
+        label === 'CLEARED' ?
         'text-green-600':
         ''
       );

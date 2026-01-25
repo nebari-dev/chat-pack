@@ -33,9 +33,9 @@ export
 function Dashboard(): ReactNode {
   return (
     <div className='h-full grid gap-2 grid-cols-7 grid-rows-[260px_1fr]'>
-      <FaultInjector />
       <Alerts className='col-span-2' />
       <SensorStatus className='col-span-4' />
+      <FaultInjector />
       <Tracks className='col-span-4' />
       <EventsLog className='col-span-3' />
     </div>

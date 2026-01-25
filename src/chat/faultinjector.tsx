@@ -6,8 +6,8 @@ import {
 } from 'react';
 
 import {
-  useCallback
-} from 'react';
+  pb
+} from '@/api/pb';
 
 import {
   Button
@@ -30,21 +30,6 @@ function FaultInjector(props: FaultInjector.Props): ReactNode {
   // Extract the props.
   const { className } = props;
 
-  // Create the handler to inject a latency fault.
-  const injectLatencyFault = useCallback(() => {
-    console.log('inject latency fault');
-  }, []);
-
-  // Create the handler to inject a packet fault.
-  const injectPacketFault = useCallback(() => {
-    console.log('inject packet fault');
-  }, []);
-
-  // Create the handler to inject a clock fault.
-  const injectClockFault = useCallback(() => {
-    console.log('inject clock fault');
-  }, []);
-
   // Return the rendered component.
   return (
     <Card className={ cn(
@@ -57,21 +42,26 @@ function FaultInjector(props: FaultInjector.Props): ReactNode {
       <CardContent className='px-4 grow min-h-0f flex flex-col gap-2'>
         <Button
           variant='destructive'
-          className='cursor-pointer bg-red-400'
-          onClick={ injectLatencyFault }>
+          className='cursor-pointer bg-red-700'
+          onClick={ Private.injectLatencyFault }>
           Latency Spike
         </Button>
         <Button
           variant='destructive'
-          className='cursor-pointer bg-red-400'
-          onClick={ injectPacketFault }>
+          className='cursor-pointer bg-red-700'
+          onClick={ Private.injectPacketFault }>
           Packet Loss
         </Button>
         <Button
           variant='destructive'
-          className='cursor-pointer bg-red-400'
-          onClick={ injectClockFault }>
+          className='cursor-pointer bg-red-700'
+          onClick={ Private.injectClockFault }>
           Clock Skew
+        </Button>
+        <Button
+          className='cursor-pointer bg-green-700'
+          onClick={ Private.clearFaults }>
+          Clear Faults
         </Button>
       </CardContent>
     </Card>
@@ -94,4 +84,90 @@ namespace FaultInjector {
      */
     readonly className?: string;
   };
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  /**
+   * Hard-coded sensor ids for the demo.
+   */
+  const SENSOR_IDS = ['EO1', 'E02', 'R1', 'R2'];
+
+  /**
+   * Select a random sensor id.
+   */
+  function randomSensorId(): string {
+    return SENSOR_IDS[Math.floor(Math.random() * SENSOR_IDS.length)];
+  }
+
+  /**
+   * A function to inject a latency sensor fault.
+   */
+  export
+  function injectLatencyFault(): void {
+    fetch('/api/api/fault/inject', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pb.authStore.token}`
+      },
+      body: JSON.stringify({
+        fault_type: 'latency_spike',
+        sensor_id: randomSensorId()
+      })
+    });
+  }
+
+  /**
+   * A function to inject a packet fault.
+   */
+  export
+  function injectPacketFault(): void {
+    fetch('/api/api/fault/inject', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pb.authStore.token}`
+      },
+      body: JSON.stringify({
+        fault_type: 'packet_loss',
+        sensor_id: randomSensorId()
+      })
+    });
+  }
+
+  /**
+   * A function inject a clock fault.
+   */
+  export
+  function injectClockFault(): void {
+    fetch('/api/api/fault/inject', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pb.authStore.token}`
+      },
+      body: JSON.stringify({
+        fault_type: 'timestamp_skew',
+        sensor_id: randomSensorId()
+      })
+    });
+  }
+
+  /**
+   * A function clear all sensor faults.
+   */
+  export
+  function clearFaults(): void {
+    fetch('/api/api/fault/clear-all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pb.authStore.token}`
+      }
+    });
+  }
 }
