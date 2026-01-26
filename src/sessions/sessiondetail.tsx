@@ -34,19 +34,24 @@ import {
 export
 function SessionDetail(props: SessionDetail.Props): ReactNode {
   // Extract the props.
-  const { detail } = props;
+  const { detail, runs } = props;
 
   // Create the state to track the active tab.
   const [tabId, setTabId] = useState<DetailHeader.TabId>('history');
-
-  // Lookup the content renderer for the selected tab id.
-  const ContentRenderer = Private.rendererMap[tabId];
 
   // Return the rendered component.
   return (
     <div className='border-l border-bd-neutral-default flex flex-col min-h-0'>
       <DetailHeader detail={ detail } tabId={ tabId } setTabId={ setTabId } />
-      <ContentRenderer detail={ detail } />
+      {
+        tabId === 'history' ?
+        <HistoryRenderer runs={ runs } /> :
+        tabId === 'metrics' ?
+        <MetricsRenderer detail={ detail } /> :
+        tabId === 'details' ?
+        <DetailsRenderer detail={ detail } /> :
+        null
+      }
     </div>
   );
 }
@@ -66,21 +71,10 @@ namespace SessionDetail {
      * The session detail data from the api.
      */
     readonly detail: api.SessionDetail;
+
+    /**
+     * The session runs from the api.
+     */
+    readonly runs: readonly api.SessionRun[];
   };
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * A mapping of content type to content renderer.
-   */
-  export
-  const rendererMap = {
-    'history': HistoryRenderer,
-    'metrics': MetricsRenderer,
-    'details': DetailsRenderer
-  } as const;
 }
