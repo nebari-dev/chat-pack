@@ -30,6 +30,10 @@ import {
   useChatConfig
 } from './chatconfigprovider';
 
+import {
+  useChatRuntime
+} from './chatruntimeprovider';
+
 
 /**
  * A react component that renders the header for the chat page.
@@ -159,18 +163,18 @@ namespace Private {
    */
   export
   function ChatSession(): ReactNode {
-    // Fetch the chat config.
-    const chatConfig = useChatConfig();
+    // Fetch the runs from the chat runtime.
+    const { runs } = useChatRuntime();
 
-    // Bail if the session id is not defined.
-    if (!chatConfig.sessionId) {
+    // Bail if there are no runs.
+    if (runs.length === 0) {
       return null;
     }
 
     // Return the rendered component.
     return (
       <div className='px-4 flex items-center'>
-        { chatConfig.sessionId }
+        { runs[0].run_input }
       </div>
     );
   }

@@ -33,8 +33,8 @@ export
 function Chat(): ReactNode {
   return (
     <main className='grow flex flex-col'>
-      <Header />
       <ChatRuntimeProvider>
+        <Header />
         <Private.Viewport>
           <ChatOutput />
           <ChatInput />
