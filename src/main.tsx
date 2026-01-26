@@ -31,6 +31,8 @@ import {
   routeTree
 } from './routeTree.gen';
 
+import 'katex/dist/katex.min.css';
+
 import './main.css';
 
 
