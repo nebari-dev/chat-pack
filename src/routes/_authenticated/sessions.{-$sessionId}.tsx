@@ -89,24 +89,6 @@ async function getSession(
 
 
 /**
- * A query function which fetches the runs for a specific session from the API.
- */
-async function getSessionRuns(
-  client: QueryClient,
-  sessionId: string
-): Promise<api.SessionRun[]> {
-  // Create the session query.
-  const sessionQuery = {
-    queryKey: ['session', sessionId],
-    queryFn: () => api.getSessionRuns(sessionId)
-  } as const;
-
-  // Fetch the query.
-  return await client.fetchQuery(sessionQuery);
-}
-
-
-/**
  * The route for the `/sessions` endpoint.
  */
 export
@@ -147,15 +129,8 @@ const Route = createFileRoute('/_authenticated/sessions/{-$sessionId}')({
       null
     );
 
-    // Fetch the session runs, if needed.
-    const runs = (
-      sessionId !== undefined ?
-      await getSessionRuns(client, sessionId) :
-      []
-    );
-
     // Return the loader data.
-    return { type, sessions, detail, runs };
+    return { type, sessions, detail };
   }
 });
 
@@ -168,7 +143,7 @@ function RouteComponent() {
   const router = useRouter();
 
   // Fetch the loader data.
-  const { type, sessions, detail, runs } = Route.useLoaderData();
+  const { type, sessions, detail } = Route.useLoaderData();
 
   // Create the handler for deleting sessions.
   const deleteSessions = async (options: api.deleteSessions.Options) => {
@@ -183,7 +158,7 @@ function RouteComponent() {
 
   // Create the sessions config.
   const config: SessionsConfig = {
-    type, sessions, detail, runs, deleteSessions
+    type, sessions, detail, deleteSessions
   };
 
   // Return the rendered component.

@@ -32,7 +32,7 @@ import {
 export
 function Sessions(): ReactNode {
   // Extract the detail and runs from the config.
-  const { detail, runs } = useSessionsConfig();
+  const { detail } = useSessionsConfig();
 
   // Return the rendered component.
   return (
@@ -47,11 +47,7 @@ function Sessions(): ReactNode {
       </div>
       <div className={ `grow grid grid-flow-col auto-cols-fr min-h-0` }>
         <SessionsTable />
-        {
-          detail ?
-          <SessionDetail detail={ detail } runs={ runs } /> :
-          null
-        }
+        { detail ? <SessionDetail detail={ detail } /> : null }
       </div>
     </main>
   );

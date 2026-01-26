@@ -31,6 +31,10 @@ import {
   EChartRenderer
 } from '@/components/charts/echartrenderer';
 
+import {
+  HITLRenderer
+} from '@/components/hitl/hitlrenderer';
+
 
 /**
  * A react component that renders the tool executions for a run.
@@ -60,7 +64,11 @@ function ToolsRenderer(props: ToolsRenderer.Props): ReactNode {
     <div className='flex flex-col gap-4'>
       <Private.ToolCountRenderer toolEvents={ toolEvents } />
       { content }
-      {/*{ paused ? <HITLRenderer event={ paused } /> : null }*/}
+      {
+        pausedEvent ?
+        <HITLRenderer pausedEvent={ pausedEvent } /> :
+        null
+      }
     </div>
   );
 }
@@ -116,8 +124,15 @@ namespace Private {
     // Filter for the completed tool events.
     const toolEvents = events.filter(e => e.event === 'ToolCallCompleted');
 
+    // Filter the paused event, if there is one at the end of the stream.
+    const pausedEvent = (
+      events.length > 0 && events[events.length - 1].event === 'RunPaused' ?
+      events[events.length - 1] :
+      null
+    ) as api.RunPausedEvent | null;
+
     // Return the filtered results.
-    return { toolEvents, pausedEvent: null };
+    return { toolEvents, pausedEvent };
   }
 
   /**

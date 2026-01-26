@@ -6,12 +6,12 @@ import type {
 } from 'react';
 
 import {
-  RunRendererMemo
-} from '@/components/chatrun/runrenderer';
-
-import {
   useChatRuntime
 } from './chatruntimeprovider';
+
+import {
+  RunRendererMemo
+} from './runrenderer';
 
 
 /**

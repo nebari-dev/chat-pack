@@ -8,8 +8,8 @@ import type {
 import * as api from '@/api';
 
 import {
-  RunRendererMemo
-} from '@/components/chatrun/runrenderer';
+  MarkdownRenderer
+} from '@/components/markdown/markdownrenderer';
 
 
 /**
@@ -18,12 +18,40 @@ import {
 export
 function HistoryRenderer(props: HistoryRenderer.Props): ReactNode {
   // Extract the props.
-  const { runs } = props;
+  const { detail } = props;
 
-  // Create the content for the runs.
-  const content = runs.map(run =>
-    <RunRendererMemo key={ run.run_id } run={ run } />
-  );
+  // TODO handle more than just agent history.
+  if (detail.type !== 'agent') {
+    return null;
+  }
+
+  // Create the content from the chat history.
+  //
+  // This renders from the chat history, which is a dumbed-down version of
+  // the entire chat. That's what we want here. It should be fast to render,
+  // skip all the tool calls, etc. Just a quick summary. The user can always
+  // re-open the session to get the full-monty.
+  const content = detail.chat_history.map((msg, i) => {
+    if (msg.role === 'user') {
+      return (
+        <div
+          key={ `user-${i}` }
+          className='flex flex-row justify-end'>
+          <div className='px-4 py-2 rounded-md bg-bg-neutral-dark'>
+            { msg.content ?? '' }
+          </div>
+        </div>
+      );
+    }
+    if (msg.role === 'assistant') {
+      return (
+        <MarkdownRenderer
+          key={ `assistant-${i}` }
+          content={ msg.content ?? '' } />
+      );
+    }
+    return null;
+  });
 
   // Return the rendered component.
   return (
@@ -45,8 +73,8 @@ namespace HistoryRenderer {
   export
   type Props = {
     /**
-     * The session session runs from the api.
+     * The session detail data from the api.
      */
-    readonly runs: readonly api.SessionRun[];
+    readonly detail: api.SessionDetail;
   };
 }

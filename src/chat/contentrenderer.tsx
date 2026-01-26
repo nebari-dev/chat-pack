@@ -5,15 +5,11 @@ import type {
   ReactNode
 } from 'react';
 
-import rehypeKatex from 'rehype-katex';
-
-import remarkGfm from 'remark-gfm';
-
-import remarkMath from 'remark-math';
-
-import Markdown from 'react-markdown';
-
 import * as api from '@/api';
+
+import {
+  MarkdownRenderer
+} from '@/components/markdown/markdownrenderer';
 
 
 /**
@@ -33,19 +29,7 @@ function ContentRenderer(props: ContentRenderer.Props): ReactNode {
   }
 
   // Return the rendered component.
-  //
-  // The markdown elements are formatted in `main.css` based on the
-  // `ot-ChatPlusPlus-markdown` class name. Do not remove it.
-  return (
-    <div className='ot-ChatPlusPlus-markdown'>
-      <Markdown
-        remarkPlugins={ [remarkGfm, remarkMath] }
-        rehypePlugins={ [rehypeKatex] }
-        components={ Private.markdownComponents }>
-        { content }
-      </Markdown>
-    </div>
-  );
+  return <MarkdownRenderer content={ content } />;
 }
 
 
@@ -92,18 +76,4 @@ namespace Private {
       return content + (e.event === 'RunContent' ? e.content : '');
     }, '');
   }
-
-  /**
-   * The custom markdown components.
-   *
-   * These handle the tags that can't be handled solely in `main.css`.
-   */
-  export
-  const markdownComponents = {
-    table: ({ ...props }) => (
-      <div className='my-6 w-full border rounded-md overflow-x-auto'>
-        <table { ...props } />
-      </div>
-    )
-  } as const;
 }

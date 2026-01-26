@@ -34,7 +34,7 @@ import {
 export
 function SessionDetail(props: SessionDetail.Props): ReactNode {
   // Extract the props.
-  const { detail, runs } = props;
+  const { detail } = props;
 
   // Create the state to track the active tab.
   const [tabId, setTabId] = useState<DetailHeader.TabId>('history');
@@ -45,7 +45,7 @@ function SessionDetail(props: SessionDetail.Props): ReactNode {
       <DetailHeader detail={ detail } tabId={ tabId } setTabId={ setTabId } />
       {
         tabId === 'history' ?
-        <HistoryRenderer runs={ runs } /> :
+        <HistoryRenderer detail={ detail } /> :
         tabId === 'metrics' ?
         <MetricsRenderer detail={ detail } /> :
         tabId === 'details' ?
@@ -71,10 +71,5 @@ namespace SessionDetail {
      * The session detail data from the api.
      */
     readonly detail: api.SessionDetail;
-
-    /**
-     * The session runs from the api.
-     */
-    readonly runs: readonly api.SessionRun[];
   };
 }
