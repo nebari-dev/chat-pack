@@ -218,7 +218,7 @@ type RunCompletedEvent = v.InferOutput<typeof runCompletedEventSchema>;
 
 
 /**
- *
+ * A schema for the Agno `ModelRequestStarted` event.
  */
 export
 const modelRequestStartedEventSchema = v.object({
@@ -234,14 +234,14 @@ const modelRequestStartedEventSchema = v.object({
 
 
 /**
- *
+ * A type alias for the Agno `ModelRequestStarted` event.
  */
 export
 type ModelRequestStartedEvent = v.InferOutput<typeof modelRequestStartedEventSchema>;
 
 
 /**
- *
+ * A schema for the Agno `ModelRequestCompleted` event.
  */
 export
 const modelRequestCompletedEventSchema = v.object({
@@ -264,7 +264,7 @@ const modelRequestCompletedEventSchema = v.object({
 
 
 /**
- *
+ * A type alias for the Agno `ModelRequestCompleted` event.
  */
 export
 type ModelRequestCompletedEvent = v.InferOutput<typeof modelRequestCompletedEventSchema>;
@@ -319,6 +319,24 @@ type ToolCallCompletedEvent = v.InferOutput<typeof toolCallCompletedEventSchema>
 
 
 /**
+ * A schema for the Agno `ToolCallError` event.
+ */
+export
+const toolCallErrorEventSchema = v.object({
+  ...toolCallEventCommonSchema.entries,
+  event: v.literal('ToolCallError'),
+  error: v.string()
+});
+
+
+/**
+ * A type alias for the Agno `ToolCallError` event.
+ */
+export
+type ToolCallErrorEvent = v.InferOutput<typeof toolCallErrorEventSchema>;
+
+
+/**
  * A schema for the Agno `CustomeEvent` event.
  */
 export
@@ -352,6 +370,7 @@ const runEventSchema = v.union([
   runCompletedEventSchema,
   toolCallStartedEventSchema,
   toolCallCompletedEventSchema,
+  toolCallErrorEventSchema,
   modelRequestStartedEventSchema,
   modelRequestCompletedEventSchema,
   customEventSchema
