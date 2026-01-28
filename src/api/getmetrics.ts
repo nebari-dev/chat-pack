@@ -84,7 +84,7 @@ type MetricsRow = v.InferOutput<typeof metricsRowSchema>;
 export
 const metricsSchema = v.object({
   metrics: v.array(metricsRowSchema),
-  updated_at: v.string(),
+  updated_at: v.nullish(v.string()),
 });
 
 

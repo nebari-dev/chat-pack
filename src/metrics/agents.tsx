@@ -45,6 +45,31 @@ function AgentRunsChart(): ReactNode {
       trigger: 'axis',
       axisPointer: {
         type: 'shadow'
+      },
+      formatter: (params: any) => {
+        // Fetch the callback params.
+        const cbp = params[0];
+
+        // Create the date for fetching the short month string.
+        const date = new Date(year, month, 0);
+
+        // Convert the date the shot month string.
+        const monthStr = date.toLocaleString('default', { month: 'short' });
+
+        // Return the tooltip HMTL.
+        return (`
+          <div class='grid gap-x-4 auto-cols-max'>
+            <div class='col-span-2 font-semibold'>
+              ${cbp.axisValue} ${monthStr} ${year}
+            </div>
+            <div>
+              ${cbp.marker} Agent Runs
+            </div>
+            <div class='font-semibold'>
+              ${cbp.value}
+            </div>
+          </div>
+        `);
       }
     },
     grid: {
@@ -107,6 +132,31 @@ function AgentSessionsChart(): ReactNode {
       trigger: 'axis',
       axisPointer: {
         type: 'shadow'
+      },
+      formatter: (params: any) => {
+        // Fetch the callback params.
+        const cbp = params[0];
+
+        // Create the date for fetching the short month string.
+        const date = new Date(year, month, 0);
+
+        // Convert the date the shot month string.
+        const monthStr = date.toLocaleString('default', { month: 'short' });
+
+        // Return the tooltip HMTL.
+        return (`
+          <div class='grid gap-x-4 auto-cols-max'>
+            <div class='col-span-2 font-semibold'>
+              ${cbp.axisValue} ${monthStr} ${year}
+            </div>
+            <div>
+              ${cbp.marker} Agent Sessions
+            </div>
+            <div class='font-semibold'>
+              ${cbp.value}
+            </div>
+          </div>
+        `);
       }
     },
     grid: {
