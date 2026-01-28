@@ -6,7 +6,8 @@ import type {
 } from 'echarts';
 
 import {
-  ChevronRight, Hammer
+  ChevronRight,
+  Hammer
 } from 'lucide-react';
 
 import type {
@@ -63,16 +64,16 @@ function ToolsRenderer(props: ToolsRenderer.Props): ReactNode {
   // Dispatch the tool events to their renderers.
   const content = toolEvents.map(evt =>
     <Private.ToolRendererDispatchMemo
-       key={ evt.tool.tool_call_id }
-       event={ evt } />
-   );
+      key={ evt.tool.tool_call_id }
+      event={ evt } />
+  );
 
   // Create the HTIL content, if needed.
   const hitl = (
     pausedEvent ?
-    <Private.HITLWrapper pausedEvent={ pausedEvent } /> :
-    null
-   );
+      <Private.HITLWrapper pausedEvent={ pausedEvent } /> :
+      null
+  );
 
   // Return the rendered component.
   return (
@@ -81,7 +82,7 @@ function ToolsRenderer(props: ToolsRenderer.Props): ReactNode {
       { content }
       { hitl }
     </div>
-   );
+  );
 }
 
 
@@ -138,8 +139,8 @@ namespace Private {
     // Filter the paused event, if there is one at the end of the stream.
     const pausedEvent = (
       events.length > 0 && events[events.length - 1].event === 'RunPaused' ?
-      events[events.length - 1] :
-      null
+        events[events.length - 1] :
+        null
     ) as api.RunPausedEvent | null;
 
     // Return the filtered results.
@@ -182,11 +183,11 @@ namespace Private {
     return (
       <div>
         <Button
-                    size='sm'
-                    variant='outline'
-                    aria-label='Open tools viewer'
-                    onClick={ handleClick }
-                    className={ cn(
+          size='sm'
+          variant='outline'
+          aria-label='Open tools viewer'
+          onClick={ handleClick }
+          className={ cn(
             'h-6 rounded-md text-xs bg-bg-neutral-dark cursor-pointer',
             'hover:bg-bg-neutral-default shadow-none'
           ) }>
@@ -195,7 +196,7 @@ namespace Private {
           <ChevronRight />
         </Button>
       </div>
-     );
+    );
   }
 
   /**
@@ -247,7 +248,7 @@ namespace Private {
       <EChartRenderer
         option={ option }
         className='h-120 p-4 border rounded-md' />
-     );
+    );
   }
 
   /**
@@ -292,17 +293,17 @@ namespace Private {
     try {
       result = JSON.parse(result);
     } catch {
-       // Attempt to fix Python string representation
-       try {
-         const fixed = result
-           .replace(/'/g, '"')
-           .replace(/None/g, 'null')
-           .replace(/True/g, 'true')
-           .replace(/False/g, 'false');
-         result = JSON.parse(fixed);
-       } catch {
-         return null;
-       }
+      // Attempt to fix Python string representation
+      try {
+        const fixed = result
+          .replace(/'/g, '"')
+          .replace(/None/g, 'null')
+          .replace(/True/g, 'true')
+          .replace(/False/g, 'false');
+        result = JSON.parse(fixed);
+      } catch {
+        return null;
+      }
     }
 
     // Bail if the result is empty.
@@ -321,7 +322,7 @@ namespace Private {
     }
 
     // Bail if the mime type is not a string.
-    if (typeof result.mime_type !== 'string') {
+    if (typeof (result as any).mime_type !== 'string') {
       return null;
     }
 
@@ -330,7 +331,10 @@ namespace Private {
       return null;
     }
 
-    return { mimeType: result.mime_type, data: result.data };
+    return {
+      mimeType: (result as any).mime_type,
+      data: (result as any).data
+    };
   }
 
   /**
@@ -372,6 +376,6 @@ namespace Private {
       <HITLRenderer
         pausedEvent={ pausedEvent }
         submitExecutions={ handleSubmitExecutions } />
-     );
+    );
   }
 }
