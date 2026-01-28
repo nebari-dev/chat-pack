@@ -45,12 +45,12 @@ import {
   Button
 } from '@/components/ui/button';
 import { DownloadIcon, InfoIcon, DatabaseIcon } from 'lucide-react';
-import { useThreadRuntime } from '@assistant-ui/react';
+import { useChatRuntime } from '../../chat/chatruntimeprovider';
 
 
 export
 function ScheduleRenderer({ result }: ScheduleRenderer.Props): ReactNode {
-  const runtime = useThreadRuntime();
+  const runtime = useChatRuntime();
 
   // Defensive coding: Ensure data exists
   if (!result || !result.data) {
@@ -134,7 +134,7 @@ function ScheduleRenderer({ result }: ScheduleRenderer.Props): ReactNode {
                   <DownloadIcon className="mr-2 h-4 w-4" />
                   Export CSV
               </Button>
-              <Button size="sm" onClick={() => runtime.append({ role: 'user', content: [{ type: 'text', text: 'Save this schedule to RosarioSIS' }] })}>
+              <Button size="sm" onClick={() => runtime.onUserSubmit('Save this schedule to RosarioSIS')}>
                   <DatabaseIcon className="mr-2 h-4 w-4" />
                   Save to RosarioSIS
               </Button>

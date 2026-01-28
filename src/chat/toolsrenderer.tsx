@@ -182,11 +182,11 @@ namespace Private {
     return (
       <div>
         <Button
-          size='sm'
-          variant='outline'
-          aria-label='Open tools viewer'
-          onClick={ handleClick }
-          className={ cn(
+                    size='sm'
+                    variant='outline'
+                    aria-label='Open tools viewer'
+                    onClick={ handleClick }
+                    className={ cn(
             'h-6 rounded-md text-xs bg-bg-neutral-dark cursor-pointer',
             'hover:bg-bg-neutral-default shadow-none'
           ) }>
@@ -292,7 +292,17 @@ namespace Private {
     try {
       result = JSON.parse(result);
     } catch {
-      return null;
+       // Attempt to fix Python string representation
+       try {
+         const fixed = result
+           .replace(/'/g, '"')
+           .replace(/None/g, 'null')
+           .replace(/True/g, 'true')
+           .replace(/False/g, 'false');
+         result = JSON.parse(fixed);
+       } catch {
+         return null;
+       }
     }
 
     // Bail if the result is empty.
