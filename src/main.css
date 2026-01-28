@@ -139,6 +139,19 @@ body {
   }
 }
 
+
+/**
+ * This rule aligns the keys to the top of the row in the JSON tool
+ * renderers when using the `json-edit-react` library.
+ *
+ * It overrides the default in the library which aligns the keys in the
+ * vertical center, which appears confusing when looking at it.
+ */
+.jer-value-main-row {
+  align-items: start;
+}
+
+
 @theme {
   /* Background Colors */
   --color-bg-neutral-dark: #EDEDED;

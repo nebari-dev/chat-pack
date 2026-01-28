@@ -6,7 +6,11 @@ import type {
 } from 'echarts';
 
 import {
-  ChevronRight, Hammer
+  JsonEditor
+} from 'json-edit-react';
+
+import {
+  Hammer
 } from 'lucide-react';
 
 import type {
@@ -20,10 +24,6 @@ import {
 import * as api from '@/api';
 
 import {
-  Button
-} from '@/components/ui/button';
-
-import {
   cn
 } from '@/lib/utils';
 
@@ -34,6 +34,10 @@ import {
 import {
   HITLRenderer
 } from '@/components/hitl/hitlrenderer';
+
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger
+} from '@/components/ui/accordion';
 
 import {
   useChatRuntime
@@ -73,7 +77,7 @@ function ToolsRenderer(props: ToolsRenderer.Props): ReactNode {
   // Return the rendered component.
   return (
     <div className='flex flex-col gap-4'>
-      <Private.ToolCountRenderer toolEvents={ toolEvents } />
+      <Private.ToolAccordion toolEvents={ toolEvents } />
       { content }
       { hitl }
     </div>
@@ -143,10 +147,10 @@ namespace Private {
   }
 
   /**
-   * A type alias for the `ToolCountRenderer` props.
+   * A type alias for the `ToolAccordion` props.
    */
   export
-  type ToolCountRendererProps = {
+  type ToolAccordionProps = {
     /**
      * The completed tool call events from the event stream.
      */
@@ -154,10 +158,12 @@ namespace Private {
   };
 
   /**
-   * A react component that renders the tool count button.
+   * A react component that renders the tool accordion.
+   *
+   * This component allows the user to inspect the raw JSON tool data.
    */
   export
-  function ToolCountRenderer(props: ToolCountRendererProps): ReactNode {
+  function ToolAccordion(props: ToolAccordionProps): ReactNode {
     // Extract the props.
     const { toolEvents } = props;
 
@@ -169,27 +175,41 @@ namespace Private {
       return null;
     }
 
-    // Create the handler to open the tools viewer.
-    const handleClick = () => {
-      console.log('open tools viewer');
-    };
+    // Create the JSON viewer content for the tool calls.
+    const content = toolEvents.map(evt => {
+      return (
+        <div key={ evt.tool.tool_call_id } className='flex flex-col gap-4'>
+          <div className='font-semibold'>
+            { evt.tool.tool_name.toUpperCase() }
+          </div>
+          <JsonEditor
+            data={ evt.tool }
+            maxWidth='100%'
+            viewOnly={ true }
+            rootFontSize={ 12 }
+            collapse={ true } />
+        </div>
+      );
+    });
 
     // Return the rendered component.
     return (
-      <div>
-        <Button
-          size='sm'
-          variant='outline'
-          aria-label='Open tools viewer'
-          onClick={ handleClick }
-          className={ cn(
-            'h-6 rounded-md text-xs bg-bg-neutral-dark cursor-pointer',
-            'hover:bg-bg-neutral-default shadow-none' ) }>
-          <Hammer />
-          { `${count} TOOL${count === 1 ? '' : 'S'} CALLED` }
-          <ChevronRight />
-        </Button>
-      </div>
+      <Accordion type='single' collapsible>
+        <AccordionItem value='tools'>
+          <AccordionTrigger
+            className={ cn(
+              'px-2 h-6 items-center flex-0 text-nowrap text-xs rounded-md',
+              'hover:no-underline cursor-pointer bg-bg-neutral-dark',
+              'hover:bg-bg-neutral-default' ) }>
+            <Hammer size={ 16 } />
+            { `${count} TOOL${count === 1 ? '' : 'S'} CALLED` }
+          </AccordionTrigger>
+          <AccordionContent
+            className='mt-4 p-4 flex flex-col gap-6 border rounded-md'>
+            { content }
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     );
   }
 

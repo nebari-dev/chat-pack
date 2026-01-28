@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  JsonEditor
+} from 'json-edit-react';
+
 import type {
   ChangeEvent, FormEvent, ReactNode
 } from 'react';
@@ -10,14 +14,6 @@ import {
 } from 'react';
 
 import * as api from '@/api';
-
-import {
-  KVTable
-} from '@/components/table/kvtable';
-
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger
-} from '@/components/ui/accordion';
 
 import {
   Button
@@ -234,20 +230,16 @@ namespace Private {
           </CardAction>
         </CardHeader>
         <CardContent className='px-0'>
-          <Accordion
-            type='single'
-            collapsible
-            defaultValue='tool-args'
-            className='px-4 border rounded-md bg-bg-neutral-default'>
-            <AccordionItem value='tool-args'>
-              <AccordionTrigger className='py-2 hover:no-underline'>
-                ARGUMENTS
-              </AccordionTrigger>
-              <AccordionContent>
-                <KVTable data={ execution.tool_args } />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <div className='flex flex-col gap-2'>
+            <div className='text-xs font-semibold'>
+              ARGUMENTS
+            </div>
+            <JsonEditor
+              data={ execution.tool_args }
+              maxWidth='100%'
+              viewOnly={ true }
+              rootFontSize={ 12 } />
+          </div>
         </CardContent>
       </Card>
     );
