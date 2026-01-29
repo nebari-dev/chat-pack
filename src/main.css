@@ -29,6 +29,131 @@ body {
   flex-direction: row;
 }
 
+.ot-ChatPlusPlus-markdown {
+  h1 {
+    margin: 0 0 2rem 0;
+    font-weight: 800;
+    font-size: var(--text-4xl);
+    line-height: var(--text-4xl--line-height);
+  }
+
+  h2 {
+    margin: 2rem 0 1rem 0;
+    font-weight: 600;
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  h3 {
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+    font-size: var(--text-2xl);
+    line-height: var(--text-2xl--line-height);
+  }
+
+  h4 {
+    margin: 1.5rem 0 1rem 0;
+    font-weight: 600;
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+  }
+
+  h5 {
+    margin: 1rem 0 1rem 0;
+    font-weight: 600;
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+  }
+
+  h6 {
+    margin: 1rem 0 1rem 0;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 1.25rem 0 1.25rem 0;
+  }
+
+  a {
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--color-bd-brand-default);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  blockquote {
+    padding-left: 2rem;
+    font-style: italic;
+    border-left: 1px solid var(--border);
+  }
+
+  ul {
+    margin: 1rem 0 1rem 2rem;
+    list-style: disc;
+  }
+
+  ol {
+    margin: 1rem 0 1rem 2rem;
+    list-style: decimal;
+  }
+
+  li {
+    margin-top: 0.5rem;
+  }
+
+  hr {
+    margin: 1rem 0 1rem 0;
+  }
+
+  pre {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    padding: 1rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead {
+    background: var(--color-bg-neutral-dark);
+  }
+
+  th {
+    text-align: left;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+  }
+
+  tr {
+    border-top: 1px solid var(--border);
+  }
+
+  td {
+    text-align: left;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+  }
+}
+
+
+/**
+ * This rule aligns the keys to the top of the row in the JSON tool
+ * renderers when using the `json-edit-react` library.
+ *
+ * It overrides the default in the library which aligns the keys in the
+ * vertical center, which appears confusing when looking at it.
+ */
+.ot-ChatPlusPlus-jer {
+  .jer-value-main-row {
+    align-items: start;
+  }
+}
+
+
 @theme {
   /* Background Colors */
   --color-bg-neutral-dark: #EDEDED;

@@ -2,8 +2,8 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  useAssistantApi
-} from '@assistant-ui/react';
+  JsonEditor
+} from 'json-edit-react';
 
 import type {
   ChangeEvent, FormEvent, ReactNode
@@ -14,14 +14,6 @@ import {
 } from 'react';
 
 import * as api from '@/api';
-
-import {
-  KVTable
-} from '@/components/table/kvtable';
-
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger
-} from '@/components/ui/accordion';
 
 import {
   Button
@@ -50,10 +42,7 @@ import {
 export
 function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   // Extract the data from the props.
-  const { agentId, runId, sessionId, tools } = props.result.data;
-
-  // Fetch the assistant API.
-  const assistantApi = useAssistantApi();
+  const { pausedEvent, submitExecutions } = props;
 
   // Create the state to hold the executions.
   //
@@ -61,7 +50,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   // `tools` does not change for the lifetime of the renderer.
   const [executions, setExecutions] = (
     useState<Record<string, api.ToolExecution>>(() => {
-      return tools.reduce((obj, item) => (
+      return pausedEvent.tools.reduce((obj, item) => (
         { ...obj, [item.tool_call_id]: item }
       ), {});
     })
@@ -78,14 +67,12 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
     evt.preventDefault();
     evt.stopPropagation();
 
-    // Resume the tool call with the user input result.
-    assistantApi.part().resumeToolCall({
-      agentId, runId, sessionId, tools: Object.values(executions)
-    });
+    // Submit the executions for continuing the run.
+    submitExecutions(Object.values(executions));
   };
 
   // Render the tools based on their interaction requirements.
-  const content = tools.map(tool => {
+  const content = pausedEvent.tools.map(tool => {
     // Render a confirmation tool.
     if (tool.requires_confirmation) {
       return (
@@ -114,9 +101,6 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
       );
     }
 
-    // The AUI messages hook should already skip non-HITL tools.
-    console.error('Unhandled tool execution:', tool);
-
     // Skip unhandled tools.
     return null;
   });
@@ -125,7 +109,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
   return (
     <div className='p-4 border rounded-md flex flex-col gap-4'>
       <form
-        id={ `form-${runId}` }
+        id={ `form-${pausedEvent.run_id}` }
         onSubmit={ handleSubmit }>
         <FieldGroup className='gap-4'>
           { content }
@@ -133,7 +117,7 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
       </form>
       <Button
         type='submit'
-        form={ `form-${runId}` }
+        form={ `form-${pausedEvent.run_id}` }
         variant='outline'
         className='rounded-md'>
         Submit
@@ -149,50 +133,19 @@ function HITLRenderer(props: HITLRenderer.Props): ReactNode {
 export
 namespace HITLRenderer {
   /**
-   * A type alias for a HITL mime result.
-   */
-  export
-  type MimeResult = {
-    /**
-     * The known mime type for the result.
-     */
-    readonly mimeType: 'application/vnd.openteams-agno-hitl';
-
-    /**
-     * The data payload for the result.
-     */
-    readonly data: {
-      /**
-       * The agent id for the run.
-       */
-      readonly agentId: string;
-
-      /**
-       * The unique run id.
-       */
-      readonly runId: string;
-
-      /**
-       * The unique id of the session for the run.
-       */
-      readonly sessionId: string;
-
-      /**
-       * The run paused event for handling HITL tools.
-       */
-      readonly tools: readonly api.ToolExecution[];
-    };
-  };
-
-  /**
    * A type alias for the `HITLRenderer` props.
    */
   export
   type Props = {
     /**
-     * The tool call result for rendering the HITL.
+     * The api paused event for the HITL interaction.
      */
-    readonly result: MimeResult;
+    readonly pausedEvent: api.RunPausedEvent;
+
+    /**
+     * The callback to handle the submit of the tool calls.
+     */
+    readonly submitExecutions: (exc: readonly api.ToolExecution[]) => void;
   };
 }
 
@@ -277,20 +230,17 @@ namespace Private {
           </CardAction>
         </CardHeader>
         <CardContent className='px-0'>
-          <Accordion
-            type='single'
-            collapsible
-            defaultValue='tool-args'
-            className='px-4 border rounded-md bg-bg-neutral-default'>
-            <AccordionItem value='tool-args'>
-              <AccordionTrigger className='py-2 hover:no-underline'>
-                ARGUMENTS
-              </AccordionTrigger>
-              <AccordionContent>
-                <KVTable data={ execution.tool_args } />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <div className='flex flex-col gap-2'>
+            <div className='text-xs font-semibold'>
+              ARGUMENTS
+            </div>
+            <JsonEditor
+              className='ot-ChatPlusPlus-jer'
+              data={ execution.tool_args }
+              maxWidth='100%'
+              viewOnly={ true }
+              rootFontSize={ 12 } />
+          </div>
         </CardContent>
       </Card>
     );

@@ -13,14 +13,12 @@ import {
 
 
 /**
- * A react component that renders an EChart tool result.
- *
- * This renders the 'application/vnd.openteams-echart' mime type.
+ * A react component that renders an EChart.
  */
 export
 function EChartRenderer(props: EChartRenderer.Props): ReactNode {
   // Extract the echart option.
-  const option = props.result.data.option;
+  const { option, className } = props;
 
   // Create the ref the chart node.
   const ref = useRef<HTMLDivElement>(null);
@@ -56,9 +54,7 @@ function EChartRenderer(props: EChartRenderer.Props): ReactNode {
   }, [option]);
 
   // Return the rendered component.
-  return (
-    <div  ref={ ref } className='h-120 mb-4 border p-4 rounded-md' />
-  );
+  return <div ref={ ref } className={ className } />;
 }
 
 
@@ -68,34 +64,18 @@ function EChartRenderer(props: EChartRenderer.Props): ReactNode {
 export
 namespace EChartRenderer {
   /**
-   * A type alias for an echart mime result.
-   */
-  export
-  type MimeResult = {
-    /**
-     * The known mime type for the result.
-     */
-    readonly mimeType: 'application/vnd.openteams-echart';
-
-    /**
-     * The data payload for the result.
-     */
-    readonly data: {
-      /**
-       * The option object for configuring the echart.
-       */
-      readonly option: echarts.EChartsOption;
-    };
-  };
-
-  /**
    * A type alias for the `EChartRenderer` props.
    */
   export
   type Props = {
     /**
-     * The tool call result for rendering an echart.
+     * The option object for configuring the echart.
      */
-    readonly result: MimeResult;
+    readonly option: echarts.EChartsOption;
+
+    /**
+     * The classname for configuring the echart div.
+     */
+    readonly className?: string;
   };
 }

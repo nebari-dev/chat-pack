@@ -31,7 +31,7 @@ import {
  */
 export
 function Sessions(): ReactNode {
-  // Extract the detail from the config.
+  // Extract the detail and runs from the config.
   const { detail } = useSessionsConfig();
 
   // Return the rendered component.

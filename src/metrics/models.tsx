@@ -30,7 +30,22 @@ function ModelRunsChart(): ReactNode {
   // Create the echarts option.
   const option: ChartCard.Option = {
     tooltip: {
-      trigger: 'item'
+      trigger: 'item',
+      formatter: (params: any) => {
+        return (`
+          <div class='grid gap-x-4 auto-cols-max'>
+            <div class='col-span-2 font-semibold'>
+              Model Runs
+            </div>
+            <div>
+              ${params.marker} ${params.name}
+            </div>
+            <div class='font-semibold'>
+              ${params.value}
+            </div>
+          </div>
+        `);
+      }
     },
     grid: {
       top: 16,
@@ -40,7 +55,7 @@ function ModelRunsChart(): ReactNode {
     },
     series: [
       {
-        name: 'Runs',
+        name: 'Model Runs',
         type: 'pie',
         radius: ['40%', '70%'],
         data: runs,

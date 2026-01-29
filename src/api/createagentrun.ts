@@ -218,6 +218,59 @@ type RunCompletedEvent = v.InferOutput<typeof runCompletedEventSchema>;
 
 
 /**
+ * A schema for the Agno `ModelRequestStarted` event.
+ */
+export
+const modelRequestStartedEventSchema = v.object({
+  event: v.literal('ModelRequestStarted'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string(),
+  model: v.optional(v.string()),
+  model_provider: v.optional(v.string())
+});
+
+
+/**
+ * A type alias for the Agno `ModelRequestStarted` event.
+ */
+export
+type ModelRequestStartedEvent = v.InferOutput<typeof modelRequestStartedEventSchema>;
+
+
+/**
+ * A schema for the Agno `ModelRequestCompleted` event.
+ */
+export
+const modelRequestCompletedEventSchema = v.object({
+  event: v.literal('ModelRequestCompleted'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string(),
+  model: v.optional(v.string()),
+  model_provider: v.optional(v.string()),
+  input_tokens: v.optional(v.number()),
+  output_tokens: v.optional(v.number()),
+  total_tokens: v.optional(v.number()),
+  time_to_first_token: v.optional(v.number()),
+  reasoning_tokens: v.optional(v.number()),
+  cache_read_tokens: v.optional(v.number()),
+  cache_write_tokens: v.optional(v.number())
+});
+
+
+/**
+ * A type alias for the Agno `ModelRequestCompleted` event.
+ */
+export
+type ModelRequestCompletedEvent = v.InferOutput<typeof modelRequestCompletedEventSchema>;
+
+
+/**
  * The common schema for tool call events.
  */
 const toolCallEventCommonSchema = v.object({
@@ -266,6 +319,45 @@ type ToolCallCompletedEvent = v.InferOutput<typeof toolCallCompletedEventSchema>
 
 
 /**
+ * A schema for the Agno `ToolCallError` event.
+ */
+export
+const toolCallErrorEventSchema = v.object({
+  ...toolCallEventCommonSchema.entries,
+  event: v.literal('ToolCallError'),
+  error: v.string()
+});
+
+
+/**
+ * A type alias for the Agno `ToolCallError` event.
+ */
+export
+type ToolCallErrorEvent = v.InferOutput<typeof toolCallErrorEventSchema>;
+
+
+/**
+ * A schema for the Agno `CustomeEvent` event.
+ */
+export
+const customEventSchema = v.looseObject({
+  event: v.literal('CustomEvent'),
+  agent_id: v.string(),
+  agent_name: v.string(),
+  created_at: v.number(),
+  run_id: v.string(),
+  session_id: v.string()
+});
+
+
+/**
+ * A type alias for the Agno `CustomEvent` event.
+ */
+export
+type CustomEvent = v.InferOutput<typeof customEventSchema>;
+
+
+/**
  * A schema union of the Agno run events.
  */
 export
@@ -277,7 +369,11 @@ const runEventSchema = v.union([
   runContentCompletedEventSchema,
   runCompletedEventSchema,
   toolCallStartedEventSchema,
-  toolCallCompletedEventSchema
+  toolCallCompletedEventSchema,
+  toolCallErrorEventSchema,
+  modelRequestStartedEventSchema,
+  modelRequestCompletedEventSchema,
+  customEventSchema
 ]);
 
 

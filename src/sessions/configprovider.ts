@@ -26,7 +26,7 @@ type SessionsConfig = {
   /**
    * The details for the currently selected session.
    *
-   * This will be null if there is no selected session.
+   * This will be `null` if there is no selected session.
    */
   readonly detail: api.SessionDetail | null;
 

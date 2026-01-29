@@ -66,8 +66,8 @@ const metricsRowSchema = v.object({
   token_metrics: tokenMetricsSchema,
   model_metrics: v.array(modelMetricSchema),
   date: v.string(),
-  created_at: v.number(),
-  updated_at: v.number(),
+  created_at: v.string(),
+  updated_at: v.string(),
 });
 
 
@@ -84,7 +84,7 @@ type MetricsRow = v.InferOutput<typeof metricsRowSchema>;
 export
 const metricsSchema = v.object({
   metrics: v.array(metricsRowSchema),
-  updated_at: v.nullable(v.string()),
+  updated_at: v.nullish(v.string()),
 });
 
 

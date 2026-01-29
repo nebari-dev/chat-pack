@@ -61,6 +61,20 @@ type SessionRun = v.InferOutput<typeof sessionRunSchema>;
 
 
 /**
+ * A schema for the Agno session runs.
+ */
+export
+const sessionRunsSchema = v.array(sessionRunSchema);
+
+
+/**
+ * A type alias for the Agno session runs.
+ */
+export
+type SessionRuns = v.InferOutput<typeof sessionRunsSchema>;
+
+
+/**
  * A function which gets the runs for a session.
  *
  * @param session_id - The unique id of the session.
@@ -68,7 +82,7 @@ type SessionRun = v.InferOutput<typeof sessionRunSchema>;
  * @returns A promise that resolves with the session runs.
  */
 export
-async function getSessionRuns(session_id: string): Promise<SessionRun[]> {
+async function getSessionRuns(session_id: string): Promise<SessionRuns> {
   // Make the fetch request.
   const resp = await fetch(`/api/sessions/${session_id}/runs`, {
     headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
@@ -83,5 +97,5 @@ async function getSessionRuns(session_id: string): Promise<SessionRun[]> {
   const json = await resp.json();
 
   // Parse the results.
-  return v.parse(v.array(sessionRunSchema), json);
+  return v.parse(sessionRunsSchema, json);
 }

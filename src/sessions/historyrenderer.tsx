@@ -2,22 +2,14 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import type {
-  ThreadMessageLike
-} from '@assistant-ui/react';
-
-import {
-  AssistantRuntimeProvider, useExternalStoreRuntime
-} from '@assistant-ui/react';
-
-import type {
   ReactNode
 } from 'react';
 
 import * as api from '@/api';
 
 import {
-  ThreadHistory
-} from '@/components/assistant-ui/thread';
+  MarkdownRenderer
+} from '@/components/markdown/markdownrenderer';
 
 
 /**
@@ -28,29 +20,43 @@ function HistoryRenderer(props: HistoryRenderer.Props): ReactNode {
   // Extract the props.
   const { detail } = props;
 
-  // TODO support team and workflow sessions.
+  // TODO handle more than just agent history.
   if (detail.type !== 'agent') {
     return null;
   }
 
-  // Convert the messages to AUI messages.
-  const messages = Private.convertMessages(detail.chat_history);
-
-  // Create the AUI runtime.
-  const runtime = useExternalStoreRuntime({
-    messages,
-    isLoading: false,
-    isRunning: false,
-    onNew: async () => {},
-    convertMessage: m => m
+  // Create the content from the chat history.
+  //
+  // This renders from the chat history, which is a dumbed-down version of
+  // the entire chat. That's what we want here. It should be fast to render,
+  // skip all the tool calls, etc. Just a quick summary. The user can always
+  // re-open the session to get the full-monty.
+  const content = detail.chat_history.map((msg, i) => {
+    if (msg.role === 'user') {
+      return (
+        <div
+          key={ `user-${i}` }
+          className='flex flex-row justify-end'>
+          <div className='px-4 py-2 rounded-md bg-bg-neutral-dark'>
+            { msg.content ?? '' }
+          </div>
+        </div>
+      );
+    }
+    if (msg.role === 'assistant') {
+      return (
+        <MarkdownRenderer
+          key={ `assistant-${i}` }
+          content={ msg.content ?? '' } />
+      );
+    }
+    return null;
   });
 
   // Return the rendered component.
   return (
-    <div className='grow min-h-0'>
-      <AssistantRuntimeProvider runtime={ runtime }>
-        <ThreadHistory />
-      </AssistantRuntimeProvider>
+    <div className='p-4 grow min-h-0 overflow-y-auto'>
+      { content }
     </div>
   );
 }
@@ -71,30 +77,4 @@ namespace HistoryRenderer {
      */
     readonly detail: api.SessionDetail;
   };
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * Convert chat history messages to AUI messages.
-   */
-  export
-  function convertMessages(msgs: api.ChatHistoryMessage[]): ThreadMessageLike[] {
-    // Create the array to hold the converted messages.
-    const result: ThreadMessageLike[] = [];
-
-    // Convert the messages, skipping those with empty content. Those messages
-    // are typically tool calls, which we don't need to show in the history.
-    for (const { role, content } of msgs) {
-      if (content) {
-        result.push({ role, content });
-      }
-    }
-
-    // Return the converted messages.
-    return result;
-  }
 }
