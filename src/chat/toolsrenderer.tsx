@@ -224,29 +224,24 @@ namespace Private {
       return null;
     }
 
-    // Bail if mime type is not known.
-    if (
-      mimeResult.mimeType !== 'application/vnd.openteams-echart' &&
-      mimeResult.mimeType !== 'application/vnd.openteams-schedule'
-    ) {
-      return null;
+    switch (mimeResult.mimeType) {
+      case 'application/vnd.openteams-schedule':
+        return <ScheduleRenderer result={ mimeResult as any } />;
+      
+      case 'application/vnd.openteams-echart':
+        // Cast the mime data to the known type.
+        const option = (mimeResult.data as any).option as EChartsOption;
+
+        // Return the rendered component.
+        return (
+          <EChartRenderer
+            option={ option }
+            className='h-120 p-4 border rounded-md' />
+        );
+
+      default:
+        return null;
     }
-
-    if (mimeResult.mimeType === 'application/vnd.openteams-schedule') {
-      return (
-        <ScheduleRenderer result={ mimeResult as any } />
-      );
-    }
-
-    // Cast the mime data to the known type.
-    const option = (mimeResult.data as any).option as EChartsOption;
-
-    // Return the rendered component.
-    return (
-      <EChartRenderer
-        option={ option }
-        className='h-120 p-4 border rounded-md' />
-    );
   }
 
   /**
@@ -277,68 +272,35 @@ namespace Private {
    */
   export
   function castResult(result: unknown): MimeResult | null {
-    // Bail if the result is empty.
-    if (!result) {
+    // Bail if the result is empty or not a string.
+    if (!result || typeof result !== 'string') {
       return null;
     }
 
-    // Bail is the result type is not a string.
-    if (typeof result !== 'string') {
-      return null;
-    }
-
-    // Try to parse the string as JSON.
+    let parsed: any;
     try {
-      result = JSON.parse(result);
+      parsed = JSON.parse(result);
     } catch {
-      // Attempt to fix Python string representation
-      try {
-        const fixed = result
-          .replace(/'/g, '"')
-          .replace(/None/g, 'null')
-          .replace(/True/g, 'true')
-          .replace(/False/g, 'false');
-        result = JSON.parse(fixed);
-      } catch {
-        return null;
-      }
-    }
-
-    // Bail if the result is empty.
-    if (!result) {
       return null;
     }
 
-    // Bail if the result is not an object.
-    if (typeof result !== 'object') {
+    // Bail if the result is empty or not an object.
+    if (!parsed || typeof parsed !== 'object') {
       return null;
     }
 
-    // Bail if the result does not have a mime type.
-    if (!('mime_type' in result)) {
-      // Support camelCase for updated agents
-      if ('mimeType' in result) {
-         return {
-           mimeType: (result as any).mimeType,
-           data: (result as any).data
-         };
-      }
-      return null;
-    }
+    // Check for mime type (support both camelCase and snake_case)
+    const mimeType = parsed.mimeType || parsed.mime_type;
+    const data = parsed.data;
 
-    // Bail if the mime type is not a string.
-    if (typeof (result as any).mime_type !== 'string') {
-      return null;
-    }
-
-    // Bail if the result does not have data.
-    if (!('data' in result)) {
+    // Bail if the mime type is not a string or data is missing.
+    if (typeof mimeType !== 'string' || !data) {
       return null;
     }
 
     return {
-      mimeType: (result as any).mime_type,
-      data: (result as any).data
+      mimeType,
+      data
     };
   }
 
