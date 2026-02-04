@@ -1,9 +1,11 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2025-present, OpenTeams Inc.
+|----------------------------------------------------------------------------*/
 import type {
   ReactNode
 } from "react";
 
 import {
-  useMemo,
   useRef,
   useState
 } from "react";
@@ -20,90 +22,131 @@ import {
   File as FileIcon
 } from "lucide-react";
 
+import {
+  cn
+} from '@/lib/utils';
 
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / Math.pow(1024, i);
-  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
-}
 
 export
 function AddFileModal(options: AddFileModal.Options): ReactNode {
   // Expand the options
-  const { isOpen, onClose, title, onItemsChange } = options;
+  const { isOpen, onClose, onContinue } = options;
 
+  // File Items
   const [items, setItems] = useState<AddFileModal.Item[]>([]);
+  // Url Items
   const [url, setUrl] = useState<string>("");
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const headerTitle = useMemo(
-    () => title ?? "Add files",
-    [title]
-  );
-
   if (!isOpen) return null;
 
-  const emit = (next: AddFileModal.Item[]) => {
-    setItems(next);
-    onItemsChange?.(next);
-  };
-
-  const addFiles = (files: FileList | null) => {
+  function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
 
-    const next: AddFileModal.Item[] = [
-      ...items,
-      ...Array.from(files).map((f) => ({
-        id: crypto.randomUUID(),
-        type: "file" as const,
-        name: f.name,
-        size: f.size,
-        file: f,
-      })),
-    ];
+    const newItems: AddFileModal.Item[] = Array.from(files).map((f) => ({
+      id: crypto.randomUUID(),
+      type: "file" as const,
+      name: f.name,
+      size: f.size,
+      file: f,
+    }));
 
-    emit(next);
-  };
+    setItems((prev) => [...prev, ...newItems]);
+  }
 
-  const addUrl = () => {
+  function addUrl() {
     const trimmed = url.trim();
     if (!trimmed) return;
 
-    const next: AddFileModal.Item[] = [
-      ...items,
-      {
-        id: crypto.randomUUID(),
-        type: "url",
-        name: trimmed,
-        url: trimmed,
-      },
-    ];
+    const newItem: AddFileModal.Item = {
+      id: crypto.randomUUID(),
+      type: "url",
+      name: trimmed,
+      url: trimmed,
+    };
 
-    emit(next);
+    setItems((prev) => [...prev, newItem]);
     setUrl("");
-  };
+  }
 
-  const removeItem = (id: string) => {
-    emit(items.filter((it) => it.id !== id));
-  };
+  function removeItem(id: string) {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  }
 
+  function handleSubmit(items: AddFileModal.Item[]) {
+    onContinue(items);
+    handleClose();
+  }
+
+  function handleClose() {
+    setItems([]);
+    setUrl("");
+    onClose();
+  }
+
+  // returns the added items list
+  function itemRows(): ReactNode {
+    if (items.length === 0) {
+      return (
+        <div className="h-full flex items-center justify-center text-sm text-gray-500">
+          No items yet
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col">
+        {items.map((it) => (
+          <div
+            key={it.id}
+            className="flex items-center justify-between gap-3 px-3 py-2 border-b last:border-b-0"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              {it.type === "file" ? (
+                <FileIcon className="h-4 w-4 text-gray-600" />
+              ) : (
+                <Link2 className="h-4 w-4 text-gray-600" />
+              )}
+
+              <div className="min-w-0">
+                <div className="text-sm font-medium truncate">{it.name}</div>
+                <div className="text-xs text-gray-500 truncate">
+                  {it.type === "file" ? `${it.size} bytes` : it.url}
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => removeItem(it.id)}
+              className="h-8 w-8 p-0 flex items-center justify-center"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+
+  // Return a rendered component
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
       <div
         className="relative z-10 w-[min(960px,calc(100vw-2rem))] rounded-2xl bg-white shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 px-6 py-4 border-b">
-          <h3 className="text-sm font-semibold truncate">{headerTitle}</h3>
+          <h3 className="text-sm font-semibold truncate">Add files</h3>
 
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
             className="h-8 w-8 p-0 flex items-center justify-center"
           >
             <X className="h-4 w-4" />
@@ -113,7 +156,12 @@ function AddFileModal(options: AddFileModal.Options): ReactNode {
         <div className="p-6 flex gap-6 h-[70vh]">
           <div className="flex-1 flex flex-col gap-4 min-w-0">
             <div
-              className="flex-1 min-h-[220px] rounded-xl border border-dashed border-gray-300 bg-gray-50 flex flex-col items-center justify-center gap-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100"
+              className={ cn(
+                'flex flex-1 flex-col items-center justify-center gap-2',
+                'rounded-xl border border-dashed border-gray-300 bg-gray-50',
+                'text-sm text-gray-600',
+                'cursor-pointer hover:bg-gray-100'
+              )}
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
@@ -145,7 +193,10 @@ function AddFileModal(options: AddFileModal.Options): ReactNode {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://example.com/file.pdf"
-                  className="flex-1 h-9 rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-gray-200"
+                  className={ cn(
+                    'flex-1 h-9 px-3 text-sm',
+                    'rounded-md border border-gray-300 focus:ring-2 focus:ring-gray-200'
+                  )}
                 />
                 <Button type="button" variant="outline" onClick={addUrl}>
                   Add
@@ -161,48 +212,7 @@ function AddFileModal(options: AddFileModal.Options): ReactNode {
             </div>
 
             <div className="mt-3 flex-1 overflow-auto rounded-lg border border-gray-100">
-              {items.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-sm text-gray-500">
-                  No items yet
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  {items.map((it) => (
-                    <div
-                      key={it.id}
-                      className="flex items-center justify-between gap-3 px-3 py-2 border-b last:border-b-0"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        {it.type === "file" ? (
-                          <FileIcon className="h-4 w-4 text-gray-600" />
-                        ) : (
-                          <Link2 className="h-4 w-4 text-gray-600" />
-                        )}
-
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">
-                            {it.name}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {it.type === "file"
-                              ? formatBytes(it.size ?? 0)
-                              : it.url}
-                          </div>
-                        </div>
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => removeItem(it.id)}
-                        className="h-8 w-8 p-0 flex items-center justify-center"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {itemRows()}
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
@@ -211,7 +221,7 @@ function AddFileModal(options: AddFileModal.Options): ReactNode {
               </Button>
               <Button
                 type="button"
-                onClick={() => options.onContinue?.(items)}
+                onClick={() => handleSubmit(items)}
               >
                 Continue
               </Button>
@@ -223,8 +233,14 @@ function AddFileModal(options: AddFileModal.Options): ReactNode {
   );
 }
 
-export namespace AddFileModal {
-  export type Item =
+export
+namespace AddFileModal {
+
+  /**
+   * Type def for the uploaded files and urls
+   */
+  export
+  type Item =
     | {
         id: string;
         type: "file";
@@ -240,10 +256,23 @@ export namespace AddFileModal {
       };
 
   export type Options = {
+    /**
+     * Is the modal open
+     */
     isOpen: boolean;
+
+    /**
+     * Callback fror close button
+     */
     onClose: () => void;
-    title?: string;
-    onItemsChange?: (items: Item[]) => void;
-    onContinue?: (items: Item[]) => void;
+
+    /**
+     * Callback to submit the data to the backend
+     * 
+     * @param urls 
+     * @returns 
+     */
+    onContinue: (items: Item[]) => void;
   };
 }
+

@@ -6,7 +6,7 @@ import type {
 } from 'react';
 
 import {
-  useState, useRef 
+  useState
 } from 'react'
 
 import {
@@ -87,7 +87,6 @@ function Knowledge(): ReactNode {
               if (item.type === "file") uploadKnowledgeItem({ file: item.file });
               else uploadKnowledgeItem({ url: item.url });
             }
-            setIsFileOpen(false);
           }}
         />
 
@@ -105,10 +104,6 @@ function Knowledge(): ReactNode {
         <AddTextModal
           isOpen={isTextOpen}
           onClose={() => setIsTextOpen(false)}
-          onBack={() => {
-            setIsTextOpen(false);
-            setIsSelectOpen(true);
-          }}
           onSubmit={async (values) => {
             const metadataRecord = Object.fromEntries(
               values.metadata.map((m) => [m.key, m.value])
@@ -125,8 +120,6 @@ function Knowledge(): ReactNode {
                   ? JSON.stringify(metadataRecord)
                   : null,
             });
-
-            setIsTextOpen(false);
           }}
         />
       </div>

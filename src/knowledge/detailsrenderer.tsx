@@ -2,168 +2,180 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import type {
-  ReactNode
-} from 'react';
+  ReactNode,
+  FormEvent
+} from "react";
 
 import {
-  useState
-} from 'react';
-
-import * as api from '@/api';
-
-import {
-  useForm,
-} from "@tanstack/react-form"
-
-import {
-  Button
-} from "@/components/ui/button"
-
-import {
-  Input
-} from "@/components/ui/input"
-
-import {
-  Label
-} from "@/components/ui/label"
+  useState,
+  useEffect
+} from "react";
 
 import {
   Link
-} from '@tanstack/react-router';
+} from "@tanstack/react-router";
+
+import {
+  useKnowledgeConfig
+} from "./configprovider";
+
+import * as api from "@/api";
+
+import {
+  Button
+} from "@/components/ui/button";
+
+import {
+  Input
+} from "@/components/ui/input";
+
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
+} from "@/components/ui/field";
 
 import {
   X
-} from "lucide-react"
+} from "lucide-react";
 
-import { useKnowledgeConfig } from './configprovider';
 
-export
-function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
-  // getch the props
+/**
+ * A detrails renderer for the knowledge item
+ * 
+ * @param props 
+ * @returns ReactNode component for the knowledge item details
+ */
+export function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
+  // Extract props
   const { detail } = props;
 
-  const {updateKnowledgeItem, deleteKnowledgeItem} = useKnowledgeConfig();
+  // get the support functions from the config
+  const {
+    updateKnowledgeItem,
+    deleteKnowledgeItem
+  } = useKnowledgeConfig();
 
-  // Form definition 
-  // TODO: Update the form from the Tanstack form to something similar to (HITL) form
-  // Metadata field is pretty complex and should be simplified.
-  const form = useForm({
-    defaultValues: {
-      name: detail.name,
-      description: detail.description,
-      metadata: detail.metadata,
-      content_type: detail.type,
-      created_at: detail.created_at,
-      updated_at: detail.updated_at,
-    },
-    onSubmit: async ({ value }) => {
-      console.log(value)
-      const knowledge_id = detail.id
-      
-      updateKnowledgeItem({
-        knowledge_id,
-        body: {
-          name: value.name,
-          description: value.description,
-          metadata: value.metadata ?? {},
-          reader_id: "",
-        },
-      });
-    },
-  })
+  // Form State
+  const [name, setName] = useState<string>(detail.name ?? "");
+  const [description, setDescription] = useState<string>(detail.description ?? "");
+  const [metadata, setMetadata] = useState<Record<string, string>>(
+    (detail.metadata as Record<string, string> | null) ?? {}
+  );
 
-  // variables for the metadata object breakdown
-  const [metadataKey, setMetadataKey] = useState("")
-  const [metadataVal, setMetadataVal] = useState("")
+  // Metadata input helpers
+  const [metadataKey, setMetadataKey] = useState<string>("");
+  const [metadataVal, setMetadataVal] = useState<string>("");
 
+  // Function that adds metadata to the object
+  function handleAddMetadata() {
+    const key = metadataKey.trim();
+    const val = metadataVal.trim();
+    if (!key) return;
+
+    setMetadata((prev) => ({
+      ...prev,
+      [key]: val,
+    }));
+
+    setMetadataKey("");
+    setMetadataVal("");
+  }
+
+  // removes metadata key/value pair from the object
+  function handleRemoveMetadata(keyToRemove: string) {
+    setMetadata((prev) => {
+      const next = { ...prev };
+      delete next[keyToRemove];
+      return next;
+    });
+  }
+
+  // Push form data to the bakcend with a URLForm type
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const knowledge_id = detail.id;
+
+    updateKnowledgeItem({
+      knowledge_id,
+      body: {
+        name: name.trim(),
+        description: description.trim(),
+        metadata: metadata ?? {},
+        reader_id: "",
+      },
+    });
+  }
+
+  // Updates detail fields when knowledge item changes
+  useEffect(() => {
+    setName(detail.name ?? "");
+    setDescription(detail.description ?? "");
+    setMetadata(((detail.metadata as Record<string, string> | null) ?? {}) );
+    setMetadataKey("");
+    setMetadataVal("");
+  }, [detail.id]);
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        form.handleSubmit()
-      }}
-      className="h-full flex flex-col justify-between"
-    >
-      <div className="space-y-6 p-6">
-        <form.Field
-          name="name"
-          children={(field) => (
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
-            </div>
-          )}
-        />
+    <form onSubmit={handleSubmit} className="h-full flex flex-col justify-between">
+      <div className="p-6">
+        <FieldSet>
+          <FieldLegend>Details</FieldLegend>
 
-        <form.Field
-          name="description"
-          children={(field) => (
-            <div className="space-y-2">
-              <Label>
-                <span>Description</span>
-                <span className="text-muted-foreground">(optional)</span>
-              </Label>
-              <Input
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                className="min-h-[110px]"
-                placeholder="Add a description..."
-              />
-            </div>
-          )}
-        />
+          <FieldGroup>
+            <Field orientation="vertical">
+              <FieldTitle>Name</FieldTitle>
+              <FieldContent>
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
+              </FieldContent>
+            </Field>
 
-        <form.Field
-          name="metadata"
-          children={(field) => {
-            const meta = field.state.value ?? {}
+            <Field orientation="vertical">
+              <FieldTitle>
+                Description <span className="text-muted-foreground font-normal">(optional)</span>
+              </FieldTitle>
+              <FieldContent>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add a description..."
+                  className="min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring/20 resize-none"
+                />
+              </FieldContent>
+            </Field>
 
-            const handleAddMetadata = () => {
-              const key = metadataKey.trim()
-              if (!key) return
+            <Field orientation="vertical">
+              <FieldTitle>Metadata</FieldTitle>
 
-              field.setValue((prev) => ({
-                ...(prev ?? {}),
-                [key]: metadataVal,
-              }))
-
-              setMetadataKey("")
-              setMetadataVal("")
-            }
-
-            // Removes the mmetatags for a knowledge item
-            const handleRemoveMetadata = (keyToRemove: string) => {
-              field.setValue((prev) => {
-                const next = { ...(prev ?? {}) }
-                delete next[keyToRemove]
-                return next
-              })
-            }
-
-            return (
-              <div className="space-y-2">
-                <Label>Metadata</Label>
-
+              <FieldContent>
                 <div className="flex gap-2">
-                  <Input placeholder="Key" value={metadataKey} onChange={(e) => setMetadataKey(e.target.value)} />
-                  <Input placeholder="Value" value={metadataVal} onChange={(e) => setMetadataVal(e.target.value)} />
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddMetadata}
-                  >
+                  <Input
+                    placeholder="Key"
+                    value={metadataKey}
+                    onChange={(e) => setMetadataKey(e.target.value)}
+                  />
+                  <Input
+                    placeholder="Value"
+                    value={metadataVal}
+                    onChange={(e) => setMetadataVal(e.target.value)}
+                  />
+                  <Button type="button" variant="outline" onClick={handleAddMetadata}>
                     +
                   </Button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(meta).map(([k, v]) => (
+                <FieldDescription>
+                  Add optional metadata tags for this knowledge item.
+                </FieldDescription>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {Object.entries(metadata).map(([k, v]) => (
                     <div
                       key={k}
                       className="h-8 inline-flex items-center gap-2 rounded-full border px-3 text-sm"
@@ -177,70 +189,66 @@ function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
                         type="button"
                         onClick={() => handleRemoveMetadata(k)}
                         className="inline-flex h-5 w-5 items-center justify-center rounded-full hover:bg-muted"
-                        aria-label={`Remove ${k}`}
                       >
-                        <X className="h-3 w-3"/>
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   ))}
                 </div>
-              </div>
-            )
-          }}
-        />
+              </FieldContent>
+            </Field>
 
+            <Field orientation="vertical">
+              <FieldTitle>Content Type</FieldTitle>
+              <FieldContent>
+                <div className="rounded-md bg-muted px-3 py-2 text-sm font-medium">
+                  {detail.type?.toUpperCase?.()}
+                </div>
+              </FieldContent>
+            </Field>
 
-        <div className="space-y-2">
-          <Label>Content Type</Label>
-          <div className="rounded-md bg-muted px-3 py-2 text-sm font-medium">
-            {detail.type.toUpperCase()}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Last Updated</Label>
-          <div className="rounded-md bg-muted px-3 py-2 text-sm font-medium">
-            {detail.updated_at}
-          </div>
-        </div>
+            <Field orientation="vertical">
+              <FieldTitle>Last Updated</FieldTitle>
+              <FieldContent>
+                <div className="rounded-md bg-muted px-3 py-2 text-sm font-medium">
+                  {detail.updated_at}
+                </div>
+              </FieldContent>
+            </Field>
+          </FieldGroup>
+        </FieldSet>
       </div>
 
-      <div className=" border-t p-6">
+      <div className="border-t p-6">
         <div className="flex items-center justify-between">
           <Button
             asChild
             type="button"
             variant="destructive"
-            onClick={async () => {
-              deleteKnowledgeItem(detail.id)
+            onClick={() => {
+              deleteKnowledgeItem(detail.id);
             }}
           >
-            <Link
-              aria-label='close'
-              to='..'
-              search={ prev => prev }>
+            <Link to=".." search={(prev) => prev}>
               Delete
             </Link>
           </Button>
 
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link
-                aria-label='close'
-                to='..'
-                search={ prev => prev }>
+            <Button asChild variant="outline" type="button">
+              <Link to=".." search={(prev) => prev}>
                 Cancel
               </Link>
             </Button>
-            <Button type="submit">
-              Save
-            </Button>
+
+            <Button type="submit">Save</Button>
           </div>
         </div>
       </div>
     </form>
   );
 }
+
 
 /**
  * The namespace for the `DetailsRenderer` statics.
