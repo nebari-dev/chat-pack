@@ -32,6 +32,10 @@ import {
 } from '@/components/charts/echartrenderer';
 
 import {
+  ScheduleRenderer
+} from '@/components/toolrenderer/schedulerenderer';
+
+import {
   HITLRenderer
 } from '@/components/hitl/hitlrenderer';
 
@@ -241,20 +245,24 @@ namespace Private {
       return null;
     }
 
-    // Bail if mime type is not known.
-    if (mimeResult.mimeType !== 'application/vnd.openteams-echart') {
-      return null;
+    switch (mimeResult.mimeType) {
+      case 'application/vnd.openteams-schedule':
+        return <ScheduleRenderer result={ mimeResult as any } />;
+      
+      case 'application/vnd.openteams-echart':
+        // Cast the mime data to the known type.
+        const option = (mimeResult.data as any).option as EChartsOption;
+
+        // Return the rendered component.
+        return (
+          <EChartRenderer
+            option={ option }
+            className='h-120 p-4 border rounded-md' />
+        );
+
+      default:
+        return null;
     }
-
-    // Cast the mime data to the known type.
-    const option = (mimeResult.data as any).option as EChartsOption;
-
-    // Return the rendered component.
-    return (
-      <EChartRenderer
-        option={ option }
-        className='h-120 p-4 border rounded-md' />
-    );
   }
 
   /**
@@ -285,49 +293,36 @@ namespace Private {
    */
   export
   function castResult(result: unknown): MimeResult | null {
-    // Bail if the result is empty.
-    if (!result) {
+    // Bail if the result is empty or not a string.
+    if (!result || typeof result !== 'string') {
       return null;
     }
 
-    // Bail is the result type is not a string.
-    if (typeof result !== 'string') {
-      return null;
-    }
-
-    // Try to parse the string as JSON.
+    let parsed: any;
     try {
-      result = JSON.parse(result);
+      parsed = JSON.parse(result);
     } catch {
       return null;
     }
 
-    // Bail if the result is empty.
-    if (!result) {
+    // Bail if the result is empty or not an object.
+    if (!parsed || typeof parsed !== 'object') {
       return null;
     }
 
-    // Bail if the result is not an object.
-    if (typeof result !== 'object') {
+    // Check for mime type (support both camelCase and snake_case)
+    const mimeType = parsed.mimeType || parsed.mime_type;
+    const data = parsed.data;
+
+    // Bail if the mime type is not a string or data is missing.
+    if (typeof mimeType !== 'string' || !data) {
       return null;
     }
 
-    // Bail if the result does not have a mime type.
-    if (!('mime_type' in result)) {
-      return null;
-    }
-
-    // Bail if the mime type is not a string.
-    if (typeof result.mime_type !== 'string') {
-      return null;
-    }
-
-    // Bail if the result does not have data.
-    if (!('data' in result)) {
-      return null;
-    }
-
-    return { mimeType: result.mime_type, data: result.data };
+    return {
+      mimeType,
+      data
+    };
   }
 
   /**
@@ -342,7 +337,7 @@ namespace Private {
   };
 
   /**
-   *  A react component that wraps the HITL renderer.
+   * A react component that wraps the HITL renderer.
    *
    * This manages the closure state needed for the renderer.
    */
