@@ -59,8 +59,14 @@ type Config = v.InferOutput<typeof configSchema>;
  */
 export
 async function getConfig(): Promise<Config> {
-  // Fetch the resource.
-  const resp = await fetch('/api/config', {
+  // Use VITE_API_URL from environment
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    throw new Error('VITE_API_URL is not defined');
+  }
+
+  // Fetch the agents list (since /agents/config is 404)
+  const resp = await fetch(`${apiUrl}/agents`, {
     headers: { 'Authorization': `Bearer ${pb.authStore.token}` }
   });
 
@@ -72,6 +78,20 @@ async function getConfig(): Promise<Config> {
   // Convert the response to json.
   const json = await resp.json();
 
-  // Parse and return the response.
+  // If the response is an array (list of agents), wrap it in a synthetic config object
+  if (Array.isArray(json)) {
+    const syntheticConfig = {
+      os_id: "education-platform",
+      databases: [],
+      agents: json, // The array from /agents matches configDetailSchema structure
+      teams: [],
+      workflows: [],
+      name: "OpenTeams Education",
+      description: "AI Education Platform"
+    };
+    return v.parse(configSchema, syntheticConfig);
+  }
+
+  // Parse and return the response if it matches schema
   return v.parse(configSchema, json);
 }

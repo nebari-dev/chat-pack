@@ -18,6 +18,7 @@ import {
 } from '@tanstack/react-query';
 
 import * as api from '@/api';
+import { pb } from '@/api/pb'; // Import PB directly to check validity
 
 import type {
   AuthConfig
@@ -60,16 +61,30 @@ declare module '@tanstack/react-router' {
 // A react component that bootstraps the application.
 function App() {
   // Create the state to track the user record.
-  const [user, setUser] = useState<api.AuthRecord>(null);
+  const [user, setUser] = useState<api.AuthRecord>(pb.authStore.model);
+  const [isValid, setIsValid] = useState(pb.authStore.isValid);
 
   // Sync the user record with the config state.
   useEffect(() => {
-    // Ensure the user is synced with the current auth state.
-    setUser(api.getUser());
-
     // Subscribe to changes of the auth record.
-    return api.onUserChange(record => { setUser(record); });
+    return pb.authStore.onChange((token, model) => {
+      setUser(model);
+      setIsValid(pb.authStore.isValid);
+      console.log("App: Auth State Changed", { isValid: pb.authStore.isValid, hasModel: !!model });
+    });
   }, []);
+
+  // Show loading if we have a valid token but no user model yet (SSO refreshing)
+  if (isValid && !user) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Verifying session...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Create the auth config object.
   const auth: AuthConfig = { user };

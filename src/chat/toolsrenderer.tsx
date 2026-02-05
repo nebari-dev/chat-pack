@@ -242,7 +242,13 @@ namespace Private {
 
     // Bail early if the cast failed.
     if (!mimeResult) {
-      return null;
+      return (
+        <div className="p-4 border border-red-500 rounded bg-red-50 text-red-700 text-xs font-mono overflow-auto max-h-60 whitespace-pre-wrap">
+           <strong>Render Error:</strong> Unable to parse tool result.<br/>
+           <strong>MIME Check:</strong> { event.tool.result && typeof event.tool.result === 'string' && event.tool.result.includes('mimeType') ? 'Found mimeType' : 'Missing mimeType' }<br/>
+           <strong>Value Preview:</strong> {JSON.stringify(event.tool.result, null, 2)}
+        </div>
+      );
     }
 
     switch (mimeResult.mimeType) {
@@ -315,7 +321,7 @@ namespace Private {
     const data = parsed.data;
 
     // Bail if the mime type is not a string or data is missing.
-    if (typeof mimeType !== 'string' || !data) {
+    if (!mimeType || typeof mimeType !== 'string' || !data) {
       return null;
     }
 

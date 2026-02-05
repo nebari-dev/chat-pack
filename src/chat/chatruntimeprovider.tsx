@@ -198,6 +198,17 @@ namespace Private {
   }
 
   /**
+   * A UUID generator that works in insecure contexts (HTTP).
+   */
+  function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
    * A query function which fetches the runs for a session.
    */
   export
@@ -261,7 +272,7 @@ namespace Private {
     const client = context.client;
 
     // Extract or create the session id.
-    const sessionId = config.sessionId ?? crypto.randomUUID();
+    const sessionId = config.sessionId ?? uuidv4();
 
     // Create the query key for the run.
     const queryKey = createQueryKey(sessionId);
