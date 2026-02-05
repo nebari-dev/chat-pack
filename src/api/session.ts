@@ -436,11 +436,6 @@ namespace ListSessions {
   export
   type Options = {
     /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
-    /**
      * The agent id for filtering the session result.
      *
      * If this is not provided, all agents will be included in the result.
@@ -495,11 +490,6 @@ namespace GetSessionDetail {
   export
   type Options = {
     /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
-    /**
      * The unique id of the session.
      */
     readonly sessionId: string;
@@ -530,11 +520,6 @@ namespace GetSessionRuns {
   export
   type Options = {
     /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
-    /**
      * The unique id for the session.
      */
     readonly sessionId: string;
@@ -563,11 +548,6 @@ namespace CreateRun {
    */
   export
   type Options = {
-    /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
     /**
      * The new session id for the run.
      *
@@ -611,11 +591,6 @@ namespace ContinueRun {
    */
   export
   type Options = {
-    /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
     /**
      * The unique session id to continue.
      */

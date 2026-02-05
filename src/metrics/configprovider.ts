@@ -51,9 +51,9 @@ type MetricsConfig = {
   readonly atEnd: boolean;
 
   /**
-   * The loaded metrics data for the year/month.
+   * The loaded metrics for the year/month.
    */
-  readonly data: api.Metrics;
+  readonly metrics: readonly api.Metrics[];
 
   /**
    * A callback to update the config.

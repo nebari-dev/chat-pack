@@ -5,6 +5,10 @@ import * as v from 'valibot';
 
 import * as api from '@/api';
 
+import {
+  getAuthToken
+} from '@/auth';
+
 
 /**
  * Fetch the agentic memories subject to the options.
@@ -14,15 +18,14 @@ import * as api from '@/api';
  * @returns The agentic memories that have been stored for the user/agent.
  */
 export
-async function getMemories(options: api.GetMemories.Options): Promise<api.MemoriesPage> {
+async function getMemories(_options: api.GetMemories.Options): Promise<api.MemoriesPage> {
   // Extract the options.
   //
   // Ignore the pagination options for Agno for now.
-  const { authToken } = options;
 
   // Fetch the resource.
   const resp = await fetch('/agno/memories', {
-    headers: { 'Authorization': `Bearer ${authToken}` }
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
   });
 
   // Guard against fetch failure.

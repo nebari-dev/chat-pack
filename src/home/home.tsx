@@ -13,14 +13,6 @@ import {
   Explorer
 } from './explorer';
 
-import {
-  Teams
-} from './teams';
-
-import {
-  Workflows
-} from './workflows';
-
 
 /**
  * A React component that renders the home page.
@@ -37,8 +29,6 @@ function Home(): ReactNode {
       <div className='p-4 grow min-h-0 overflow-y-auto flex flex-col gap-4 @container'>
         <Explorer />
         <Agents />
-        <Teams />
-        <Workflows />
       </div>
     </main>
   );

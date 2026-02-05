@@ -13,9 +13,9 @@ import type {
   ReactNode
 } from 'react';
 
-import {
-  Sidebar
-} from '@/sidebar';
+import type {
+  API
+} from '@/api';
 
 
 /**
@@ -23,6 +23,7 @@ import {
  */
 type RouteContext = {
   client: QueryClient;
+  API: API;
 };
 
 
@@ -39,10 +40,5 @@ const Route = createRootRouteWithContext<RouteContext>()({
  * The component that renders the root route.
  */
 function RouteComponent(): ReactNode {
-  return (
-    <>
-      <Sidebar />
-      <Outlet />
-    </>
-  );
+  return <Outlet />;
 }

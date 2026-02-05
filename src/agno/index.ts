@@ -24,7 +24,7 @@ import {
  * The api handlers for the Agno OS api.
  */
 export
-const agnoHandlers: api.Handlers = {
+const agnoAPI: api.API = {
   getConfig,
   getMemories,
   getMetrics,

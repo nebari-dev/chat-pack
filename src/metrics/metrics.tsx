@@ -22,20 +22,8 @@ import {
 } from './monthselector';
 
 import {
-  TeamRunsChart, TeamSessionsChart
-} from './teams';
-
-import {
   TokensChart
 } from './tokens';
-
-import {
-  UsersChart
-} from './users';
-
-import {
-  WorkflowRunsChart, WorkflowSessionsChart
-} from './workflows';
 
 
 /**
@@ -57,13 +45,8 @@ function Metrics(): ReactNode {
         'p-4 grow min-h-0 overflow-y-auto grid gap-4 auto-rows-[1fr]',
         'grid-cols-1 @3xl:grid-cols-2 @6xl:grid-cols-3') }>
         <TokensChart />
-        <UsersChart />
         <AgentRunsChart />
         <AgentSessionsChart />
-        <TeamRunsChart />
-        <TeamSessionsChart />
-        <WorkflowRunsChart />
-        <WorkflowSessionsChart />
         <ModelRunsChart />
       </div>
     </main>

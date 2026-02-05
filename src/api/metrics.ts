@@ -115,11 +115,6 @@ namespace GetMetrics {
   export
   type Options = {
     /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
-    /**
      * The start date for the aggregate metrics, inclusive.
      *
      * This is formatted as an ISO UTC string.

@@ -5,6 +5,10 @@ import * as v from 'valibot';
 
 import * as api from '@/api';
 
+import {
+  getAuthToken
+} from '@/auth';
+
 
 /**
  * Fetch the global application config object.
@@ -15,13 +19,10 @@ import * as api from '@/api';
  * @returns The global application config object.
  */
 export
-async function getConfig(options: api.GetConfig.Options): Promise<api.Config> {
-  // Extract the options.
-  const { authToken } = options;
-
+async function getConfig(): Promise<api.Config> {
   // Fetch the Agno OS config.
   const configResp = await fetch('/agno/config', {
-    headers: { 'Authorization': `Bearer ${authToken}` }
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
   });
 
   // Guard against request failure.
@@ -34,7 +35,7 @@ async function getConfig(options: api.GetConfig.Options): Promise<api.Config> {
 
   // Fetch the Agno agents.
   const agentsResp = await fetch('/agno/agents', {
-    headers: { 'Authorization': `Bearer ${authToken}` }
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
   });
 
   // Guard against request failure.

@@ -5,6 +5,10 @@ import * as v from 'valibot';
 
 import * as api from '@/api';
 
+import {
+  getAuthToken
+} from '@/auth';
+
 
 /**
  * Fetch the aggregate application metrics.
@@ -16,7 +20,7 @@ import * as api from '@/api';
 export
 async function getMetrics(options: api.GetMetrics.Options): Promise<readonly api.Metrics[]> {
   // Extract the options.
-  const { authToken, startDate, endDate } = options;
+  const { startDate, endDate } = options;
 
   // Create the search params for the request.
   const params = new URLSearchParams();
@@ -29,12 +33,12 @@ async function getMetrics(options: api.GetMetrics.Options): Promise<readonly api
   // implement a caching strategy, refresh on a timer, etc.
   await fetch('/agno/metrics/refresh', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${authToken}` }
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
   });
 
   // Fetch the Agno OS config schema.
   const resp = await fetch(`/agno/metrics?${params}`, {
-    headers: { 'Authorization': `Bearer ${authToken}` }
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
   });
 
   // Guard against request failure.

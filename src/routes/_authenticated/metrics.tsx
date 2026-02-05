@@ -11,8 +11,6 @@ import {
 
 import * as v from 'valibot';
 
-import * as api from '@/api';
-
 import type {
   MetricsConfig, MetricsConfigUpdateOptions
 } from '@/metrics';
@@ -75,7 +73,7 @@ const Route = createFileRoute('/_authenticated/metrics')({
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => {
     // Extract the query client from the context.
-    const { client } = context;
+    const { client, API } = context;
 
     // Unpack the deps.
     const { year, month } = deps;
@@ -91,13 +89,13 @@ const Route = createFileRoute('/_authenticated/metrics')({
     // Create the function to load the metrics for the date range.
     const loadMetrics = () => {
       // Convert the start date to YYYY-MM-DD
-      const starting_date = firstDay.toISOString().split('T')[0];
+      const startDate = firstDay.toISOString().split('T')[0];
 
       // Convert the end date to YYYY-MM-DD
-      const ending_date = lastDay.toISOString().split('T')[0];
+      const endDate = lastDay.toISOString().split('T')[0];
 
       // Fetch the metrics from the API.
-      return api.getMetrics({ starting_date, ending_date });
+      return API.getMetrics({ startDate, endDate });
     };
 
     // Create the metrics query.
@@ -148,7 +146,7 @@ function RouteComponent() {
 
   // Create the metrics config.
   const config: MetricsConfig = {
-    month, year, atStart, atEnd, data, update
+    month, year, atStart, atEnd, metrics: data, update
   };
 
   // Return the rendered component.

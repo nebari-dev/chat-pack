@@ -24,13 +24,13 @@ import {
 export
 function AgentRunsChart(): ReactNode {
   // Fetch the loaded metrics data.
-  const { year, month, data } = useMetricsConfig();
+  const { year, month, metrics } = useMetricsConfig();
 
   // Create the day range for the month of interest.
   const dayRange = createDayRange(year, month);
 
   // Collect the relevant metrics.
-  const countsMap = collectMetricsByDay(data, 'agent_runs_count');
+  const countsMap = collectMetricsByDay(metrics, 'runsCount');
 
   // Create the chart data and fill in missing values.
   const counts: number[] = [];
@@ -111,13 +111,13 @@ function AgentRunsChart(): ReactNode {
 export
 function AgentSessionsChart(): ReactNode {
   // Fetch the loaded metrics data.
-  const { year, month, data } = useMetricsConfig();
+  const { year, month, metrics } = useMetricsConfig();
 
   // Create the day range for the month of interest.
   const dayRange = createDayRange(year, month);
 
   // Collect the relevant metrics.
-  const countsMap = collectMetricsByDay(data, 'agent_sessions_count');
+  const countsMap = collectMetricsByDay(metrics, 'sessionsCount');
 
   // Create the chart data and fill in missing values.
   const counts: number[] = [];
@@ -127,7 +127,7 @@ function AgentSessionsChart(): ReactNode {
 
   // Create the echarts option.
   const option: ChartCard.Option = {
-    color: ['#ad46ff'],
+    color: ['#ff2056'],
     tooltip: {
       trigger: 'axis',
       axisPointer: {

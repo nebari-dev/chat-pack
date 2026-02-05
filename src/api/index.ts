@@ -1,6 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  createContext, useContext
+} from 'react';
+
 import type {
   GetConfig
 } from './config';
@@ -26,10 +30,10 @@ export * from './session';
 
 
 /**
- * A type alias of all the api handlers.
+ * A type alias for the API functions.
  */
 export
-type Handlers = {
+type API = {
   readonly getConfig: GetConfig;
   readonly getMemories: GetMemories;
   readonly getMetrics: GetMetrics;
@@ -39,3 +43,23 @@ type Handlers = {
   readonly createRun: CreateRun;
   readonly continueRun: ContinueRun;
 };
+
+
+/**
+ * A provider component for the api functions.
+ */
+export
+const APIProvider = createContext<API | undefined>(undefined);
+
+
+/**
+ * A hook that returns the api functions.
+ */
+export
+function useAPI(): API {
+  const api = useContext(APIProvider);
+  if (api === undefined) {
+    throw new Error('missing `APIProvider`');
+  }
+  return api;
+}

@@ -24,21 +24,21 @@ import {
 export
 function TokensChart(): ReactNode {
   // Fetch the metrics config.
-  const { year, month, data } = useMetricsConfig();
+  const { year, month, metrics } = useMetricsConfig();
 
   // Create the day range for the month of interest.
   const dayRange = createDayRange(year, month);
 
   // Collect the relevant metrics.
-  const tokensMap = collectMetricsByDay(data, 'token_metrics');
+  const tokensMap = collectMetricsByDay(metrics, 'tokenMetrics');
 
   // Create the chart data and fill in missing values.
   const input: number[] = [];
   const output: number[] = [];
   for (const day of dayRange) {
     const toks = tokensMap.get(day);
-    input.push(toks?.input_tokens ?? 0);
-    output.push(toks?.output_tokens ?? 0);
+    input.push(toks?.inputTokens ?? 0);
+    output.push(toks?.outputTokens ?? 0);
   }
 
   // Create the echarts option.

@@ -102,11 +102,6 @@ namespace GetMemories {
   export
   type Options = {
     /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-
-    /**
      * The unique id of the agent for filtered results.
      *
      * If this is not provided, the server should return all agents.

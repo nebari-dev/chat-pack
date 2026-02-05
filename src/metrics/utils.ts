@@ -34,21 +34,21 @@ function createDayRange(year: number, month: number): number[] {
 /**
  * A function that collects metrics by days they appeared.
  *
- * @param data - The metrics api data response.
+ * @param metrics - The array of metrics data.
  *
  * @param key - The key in the metrics rows to extract.
  *
  * @returns A map of day -> extracted metric.
  */
 export
-function collectMetricsByDay<T extends keyof api.MetricsRow>(
-  data: api.Metrics, key: T
-): Map<number, api.MetricsRow[T]> {
+function collectMetricsByDay<T extends keyof api.Metrics>(
+  metrics: readonly api.Metrics[], key: T
+): Map<number, api.Metrics[T]> {
   // Create the map to hold the results
-  const map = new Map<number, api.MetricsRow[T]>();
+  const map = new Map<number, api.Metrics[T]>();
 
   // Iterate the metrics array to collect the metrics.
-  for (const row of data.metrics) {
+  for (const row of metrics) {
     // Compute the day for the metrics entry.
     const day = new Date(row.date).getDate();
 

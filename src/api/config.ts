@@ -113,27 +113,7 @@ type Config = {
  * This defines the top-level application config which, among other
  * things, defines which agents are available to the application.
  *
- * @param options - The options for the request.
- *
  * @returns The global application config object.
  */
 export
-type GetConfig = (options: GetConfig.Options) => Promise<Config>;
-
-
-/**
- * The namespace for the `GetConfig` statics.
- */
-export
-namespace GetConfig {
-  /**
-   * A type alias for the `GetConfig` options.
-   */
-  export
-  type Options = {
-    /**
-     * The JWT authorization token for the user.
-     */
-    readonly authToken: string;
-  };
-}
+type GetConfig = () => Promise<Config>;

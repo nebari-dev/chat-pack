@@ -9,9 +9,9 @@ import type {
   ReactNode
 } from 'react';
 
-import {
-  useAuthConfig
-} from '@/auth';
+// import {
+//   useAuthConfig
+// } from '@/auth';
 
 import {
   Link
@@ -30,7 +30,24 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 
+  // // Create the state to track the user record.
+  // const [user, setUser] = useState<AuthRecord>(null);
 
+  // // Create the state to track the auth token.
+  // const [authToken, setAuthToken] = useState<string>('');
+
+  // // Sync the user record with the config state.
+  // useEffect(() => {
+  //   // Sync the auth state on mount.
+  //   setUser(getUser());
+  //   setAuthToken(getAuthToken());
+
+  //   // Subscribe to auth changes.
+  //   return onUserChange((token, record) => {
+  //     setUser(record);
+  //     setAuthToken(token);
+  //   });
+  // }, []);
 /**
  * A react component that renders the user info in the sidebar.
  */
@@ -40,8 +57,8 @@ function UserInfo(props: UserInfo.Props): ReactNode {
   const { isSidebarOpen } = props;
 
   // Fetch the user record from the auth config.
-  const { user } = useAuthConfig();
-
+  // const { user } = useAuthConfig();
+  const user = null;
   // Bail early if the user is not logged in.
   if (!user) {
     return null;
