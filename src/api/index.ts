@@ -10,7 +10,7 @@ import type {
 } from './config';
 
 import type {
-  GetMemories
+  DeleteMemories, GetMemories
 } from './memory';
 
 import type {
@@ -36,6 +36,7 @@ export
 type API = {
   readonly getConfig: GetConfig;
   readonly getMemories: GetMemories;
+  readonly deleteMemories: DeleteMemories;
   readonly getMetrics: GetMetrics;
   readonly listSessions: ListSessions;
   readonly getSessionDetail: GetSessionDetail;

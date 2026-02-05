@@ -41,12 +41,12 @@ import {
  */
 export
 function DataTable(): ReactNode {
-  // Fetch the memories config.
-  const { data } = useMemoriesConfig();
+  // Fetch the memories page.
+  const { page } = useMemoriesConfig();
 
   // Create the data table model.
   const table = useReactTable({
-    data: data.data,
+    data: page.memories as api.Memory[],  // dumb cast required for tanstack
     columns: Private.columns,
     getCoreRowModel: getCoreRowModel()
   });
@@ -144,7 +144,7 @@ namespace Private {
   /**
    * Create the helper for defining the columns.
    */
-  const columnHelper = createColumnHelper<api.MemoryItem>();
+  const columnHelper = createColumnHelper<api.Memory>();
 
   /**
    * Create the column for the selection check boxes.
@@ -186,7 +186,7 @@ namespace Private {
   /**
    * Create the column to display the memory text data.
    */
-  const memoryColumn = columnHelper.accessor('memory', {
+  const memoryColumn = columnHelper.accessor('content', {
     header: 'Memory',
     cell: cellContext => {
       return (
@@ -218,7 +218,7 @@ namespace Private {
   /**
    * Create the column to display the updated timestamp.
    */
-  const updatedAtColumn = columnHelper.accessor('updated_at', {
+  const updatedAtColumn = columnHelper.accessor('updatedAt', {
     header: 'Updated At',
     cell: cellContext => {
       const date = new Date(cellContext.getValue());
@@ -249,7 +249,7 @@ namespace Private {
     /**
      * The Tanstack table instance for the page.
      */
-    readonly table: TSTable<api.MemoryItem>;
+    readonly table: TSTable<api.Memory>;
   };
 
   /**
@@ -282,7 +282,7 @@ namespace Private {
     const handleDelete = () => {
       // Fetch the ids of the memories to delete.
       const rows = table.getSelectedRowModel().rows;
-      const ids = rows.map(row => row.original.memory_id);
+      const ids = rows.map(row => row.original.memoryId);
 
       // Clear the selected rows.
       table.resetRowSelection();

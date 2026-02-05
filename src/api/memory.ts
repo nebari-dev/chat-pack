@@ -130,3 +130,14 @@ namespace GetMemories {
     };
   };
 }
+
+
+/**
+ * Delete memories from the server.
+ *
+ * @param ids - The array of memory ids to delete.
+ *
+ * @returns A promise that resolves at the completion of the delete.
+ */
+export
+type DeleteMemories = (ids: readonly string[]) => Promise<void>;

@@ -16,7 +16,7 @@ type MemoriesConfig = {
   /**
    * The loaded memories from the api.
    */
-  readonly data: api.Memories;
+  readonly page: api.MemoriesPage;
 
   /**
    * A function that deletes the provided memories by id.

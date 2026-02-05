@@ -8,7 +8,7 @@ import {
 } from './config';
 
 import {
-  getMemories
+  deleteMemories, getMemories
 } from './memory';
 
 import {
@@ -27,6 +27,7 @@ export
 const agnoAPI: api.API = {
   getConfig,
   getMemories,
+  deleteMemories,
   getMetrics,
   listSessions,
   getSessionDetail,

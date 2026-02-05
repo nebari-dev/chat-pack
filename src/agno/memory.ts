@@ -57,6 +57,32 @@ async function getMemories(_options: api.GetMemories.Options): Promise<api.Memor
 
 
 /**
+ * Delete memories from the server.
+ *
+ * @param ids - The array of memory ids to delete.
+ *
+ * @returns A promise that resolves at the completion of the delete.
+ */
+export
+async function deleteMemories(ids: readonly string[]): Promise<void> {
+  // Create the request.
+  const resp = await fetch('/agno/memories', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: JSON.stringify({ memory_ids: ids }),
+  });
+
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+}
+
+
+/**
  * The namespace for the module implementation details.
  */
 namespace Private {
