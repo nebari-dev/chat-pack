@@ -14,14 +14,9 @@ import * as api from '@/api';
 export
 type SessionsConfig = {
   /**
-   * The type of the sessions that have been queried.
+   * The loaded sessions page from the api.
    */
-  readonly type: 'agent' | 'team' | 'workflow';
-
-  /**
-   * The loaded sessions list from the api.
-   */
-  readonly sessions: api.SessionsList;
+  readonly page: api.SessionsPage;
 
   /**
    * The details for the currently selected session.
@@ -33,7 +28,7 @@ type SessionsConfig = {
   /**
    * A function that deletes the provided sessions by id.
    */
-  readonly deleteSessions: (options: api.deleteSessions.Options) => Promise<void>;
+  readonly deleteSessions: (ids: readonly string[]) => Promise<void>;
 };
 
 

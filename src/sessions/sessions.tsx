@@ -6,20 +6,12 @@ import type {
 } from 'react';
 
 import {
-  cn
-} from '@/lib/utils';
-
-import {
   SessionDetail
 } from './sessiondetail';
 
 import {
   SessionsTable
 } from './sessionstable';
-
-import {
-  TypeSelector
-} from './typeselector';
 
 import {
   useSessionsConfig
@@ -37,15 +29,12 @@ function Sessions(): ReactNode {
   // Return the rendered component.
   return (
     <main className='grow flex flex-col'>
-      <div className={ cn(
-        'px-4 py-2 border-b border-bd-neutral-default',
-        'flex flex-row justify-between items-center') }>
+      <div className='px-4 py-2 border-b border-bd-neutral-default'>
         <h2 className='text-lg font-semibold'>
           Sessions
         </h2>
-        <TypeSelector />
       </div>
-      <div className={ `grow grid grid-flow-col auto-cols-fr min-h-0` }>
+      <div className='grow grid grid-flow-col auto-cols-fr min-h-0'>
         <SessionsTable />
         { detail ? <SessionDetail detail={ detail } /> : null }
       </div>

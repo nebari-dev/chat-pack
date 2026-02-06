@@ -1,15 +1,9 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import type {
-  QueryClient
-} from '@tanstack/react-query';
-
 import {
   createFileRoute, redirect, useRouter
 } from '@tanstack/react-router';
-
-import * as v from 'valibot';
 
 import * as api from '@/api';
 
@@ -22,116 +16,50 @@ import {
 } from '@/sessions';
 
 
-// The schema for the agent search params.
-const agentSchema = v.object({
-  type: v.literal('agent')
-});
-
-
-// The schema for the team search params.
-const teamSchema = v.object({
-  type: v.literal('team')
-});
-
-
-// The schema for the workflow search params.
-const workflowSchema = v.object({
-  type: v.literal('workflow')
-});
-
-
-// The schema for the `/sessions` route search params
-const searchSchema = v.fallback(
-  v.variant('type', [
-    agentSchema,
-    teamSchema,
-    workflowSchema
-  ]),
-  { type: 'agent' }
-);
-
-
-/**
- * A query function which fetches the sessions list from the API.
- */
-async function listSessions(
-  client: QueryClient,
-  type: 'agent' | 'team' | 'workflow'
-): Promise<api.SessionsList> {
-  // Create the sessions query.
-  const sesssionsQuery = {
-    queryKey: ['sessions', type],
-    queryFn: () => api.listSessions({ type })
-  } as const;
-
-  // Fetch the query.
-  return await client.fetchQuery(sesssionsQuery);
-}
-
-
-/**
- * A query function which fetches a specific session from the API.
- */
-async function getSession(
-  client: QueryClient,
-  type: 'agent' | 'team' | 'workflow',
-  sessionId: string
-): Promise<api.SessionDetail> {
-  // Create the session query.
-  const sessionQuery = {
-    queryKey: ['session', type, sessionId],
-    queryFn: () => api.getSession({ type, sessionId })
-  } as const;
-
-  // Fetch the query.
-  return await client.fetchQuery(sessionQuery);
-}
-
-
 /**
  * The route for the `/sessions` endpoint.
  */
 export
 const Route = createFileRoute('/_authenticated/sessions/{-$sessionId}')({
-  component: RouteComponent,
-  validateSearch: searchSchema,
-  loaderDeps: ({ search }) => search,
-  loader: async ({ context, deps, params }) => {
-    // Extract the query client from the context.
-    const { client } = context;
-
-    // Unpack the deps.
-    const { type } = deps;
+  loader: async ({ context, params }) => {
+    // Extract the query client and API.
+    const { client, API } = context;
 
     // Unpack the params.
     const { sessionId } = params;
 
-    // Fetch the sessions list.
-    const sessions = await listSessions(client, type);
+    // Fetch the sessions page.
+    const page = await client.fetchQuery({
+      queryKey: ['sessions'],
+      queryFn: () => API.listSessions({})
+    });
 
     // Redirect if the specified session id does not exist.
     //
     // TODO this is not fully correct because `listSessions` returns
     // a paginated response which might not include the otherwise valid
     // session id.
-    if (sessionId && !sessions.data.find(s => s.session_id === sessionId)) {
+    if (sessionId && !page.sessions.find(s => s.sessionId === sessionId)) {
       throw redirect({
         to: '/sessions/{-$sessionId}',
-        params: { sessionId: undefined },
-        search: s => s
+        params: { sessionId: undefined }
       });
     }
 
     // Fetch the session detail, if needed.
     const detail = (
       sessionId !== undefined ?
-      await getSession(client, type, sessionId) :
+      await client.fetchQuery({
+        queryKey: ['session', sessionId],
+        queryFn: () => API.getSessionDetail(sessionId)
+      }) :
       null
     );
 
     // Return the loader data.
-    return { type, sessions, detail };
-  }
+    return { page, detail };
+  },
+  component: RouteComponent
 });
 
 
@@ -142,24 +70,23 @@ function RouteComponent() {
   // Fetch the router for the current endpoint.
   const router = useRouter();
 
+  // Fetch the API handlers.
+  const API = api.useAPI();
+
   // Fetch the loader data.
-  const { type, sessions, detail } = Route.useLoaderData();
+  const { page, detail } = Route.useLoaderData();
 
   // Create the handler for deleting sessions.
-  const deleteSessions = async (options: api.deleteSessions.Options) => {
+  const deleteSessions = async (ids: readonly string[]) => {
     // Delete the sessions on the server.
-    await api.deleteSessions(options);
-
-    // TODO delete the query cache for these sessions and chats.
+    await API.deleteSessions(ids);
 
     // Force the router to reload the current data.
     await router.invalidate();
   };
 
   // Create the sessions config.
-  const config: SessionsConfig = {
-    type, sessions, detail, deleteSessions
-  };
+  const config: SessionsConfig = { page, detail, deleteSessions };
 
   // Return the rendered component.
   return (

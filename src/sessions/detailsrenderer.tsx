@@ -20,20 +20,9 @@ function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
   // Extract the props.
   const { detail } = props;
 
-  // TODO support workflow sessions.
-  if (detail.type === 'workflow') {
-    return null;
-  }
-
-  // Determine the label for the detail type.
-  const label = detail.type === 'agent' ? 'Agent' : 'Team';
-
-  // Fetch the data for the detail type.
-  const data = detail.type === 'agent' ? detail.agent_data : detail.team_data;
-
   // Convert the UTC date strings to date objects.
-  const createdAt = new Date(detail.created_at);
-  const updatedAt = new Date(detail.updated_at);
+  const createdAt = new Date(detail.createdAt);
+  const updatedAt = new Date(detail.updatedAt);
 
   // Return the rendered component.
   return (
@@ -42,10 +31,10 @@ function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
         <TableBody>
           <TableRow>
             <TableCell className='w-[30%]'>
-              { label }
+              Agent
             </TableCell>
             <TableCell className='w-[70%] font-semibold'>
-              { data.name }
+              TODO: Get Agent Name
             </TableCell>
           </TableRow>
           <TableRow>
@@ -53,7 +42,7 @@ function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
               Model
             </TableCell>
             <TableCell className='font-semibold'>
-              { data.model.name }
+              TODO: Get Model Name
             </TableCell>
           </TableRow>
           <TableRow>
@@ -61,7 +50,7 @@ function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
               Model Id
             </TableCell>
             <TableCell className='font-semibold'>
-              { data.model.id }
+              TODO: Get Model Name
             </TableCell>
           </TableRow>
           <TableRow>
@@ -69,7 +58,7 @@ function DetailsRenderer(props: DetailsRenderer.Props): ReactNode {
               Model Provider
             </TableCell>
             <TableCell className='font-semibold'>
-              { data.model.provider }
+              TODO: Get Model Provider
             </TableCell>
           </TableRow>
           <TableRow>

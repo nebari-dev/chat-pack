@@ -20,13 +20,8 @@ function MetricsRenderer(props: MetricsRenderer.Props): ReactNode {
   // Extract the props.
   const { detail } = props;
 
-  // TODO support workflow sessions.
-  if (detail.type === 'workflow') {
-    return null;
-  }
-
-  // Extract the metrics from the detail.
-  const { metrics } = detail;
+  // Get the metrics from the detail.
+  const { tokenMetrics } = detail;
 
   // Return the rendered component.
   return (
@@ -38,7 +33,7 @@ function MetricsRenderer(props: MetricsRenderer.Props): ReactNode {
               Input Tokens
             </TableCell>
             <TableCell className='w-[70%] font-semibold'>
-              { metrics.input_tokens }
+              { tokenMetrics.inputTokens }
             </TableCell>
           </TableRow>
           <TableRow>
@@ -46,7 +41,7 @@ function MetricsRenderer(props: MetricsRenderer.Props): ReactNode {
               Output Tokens
             </TableCell>
             <TableCell className='font-semibold'>
-              { metrics.output_tokens }
+              { tokenMetrics.outputTokens }
             </TableCell>
           </TableRow>
           <TableRow>
@@ -54,7 +49,7 @@ function MetricsRenderer(props: MetricsRenderer.Props): ReactNode {
               Total Tokens
             </TableCell>
             <TableCell className='font-semibold'>
-              { metrics.total_tokens }
+              { tokenMetrics.totalTokens }
             </TableCell>
           </TableRow>
         </TableBody>

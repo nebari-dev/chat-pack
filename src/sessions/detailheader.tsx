@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  ExternalLink, X
+  MessageSquarePlus, X
 } from 'lucide-react';
 
 import {
@@ -32,27 +32,10 @@ function DetailHeader(props: DetailHeader.Props): ReactNode {
   // Extract the props.
   const { detail, tabId, setTabId } = props;
 
-  // Compute the actor id for the detail type.
-  let actorId: string;
-  switch (detail.type) {
-  case 'agent':
-    actorId = detail.agent_id;
-    break;
-  case 'team':
-    actorId = detail.team_id;
-    break;
-  case 'workflow':
-    actorId = detail.workflow_id;
-    break;
-  default:
-    throw 'unreachable'
-  }
-
   // Create the search params for launching the chat.
   const params = new URLSearchParams();
-  params.append('type', detail.type);
-  params.append('sessionId', detail.session_id);
-  params.append('id', actorId);
+  params.append('agentId', detail.agentId);
+  params.append('sessionId', detail.sessionId);
 
   // Create the URL for navigating to the chat.
   const chatUrl = `/chat?${params}`;
@@ -77,14 +60,14 @@ function DetailHeader(props: DetailHeader.Props): ReactNode {
       <div className={
         'py-2 px-4 flex flex-row gap-2 items-center justify-between' }>
         <h2 className='text-lg font-semibold truncate'>
-          { detail.session_name }
+          { detail.sessionName }
         </h2>
         <div className='flex flex-row gap-2'>
           <Link
             to={ chatUrl }
             className='p-1 rounded-sm hover:bg-bg-neutral-dark'
             aria-label='open chat'>
-            <ExternalLink size={ 20 } />
+            <MessageSquarePlus size={ 20 } />
           </Link>
           <Link
             className='p-1 rounded-sm hover:bg-bg-neutral-dark'

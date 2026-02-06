@@ -46,11 +46,11 @@ import {
 export
 function SessionsTable(): ReactNode {
   // Fetch the memories config.
-  const { type, sessions } = useSessionsConfig();
+  const { page } = useSessionsConfig();
 
   // Create the data table model.
   const table = useReactTable({
-    data: sessions.data,
+    data: page.sessions as api.SessionDetail[],  // dumb cast required for Tanstack
     columns: Private.columns,
     getCoreRowModel: getCoreRowModel()
   });
@@ -112,11 +112,11 @@ function SessionsTable(): ReactNode {
   // Insert a placeholder row when there are no sessions.
   if (bodyRows.length === 0) {
     bodyRows.push(
-      <TableRow key={ `no_${type}_sessions_found` }>
+      <TableRow key={ `no_sessions_found` }>
         <TableCell
           colSpan={ table.getAllColumns().length }
           className='text-center text-muted-foreground'>
-          { `No ${type} sessions found.` }
+          No sessions found.
         </TableCell>
       </TableRow>
     );
@@ -148,7 +148,7 @@ namespace Private {
   /**
    * Create the helper for defining the columns.
    */
-  const columnHelper = createColumnHelper<api.SessionsListItem>();
+  const columnHelper = createColumnHelper<api.SessionDetail>();
 
   /**
    * Create the column for the selection check boxes.
@@ -190,11 +190,11 @@ namespace Private {
   /**
    * Create the column to display the memory text data.
    */
-  const nameColumn = columnHelper.accessor('session_name', {
+  const nameColumn = columnHelper.accessor('sessionName', {
     header: 'Name',
     cell: cellContext => {
       const row = cellContext.row;
-      const sessionId = row.original.session_id;
+      const sessionId = row.original.sessionId;
       const activeProps = {
         className: 'text-bd-brand-default font-semibold'
       };
@@ -204,8 +204,6 @@ namespace Private {
             className='block'
             to='/sessions/{-$sessionId}'
             params={ { sessionId } }
-            // @ts-ignore
-            search={ prev => prev }
             activeProps={ activeProps }>
             { cellContext.getValue() || 'Untitled Session' }
           </Link>
@@ -217,7 +215,7 @@ namespace Private {
   /**
    * Create the column to display the updated timestamp.
    */
-  const updatedAtColumn = columnHelper.accessor('updated_at', {
+  const updatedAtColumn = columnHelper.accessor('updatedAt', {
     header: 'Updated At',
     cell: cellContext => {
       const date = new Date(cellContext.getValue());
@@ -247,7 +245,7 @@ namespace Private {
     /**
      * The Tanstack table instance for the page.
      */
-    readonly table: TSTable<api.SessionsListItem>;
+    readonly table: TSTable<api.SessionDetail>;
   };
 
   /**
@@ -259,7 +257,7 @@ namespace Private {
     const { table } = props;
 
     // Fetch the sessions config.
-    const { type, deleteSessions } = useSessionsConfig();
+    const { deleteSessions } = useSessionsConfig();
 
     // Fetch the needed info from the table.
     const rowCount = table.getRowModel().rows.length;
@@ -280,16 +278,13 @@ namespace Private {
     const handleDelete = () => {
       // Fetch the ids of the memories to delete.
       const rows = table.getSelectedRowModel().rows;
-      const session_ids = rows.map(row => row.original.session_id);
-
-      // Create the array of session types.
-      const session_types = (new Array(session_ids.length)).fill(type);
+      const ids = rows.map(row => row.original.sessionId);
 
       // Clear the selected rows.
       table.resetRowSelection();
 
       // Delete the memories on the server.
-      deleteSessions({ session_ids, session_types });
+      deleteSessions(ids);
     };
 
     // Return the rendered component.
