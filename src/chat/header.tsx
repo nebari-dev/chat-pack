@@ -10,8 +10,7 @@ import type {
 } from 'react';
 
 import {
-  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger,
-  SelectValue
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 
 import {
