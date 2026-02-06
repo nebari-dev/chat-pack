@@ -7,9 +7,7 @@ import type {
   JsonSchema, UISchemaElement
 } from '@jsonforms/core';
 
-import {
-  getAuthToken
-} from '@/auth';
+import * as auth from '@/auth';
 
 import type {
   ReadonlyJSONObject, ReadonlyJSONValue
@@ -433,7 +431,7 @@ async function listSessions(_options: listSessions.Options): Promise<SessionsPag
 
   // Fetch the resource.
   const resp = await fetch(`/api/sessions?type=agent&sort_by=updated_at`, {
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Guard against fetch failure.
@@ -519,7 +517,7 @@ async function deleteSessions(ids: readonly string[]): Promise<void> {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      'Authorization': `Bearer ${auth.getAuthToken()}`
     },
     body: JSON.stringify({ session_ids: ids }),
   });
@@ -543,7 +541,7 @@ export
 async function getSessionDetail(id: string): Promise<SessionDetail> {
   // Fetch the resource.
   const resp = await fetch(`/api/sessions/${id}?type=agent`, {
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Guard against fetch failure.

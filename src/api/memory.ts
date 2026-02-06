@@ -3,9 +3,7 @@
 |----------------------------------------------------------------------------*/
 import * as v from 'valibot';
 
-import {
-  getAuthToken
-} from '@/auth';
+import * as auth from '@/auth';
 
 
 /**
@@ -98,7 +96,7 @@ async function getMemories(_options: getMemories.Options): Promise<MemoriesPage>
 
   // Fetch the resource.
   const resp = await fetch('/api/memories', {
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Guard against fetch failure.
@@ -184,7 +182,7 @@ async function deleteMemories(ids: readonly string[]): Promise<void> {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`
+      'Authorization': `Bearer ${auth.getAuthToken()}`
     },
     body: JSON.stringify({ memory_ids: ids }),
   });

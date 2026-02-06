@@ -3,9 +3,7 @@
 |----------------------------------------------------------------------------*/
 import * as v from 'valibot';
 
-import {
-  getAuthToken
-} from '@/auth';
+import * as auth from '@/auth';
 
 
 /**
@@ -121,7 +119,7 @@ export
 async function getConfig(): Promise<Config> {
   // Fetch the Agno OS config.
   const configResp = await fetch('/api/config', {
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Guard against request failure.
@@ -134,7 +132,7 @@ async function getConfig(): Promise<Config> {
 
   // Fetch the Agno agents.
   const agentsResp = await fetch('/api/agents', {
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Guard against request failure.

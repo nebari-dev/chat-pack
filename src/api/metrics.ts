@@ -3,9 +3,7 @@
 |----------------------------------------------------------------------------*/
 import * as v from 'valibot';
 
-import {
-  getAuthToken
-} from '@/auth';
+import * as auth from '@/auth';
 
 
 /**
@@ -121,12 +119,12 @@ async function getMetrics(options: getMetrics.Options): Promise<readonly Metrics
   // implement a caching strategy, refresh on a timer, etc.
   await fetch('/api/metrics/refresh', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Fetch the Agno OS config schema.
   const resp = await fetch(`/api/metrics?${params}`, {
-    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
   });
 
   // Guard against request failure.
