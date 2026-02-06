@@ -5,12 +5,12 @@ import {
   createFileRoute
 } from '@tanstack/react-router';
 
-import type {
-  KnowledgeConfig
-} from '@/knowledge';
+import {
+  KnowledgeContext
+} from '@/context';
 
 import {
-  Knowledge, KnowledgeConfigProvider
+  Knowledge
 } from '@/knowledge';
 
 
@@ -27,13 +27,9 @@ const Route = createFileRoute('/_authenticated/knowledge')({
  * The component that renders the `/knowledge` route.
  */
 function RouteComponent() {
-  // Create the knowledge config.
-  const config: KnowledgeConfig = {};
-
-  // Return the rendered component.
   return (
-    <KnowledgeConfigProvider value={ config }>
+    <KnowledgeContext value={ { } }>
       <Knowledge />
-    </KnowledgeConfigProvider>
+    </KnowledgeContext>
   );
 }
