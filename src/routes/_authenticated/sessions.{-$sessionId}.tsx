@@ -8,11 +8,15 @@ import {
 import * as api from '@/api';
 
 import type {
-  SessionsConfig
-} from '@/sessions';
+  SessionsContextValue
+} from '@/context';
 
 import {
-  Sessions, SessionsConfigProvider
+  SessionsContext
+} from '@/context';
+
+import {
+  Sessions
 } from '@/sessions';
 
 
@@ -82,13 +86,13 @@ function RouteComponent() {
     await router.invalidate();
   };
 
-  // Create the sessions config.
-  const config: SessionsConfig = { page, detail, deleteSessions };
+  // Create the context value.
+  const value: SessionsContextValue = { page, detail, deleteSessions };
 
   // Return the rendered component.
   return (
-    <SessionsConfigProvider value={ config }>
+    <SessionsContext value={ value }>
       <Sessions />
-    </SessionsConfigProvider>
+    </SessionsContext>
   );
 }

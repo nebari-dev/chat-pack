@@ -6,16 +6,16 @@ import type {
 } from 'react';
 
 import {
+  useSessions
+} from '@/context';
+
+import {
   SessionDetail
 } from './sessiondetail';
 
 import {
   SessionsTable
 } from './sessionstable';
-
-import {
-  useSessionsConfig
-} from './configprovider';
 
 
 /**
@@ -24,7 +24,7 @@ import {
 export
 function Sessions(): ReactNode {
   // Extract the detail and runs from the config.
-  const { detail } = useSessionsConfig();
+  const { detail } = useSessions();
 
   // Return the rendered component.
   return (

@@ -9,10 +9,10 @@ import * as api from '@/api';
 
 
 /**
- * A type alias for the sessions config.
+ * A type alias for the sessions context value.
  */
 export
-type SessionsConfig = {
+type SessionsContextValue = {
   /**
    * The loaded sessions page from the api.
    */
@@ -33,20 +33,20 @@ type SessionsConfig = {
 
 
 /**
- * The sessions config provider.
+ * The sessions context.
  */
 export
-const SessionsConfigProvider = createContext<SessionsConfig | undefined>(undefined);
+const SessionsContext = createContext<SessionsContextValue | undefined>(undefined);
 
 
 /**
- * A hook which returns the sessions config.
+ * A hook which returns the sessions context value.
  */
 export
-function useSessionsConfig(): SessionsConfig {
-  const config = useContext(SessionsConfigProvider);
-  if (config === undefined) {
-    throw new Error('missing `SessionsConfigProvider`');
+function useSessions(): SessionsContextValue {
+  const value = useContext(SessionsContext);
+  if (value === undefined) {
+    throw new Error('`useSessions` must be called within a `SessionsContext`');
   }
-  return config;
+  return value;
 }

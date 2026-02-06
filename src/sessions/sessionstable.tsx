@@ -32,12 +32,12 @@ import {
 } from '@/components/ui/table';
 
 import {
-  cn
-} from '@/lib/utils';
+  useSessions
+} from '@/context';
 
 import {
-  useSessionsConfig
-} from './configprovider';
+  cn
+} from '@/lib/utils';
 
 
 /**
@@ -46,7 +46,7 @@ import {
 export
 function SessionsTable(): ReactNode {
   // Fetch the memories config.
-  const { page } = useSessionsConfig();
+  const { page } = useSessions();
 
   // Create the data table model.
   const table = useReactTable({
@@ -257,7 +257,7 @@ namespace Private {
     const { table } = props;
 
     // Fetch the sessions config.
-    const { deleteSessions } = useSessionsConfig();
+    const { deleteSessions } = useSessions();
 
     // Fetch the needed info from the table.
     const rowCount = table.getRowModel().rows.length;

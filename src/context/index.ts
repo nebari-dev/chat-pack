@@ -5,3 +5,4 @@ export * from './config';
 export * from './knowledge';
 export * from './memories';
 export * from './metrics';
+export * from './sessions';
