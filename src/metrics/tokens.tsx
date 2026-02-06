@@ -46,6 +46,7 @@ function TokensChart(): ReactNode {
     color: ['#00bc7d', '#fd9a00'],
     tooltip: {
       trigger: 'axis',
+      confine: true,
       axisPointer: {
         type: 'shadow'
       },

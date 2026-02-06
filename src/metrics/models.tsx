@@ -31,6 +31,7 @@ function ModelRunsChart(): ReactNode {
   const option: ChartCard.Option = {
     tooltip: {
       trigger: 'item',
+      confine: true,
       formatter: (params: any) => {
         return (`
           <div class='grid gap-x-4 auto-cols-max'>

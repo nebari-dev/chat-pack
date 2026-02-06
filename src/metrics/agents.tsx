@@ -43,6 +43,7 @@ function AgentRunsChart(): ReactNode {
     color: ['#ad46ff'],
     tooltip: {
       trigger: 'axis',
+      confine: true,
       axisPointer: {
         type: 'shadow'
       },
@@ -130,6 +131,7 @@ function AgentSessionsChart(): ReactNode {
     color: ['#ff2056'],
     tooltip: {
       trigger: 'axis',
+      confine: true,
       axisPointer: {
         type: 'shadow'
       },
