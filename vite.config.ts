@@ -24,10 +24,10 @@ export default defineConfig(({ mode }) => {
     server: {
       allowedHosts: [env.VITE_ALLOWED_HOST],
       proxy: {
-        '/agno': {
+        '/api': {
           target: env.VITE_API_URL,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/agno/, '')
+          rewrite: (path) => path.replace(/^\/api/, '')
         }
       }
     }

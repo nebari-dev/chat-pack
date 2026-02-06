@@ -9,9 +9,9 @@ import type {
   ReactNode,
 } from 'react';
 
-import {
-  getUser
-} from '@/auth';
+import * as api from '@/api';
+
+import * as auth from '@/auth';
 
 import {
   ConfigProvider
@@ -35,7 +35,7 @@ const AUTH_ENABLED = (
 export
 const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ location }) => {
-    if (AUTH_ENABLED && getUser() === null) {
+    if (AUTH_ENABLED && auth.getUser() === null) {
       throw redirect({
         to: '/login',
         search: { redirect: location.href },
@@ -45,7 +45,7 @@ const Route = createFileRoute('/_authenticated')({
   loader: ({ context }) => {
     return context.client.ensureQueryData({
       queryKey: ['config'],
-      queryFn: context.API.getConfig,
+      queryFn: api.getConfig,
       staleTime: 'static'
     });
   },

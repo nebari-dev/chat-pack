@@ -11,6 +11,8 @@ import {
 
 import * as v from 'valibot';
 
+import * as api from '@/api';
+
 import type {
   MetricsConfig, MetricsConfigUpdateOptions
 } from '@/metrics';
@@ -51,8 +53,8 @@ function validateSearch(search: Record<string, unknown>) {
   // Calculate the chosen date via max(epoch, min(selected, today))
   const chosen = (
     selected < epoch ? epoch :
-      selected > today ? today :
-        selected
+    selected > today ? today :
+    selected
   );
 
   // Return the fully processed search params.
@@ -72,8 +74,8 @@ const Route = createFileRoute('/_authenticated/metrics')({
   validateSearch: validateSearch,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) => {
-    // Extract the client and API from the context.
-    const { client, API } = context;
+    // Extract the client from the context.
+    const { client } = context;
 
     // Unpack the deps.
     const { year, month } = deps;
@@ -94,8 +96,8 @@ const Route = createFileRoute('/_authenticated/metrics')({
       // Convert the end date to YYYY-MM-DD
       const endDate = lastDay.toISOString().split('T')[0];
 
-      // Fetch the metrics from the API.
-      return API.getMetrics({ startDate, endDate });
+      // Fetch the metrics from the api.
+      return api.getMetrics({ startDate, endDate });
     };
 
     // Create the metrics query.

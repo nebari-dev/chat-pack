@@ -18,14 +18,6 @@ import {
 } from '@tanstack/react-query';
 
 import {
-  agnoAPI
-} from '@/agno';
-
-import {
-  APIProvider
-} from '@/api';
-
-import {
   routeTree
 } from './routeTree.gen';
 
@@ -43,7 +35,7 @@ const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
-  context: { client, API: agnoAPI }
+  context: { client }
 });
 
 
@@ -59,11 +51,9 @@ declare module '@tanstack/react-router' {
 function App() {
   return (
     <StrictMode>
-      <APIProvider value={ agnoAPI }>
-        <QueryClientProvider client={ client }>
-          <RouterProvider router={ router } />
-        </QueryClientProvider>
-      </APIProvider>
+      <QueryClientProvider client={ client }>
+        <RouterProvider router={ router } />
+      </QueryClientProvider>
     </StrictMode>
   );
 }

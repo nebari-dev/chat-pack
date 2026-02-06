@@ -1,9 +1,15 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import * as v from 'valibot';
+
 import type {
   JsonSchema, UISchemaElement
 } from '@jsonforms/core';
+
+import {
+  getAuthToken
+} from '@/auth';
 
 import type {
   ReadonlyJSONObject, ReadonlyJSONValue
@@ -422,16 +428,48 @@ type SessionRun = {
  * @returns The paginated session summaries according to the request.
  */
 export
-type ListSessions = (options: ListSessions.Options) => Promise<SessionsPage>;
+async function listSessions(_options: listSessions.Options): Promise<SessionsPage> {
+  // Ignore the pagination options for now.
+
+  // Fetch the resource.
+  const resp = await fetch(`/api/sessions?type=agent&sort_by=updated_at`, {
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+  });
+
+  // Guard against fetch failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Convert the response to JSON.
+  const json = await resp.json();
+
+  // Pase the response.
+  const parsed = v.parse(Private.sessionsListSchema, json);
+
+  // Return the translated result.
+  return {
+    limit: parsed.data.length,
+    pageNumber: 0,
+    pageCount: 1,
+    totalCount: parsed.data.length,
+    sessions: parsed.data.map(si => ({
+      createdAt: si.created_at,
+      sessionId: si.session_id,
+      sessionName: si.session_name,
+      updatedAt: si.updated_at
+    }))
+  };
+}
 
 
 /**
- * The namespace for the `ListSesssions` statics.
+ * The namespace for the `listSessions` statics.
  */
 export
-namespace ListSessions {
+namespace listSessions {
   /**
-   * A type alias for the `ListSessions` options.
+   * A type alias for the `listSessions` options.
    */
   export
   type Options = {
@@ -475,7 +513,22 @@ namespace ListSessions {
  * @returns A promise that resolves at the completion of the delete.
  */
 export
-type DeleteSessions = (ids: readonly string[]) => Promise<void>;
+async function deleteSessions(ids: readonly string[]): Promise<void> {
+  // Create the request.
+  const resp = await fetch('/api/sessions', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: JSON.stringify({ session_ids: ids }),
+  });
+
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+}
 
 
 /**
@@ -487,7 +540,42 @@ type DeleteSessions = (ids: readonly string[]) => Promise<void>;
  *   result is useful for generating a medium-overview of the session.
  */
 export
-type GetSessionDetail = (id: string) => Promise<SessionDetail>;
+async function getSessionDetail(id: string): Promise<SessionDetail> {
+  // Fetch the resource.
+  const resp = await fetch(`/api/sessions/${id}?type=agent`, {
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+  });
+
+  // Guard against fetch failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Convert the response to JSON.
+  const json = await resp.json();
+
+  // Parse the Agno response
+  const parsed = v.parse(Private.sessionDetailSchema, json);
+
+  // Return the translated result.
+  return {
+    createdAt: parsed.created_at,
+    updatedAt: parsed.updated_at,
+    sessionId: parsed.session_id,
+    sessionName: parsed.session_name,
+    agentId: parsed.agent_id,
+    tokenMetrics: {
+      inputTokens: parsed.metrics.input_tokens,
+      outputTokens: parsed.metrics.output_tokens,
+      totalTokens: parsed.metrics.output_tokens
+    },
+    chatSummary: parsed.chat_history.map(ch => ({
+      role: ch.role,
+      createdAt: new Date(ch.created_at).toISOString(),
+      content: ch.content
+    }))
+  }
+}
 
 
 /**
@@ -499,7 +587,9 @@ type GetSessionDetail = (id: string) => Promise<SessionDetail>;
  *   used to restore the full state of a session from history.
  */
 export
-type GetSessionRuns = (id: string) => Promise<readonly SessionRun[]>;
+async function getSessionRuns(id: string): Promise<readonly SessionRun[]> {
+  return [];
+}
 
 
 /**
@@ -510,16 +600,18 @@ type GetSessionRuns = (id: string) => Promise<readonly SessionRun[]>;
  * @returns An async generator that streams run events.
  */
 export
-type CreateRun = (options: CreateRun.Options) => AsyncGenerator<RunEvent>;
+async function *createRun(options: createRun.Options): AsyncGenerator<RunEvent> {
+  throw 'not implemented';
+}
 
 
 /**
- * The namespace for the `CreateRun` statics.
+ * The namespace for the `createRun` statics.
  */
 export
-namespace CreateRun {
+namespace createRun {
   /**
-   * A type alias for the `CreateRun` options.
+   * A type alias for the `createRun` options.
    */
   export
   type Options = {
@@ -553,16 +645,18 @@ namespace CreateRun {
  * @returns An async generator that continues the run events.
  */
 export
-type ContinueRun = (options: ContinueRun.Options) => AsyncGenerator<RunEvent>;
+async function *continueRun(options: continueRun.Options): AsyncGenerator<RunEvent> {
+  throw 'not implemented';
+}
 
 
 /**
- * The namespace for the `ContinueRun` statics.
+ * The namespace for the `continueRun` statics.
  */
 export
-namespace ContinueRun {
+namespace continueRun {
   /**
-   * A type alias for the `ContinueRun` options.
+   * A type alias for the `continueRun` options.
    */
   export
   type Options = {
@@ -586,4 +680,53 @@ namespace ContinueRun {
      */
     readonly formData: ReadonlyJSONObject;
   };
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+   // A schema for a sessions list item.
+  const sessionsListItemSchema = v.object({
+    session_id: v.string(),
+    session_name: v.string(),
+    created_at: v.string(),
+    updated_at: v.string()
+  });
+
+   // A schema for a sessions list.
+  export
+  const sessionsListSchema = v.object({
+    data: v.array(sessionsListItemSchema),
+  });
+
+  // A schema for session token metrics.
+  const metricsSchema = v.object({
+    input_tokens: v.number(),
+    output_tokens: v.number(),
+    total_tokens: v.number()
+  });
+
+  // A schema for a chat history message.
+  const chatHistoryMessageSchema = v.object({
+    created_at: v.number(),
+    content: v.fallback(v.string(), ''),
+    role: v.union([
+      v.literal('assistant'),
+      v.literal('user')
+    ])
+  });
+
+  // A schema for an `agent` session.
+  export
+  const sessionDetailSchema = v.object({
+    created_at: v.string(),
+    session_id: v.string(),
+    session_name: v.string(),
+    updated_at: v.string(),
+    agent_id: v.string(),
+    metrics: metricsSchema,
+    chat_history: v.array(chatHistoryMessageSchema)
+  });
 }

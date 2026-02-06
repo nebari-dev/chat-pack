@@ -13,17 +13,12 @@ import type {
   ReactNode
 } from 'react';
 
-import type {
-  API
-} from '@/api';
-
 
 /**
  * The root route context.
  */
 type RouteContext = {
   client: QueryClient;
-  API: API;
 };
 
 

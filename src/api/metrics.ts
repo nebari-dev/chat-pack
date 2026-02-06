@@ -1,6 +1,11 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import * as v from 'valibot';
+
+import {
+  getAuthToken
+} from '@/auth';
 
 
 /**
@@ -101,16 +106,58 @@ type Metrics = {
  * @returns The aggregate metrics results for the requested time range.
  */
 export
-type GetMetrics = (options: GetMetrics.Options) => Promise<readonly Metrics[]>;
+async function getMetrics(options: getMetrics.Options): Promise<readonly Metrics[]> {
+  // Extract the options.
+  const { startDate, endDate } = options;
+
+  // Create the search params for the request.
+  const params = new URLSearchParams();
+  params.append('starting_date', startDate);
+  params.append('ending_date', endDate);
+
+  // Ensure the metrics are up-to-date.
+  //
+  // TODO - if this POST becomes a performance problem, we may need to
+  // implement a caching strategy, refresh on a timer, etc.
+  await fetch('/api/metrics/refresh', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+  });
+
+  // Fetch the Agno OS config schema.
+  const resp = await fetch(`/api/metrics?${params}`, {
+    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+  });
+
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Convert the response to json.
+  const json = await resp.json();
+
+  // Parse the response.
+  const parsed = v.parse(Private.metricsSchema, json);
+
+  // Return the translated result.
+  return parsed.metrics.map(row => ({
+    date: row.updated_at,
+    runsCount: row.agent_runs_count,
+    sessionsCount: row.agent_sessions_count,
+    tokenMetrics: Private.convertTokenMetrics(row.token_metrics),
+    modelMetrics: row.model_metrics.map(Private.convertModelMetrics)
+  }));
+}
 
 
 /**
- * The namespace for the `GetMetrics` statics.
+ * The namespace for the `getMetrics` statics.
  */
 export
-namespace GetMetrics {
+namespace getMetrics {
   /**
-   * A type alias for the `GetMetrics` options.
+   * A type alias for the `getMetrics` options.
    */
   export
   type Options = {
@@ -128,4 +175,67 @@ namespace GetMetrics {
      */
     readonly endDate: string;
   };
+}
+
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
+  // A schema for Agno token metrics.
+  const tokenMetricsSchema = v.object({
+    input_tokens: v.number(),
+    output_tokens: v.number(),
+    total_tokens: v.number(),
+  });
+
+  // A schema for Agno model metrics.
+  const modelMetricsSchema = v.object({
+    model_id: v.string(),
+    model_provider: v.string(),
+    count: v.number(),
+  });
+
+  // A schema for an agno metrics row.
+  const metricsRowSchema = v.object({
+    agent_runs_count: v.number(),
+    agent_sessions_count: v.number(),
+    token_metrics: tokenMetricsSchema,
+    model_metrics: v.array(modelMetricsSchema),
+    updated_at: v.string(),
+  });
+
+  // A schmea for an agno metrics result.
+  export
+  const metricsSchema = v.object({
+    metrics: v.array(metricsRowSchema)
+  });
+
+  /**
+   * A function which converts Agno token metrics to api token metrics.
+   */
+  export
+  function convertTokenMetrics(
+    metrics: v.InferOutput<typeof tokenMetricsSchema>
+  ): TokenMetrics {
+    return {
+      inputTokens: metrics.input_tokens,
+      outputTokens: metrics.output_tokens,
+      totalTokens: metrics.total_tokens
+    };
+  }
+
+  /**
+   * A function which converts Agno model metrics to api model metrics.
+   */
+  export
+  function convertModelMetrics(
+    metrics: v.InferOutput<typeof modelMetricsSchema>
+  ): ModelMetrics {
+    return {
+      modelId: metrics.model_id,
+      modelProvider: metrics.model_provider,
+      runCount: metrics.count
+    };
+  }
 }

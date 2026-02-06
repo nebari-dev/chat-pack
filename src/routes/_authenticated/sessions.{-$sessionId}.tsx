@@ -22,8 +22,8 @@ import {
 export
 const Route = createFileRoute('/_authenticated/sessions/{-$sessionId}')({
   loader: async ({ context, params }) => {
-    // Extract the query client and API.
-    const { client, API } = context;
+    // Extract the query client.
+    const { client } = context;
 
     // Unpack the params.
     const { sessionId } = params;
@@ -31,7 +31,7 @@ const Route = createFileRoute('/_authenticated/sessions/{-$sessionId}')({
     // Fetch the sessions page.
     const page = await client.fetchQuery({
       queryKey: ['sessions'],
-      queryFn: () => API.listSessions({})
+      queryFn: () => api.listSessions({})
     });
 
     // Redirect if the specified session id does not exist.
@@ -51,7 +51,7 @@ const Route = createFileRoute('/_authenticated/sessions/{-$sessionId}')({
       sessionId !== undefined ?
       await client.fetchQuery({
         queryKey: ['session', sessionId],
-        queryFn: () => API.getSessionDetail(sessionId)
+        queryFn: () => api.getSessionDetail(sessionId)
       }) :
       null
     );
@@ -70,16 +70,13 @@ function RouteComponent() {
   // Fetch the router for the current endpoint.
   const router = useRouter();
 
-  // Fetch the API handlers.
-  const API = api.useAPI();
-
   // Fetch the loader data.
   const { page, detail } = Route.useLoaderData();
 
   // Create the handler for deleting sessions.
   const deleteSessions = async (ids: readonly string[]) => {
     // Delete the sessions on the server.
-    await API.deleteSessions(ids);
+    await api.deleteSessions(ids);
 
     // Force the router to reload the current data.
     await router.invalidate();

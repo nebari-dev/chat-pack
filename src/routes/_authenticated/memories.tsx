@@ -5,9 +5,7 @@ import {
   createFileRoute, useRouter
 } from '@tanstack/react-router';
 
-import {
-  useAPI
-} from '@/api';
+import * as api from '@/api';
 
 import type {
   MemoriesConfig
@@ -29,7 +27,7 @@ const Route = createFileRoute('/_authenticated/memories')({
   loader: ({ context }) => {
     return context.client.fetchQuery({
       queryKey: ['memories'],
-      queryFn: () => context.API.getMemories({})
+      queryFn: () => api.getMemories({})
     });
   }
 });
@@ -42,16 +40,13 @@ function RouteComponent() {
   // Fetch the router for the current endpoint.
   const router = useRouter();
 
-  // Fetch the API.
-  const API = useAPI();
-
   // Fetch the loader data.
   const data = Route.useLoaderData();
 
   // Create the handler for deleting memories.
   const deleteMemories = async (ids: readonly string[]) => {
     // Delete the memories on the server.
-    await API.deleteMemories(ids);
+    await api.deleteMemories(ids);
 
     // Force the router to reload the current data.
     await router.invalidate();
