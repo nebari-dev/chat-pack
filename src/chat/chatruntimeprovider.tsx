@@ -29,11 +29,11 @@ import * as api from '@/api';
 
 import type {
   ChatConfig
-} from './chatconfigprovider';
+} from '@/context';
 
 import {
   useChatConfig
-} from './chatconfigprovider';
+} from '@/context';
 
 
 /**
