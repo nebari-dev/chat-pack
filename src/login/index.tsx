@@ -9,7 +9,7 @@ import {
   useState
 } from 'react'
 
-import * as api from '@/api';
+import * as auth from '@/auth';
 
 import {
   Button
@@ -83,7 +83,9 @@ function Login(props: Login.Props): ReactNode {
       <Card className='max-w-md w-full rounded-md'>
         <CardHeader>
           <CardTitle className='text-xl'>
-            Sign In
+            <div className={ cn(
+              'h-6 bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)]',
+              'bg-[auto_100px] bg-center bg-no-repeat w-[100px]') } />
           </CardTitle>
           { errorContent }
         </CardHeader>
@@ -157,6 +159,6 @@ namespace Login {
     /**
      * A callback function to submit the UN/PW for login.
      */
-    readonly onLogin: (options: api.login.Options) => Promise<void>;
+    readonly onLogin: (options: auth.login.Options) => Promise<void>;
   };
 }
