@@ -16,7 +16,8 @@ import {
 } from './metrics';
 
 import {
-  listSessions, getSessionDetail, getSessionRuns, createRun, continueRun
+  continueRun, createRun, deleteSessions, getSessionDetail, getSessionRuns,
+  listSessions
 } from './session';
 
 
@@ -30,6 +31,7 @@ const agnoAPI: api.API = {
   deleteMemories,
   getMetrics,
   listSessions,
+  deleteSessions,
   getSessionDetail,
   getSessionRuns,
   createRun,

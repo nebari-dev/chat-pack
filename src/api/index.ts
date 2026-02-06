@@ -18,7 +18,8 @@ import type {
 } from './metrics';
 
 import type {
-  CreateRun, ContinueRun, GetSessionDetail, GetSessionRuns, ListSessions
+  ContinueRun, CreateRun, DeleteSessions, GetSessionDetail, GetSessionRuns,
+  ListSessions
 } from './session';
 
 
@@ -39,6 +40,7 @@ type API = {
   readonly deleteMemories: DeleteMemories;
   readonly getMetrics: GetMetrics;
   readonly listSessions: ListSessions;
+  readonly deleteSessions: DeleteSessions;
   readonly getSessionDetail: GetSessionDetail;
   readonly getSessionRuns: GetSessionRuns;
   readonly createRun: CreateRun;

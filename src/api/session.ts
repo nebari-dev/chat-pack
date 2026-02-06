@@ -290,7 +290,7 @@ type SessionsPage = {
    *
    * This must agree with the `limit`, `pageCount`, and `totalCount`.
    */
-  readonly page: number;
+  readonly pageNumber: number;
 
   /**
    * The total number of pages available based on `limit` and `totalCount`.
@@ -468,63 +468,38 @@ namespace ListSessions {
 
 
 /**
+ * Delete sessions from the server.
+ *
+ * @param ids - The array of session ids to delete.
+ *
+ * @returns A promise that resolves at the completion of the delete.
+ */
+export
+type DeleteSessions = (ids: readonly string[]) => Promise<void>;
+
+
+/**
  * Fetch the details for a particular session.
  *
- * @params options - The options that identifies the session of interest.
+ * @params id - The session id of interest.
  *
  * @returns The details of the specified session, minus its runs. This
  *   result is useful for generating a medium-overview of the session.
  */
 export
-type GetSessionDetail = (options: GetSessionDetail.Options) => Promise<SessionDetail>;
-
-
-/**
- * The namespace for the `GetSessionDetail` statics.
- */
-export
-namespace GetSessionDetail {
-  /**
-   * A type alias for the `GetSessionDetail` options.
-   */
-  export
-  type Options = {
-    /**
-     * The unique id of the session.
-     */
-    readonly sessionId: string;
-  };
-}
+type GetSessionDetail = (id: string) => Promise<SessionDetail>;
 
 
 /**
  * Fetch the runs for a particular session.
  *
- * @params options - The options that identifies the session of interest.
+ * @params id - The session id of interest.
  *
  * @returns A full and complete history of the session runs. This can be
  *   used to restore the full state of a session from history.
  */
 export
-type GetSessionRuns = (options: GetSessionRuns.Options) => Promise<readonly SessionRun[]>;
-
-
-/**
- * The namespace for the `GetSessionRuns` statics.
- */
-export
-namespace GetSessionRuns {
-  /**
-   * A type alias for the `GetSessionRuns` options.
-   */
-  export
-  type Options = {
-    /**
-     * The unique id for the session.
-     */
-    readonly sessionId: string;
-  };
-}
+type GetSessionRuns = (id: string) => Promise<readonly SessionRun[]>;
 
 
 /**
