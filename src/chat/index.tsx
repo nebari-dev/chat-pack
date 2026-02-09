@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import type {
-  PropsWithChildren, ReactNode
+  ReactNode
 } from 'react';
 
 import {
@@ -15,15 +15,15 @@ import {
 
 import {
   ChatRuntimeProvider
-} from './chatruntimeprovider';
+} from './chatruntime';
 
 import {
   Header
 } from './header';
 
 import {
-  useScrollToBottom
-} from './usescrolltobottom';
+  Viewport
+} from './viewport';
 
 
 /**
@@ -35,38 +35,11 @@ function Chat(): ReactNode {
     <main className='grow flex flex-col'>
       <ChatRuntimeProvider>
         <Header />
-        <Private.Viewport>
+        <Viewport>
           <ChatOutput />
           <ChatInput />
-        </Private.Viewport>
+        </Viewport>
       </ChatRuntimeProvider>
     </main>
   );
-}
-
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * A react component that renders the scroll viewport for the chat.
-   */
-  export
-  function Viewport(props: PropsWithChildren): ReactNode {
-    // Extract the props.
-    const { children } = props;
-
-    // Fetch the auto-scroll ref from the hook.
-    const ref = useScrollToBottom();
-
-    // Return the rendered component.
-    return (
-      <div
-        ref={ ref }
-        className='px-4 grow min-h-0 flex flex-col gap-6 overflow-y-auto'>
-        { children }
-      </div>
-    );
-  }
 }

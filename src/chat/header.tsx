@@ -23,7 +23,7 @@ import {
 
 import {
   useChatRuntime
-} from './chatruntimeprovider';
+} from './chatruntime';
 
 
 /**
@@ -110,7 +110,7 @@ namespace Private {
     // Return the rendered component.
     return (
       <div className='px-4 flex items-center'>
-        { runs[0].run_input }
+        { runs[0].prompt }
       </div>
     );
   }

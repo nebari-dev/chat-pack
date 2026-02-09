@@ -169,9 +169,9 @@ type RunContinuedEvent = EventCommon & {
 export
 type ToolCall = {
   /**
-   * The unique id of the tool being called.
+   * The unique id of the tool call.
    */
-  readonly toolId: string;
+  readonly toolCallId: string;
 
   /**
    * The human readable name of the tool.
@@ -400,21 +400,16 @@ type SessionRun = {
   readonly events: readonly RunEvent[];
 
   /**
-   * The unique id for the run.
-   */
-  readonly runId: string;
-
-  /**
-   * The ISO UTC timestamp of the most recent update to the run.
-   */
-  readonly updatedAt: string;
-
-  /**
    * The user prompt for the run.
    *
    * This is echoed from the user submitted prompt.
    */
-  readonly userPrompt: string;
+  readonly prompt: string;
+
+  /**
+   * The unique id for the run.
+   */
+  readonly runId: string;
 };
 
 
@@ -589,7 +584,30 @@ async function getSessionDetail(id: string): Promise<SessionDetail> {
  */
 export
 async function getSessionRuns(id: string): Promise<readonly SessionRun[]> {
-  return [];
+  // Fetch the resource.
+  const resp = await fetch(`/api/sessions/${id}/runs`, {
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
+  });
+
+  // Guard against fetch failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Convert the response to JSON.
+  const json = await resp.json();
+
+  // Parse the Agno response
+  const parsed = v.parse(Private.sessionRunsSchema, json);
+
+  // Return the translated result.
+  return parsed.map(sr => ({
+    agentId: sr.agent_id,
+    createdAt: sr.created_at,
+    events: sr.events.map(Private.convertRunEvent),
+    prompt: sr.run_input,
+    runId: sr.run_id
+  }));
 }
 
 
@@ -633,7 +651,7 @@ namespace createRun {
     /**
      * The user prompt for the run.
      */
-    readonly userPrompt: string;
+    readonly prompt: string;
   };
 }
 
@@ -672,6 +690,11 @@ namespace continueRun {
     readonly runId: string;
 
     /**
+     * The unique id of the agent for the run.
+     */
+    readonly agentId: string;
+
+    /**
      * The id of the form that has been completed.
      */
     readonly formId: string;
@@ -688,35 +711,75 @@ namespace continueRun {
  * The namespace for the module implementation details.
  */
 namespace Private {
-   // A schema for a sessions list item.
-  const sessionsListItemSchema = v.object({
-    session_id: v.string(),
-    session_name: v.string(),
-    created_at: v.string(),
-    updated_at: v.string()
+  // A schema for the common `Agno` event properties.
+  const eventCommonSchema = v.object({
+    created_at: v.number(),
+    agent_id: v.string(),
+    run_id: v.string(),
+    session_id: v.string()
   });
 
-   // A schema for a sessions list.
+  // A schema for the Agno `RunStarted` event.
+  const runStartedEventSchema = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('RunStarted')
+  });
+
+  // A schema for the Agno `RunContent` event.
+  const runContentEventSchema = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('RunContent'),
+    content: v.string()
+  });
+
+  // A schema for the Agno `ToolCallCompleted` event.
+  const toolCallCompletedEventSchema = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('ToolCallCompleted'),
+    tool: v.object({
+      tool_call_id: v.string(),
+      tool_name: v.string(),
+      tool_args: v.looseObject({}),
+      result: v.any()
+    })
+  });
+
+  // A schema for the Agno `RunCompleted` event.
+  const runCompletedEvent = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('RunCompleted'),
+    content: v.string()
+  });
+
+  // A schema for an Agno run event.
+  const runEventSchema = v.variant('event', [
+    runStartedEventSchema,
+    runContentEventSchema,
+    toolCallCompletedEventSchema,
+    runCompletedEvent
+  ]);
+
+  // A function which filters for useful agno event types.
+  function isUsefulEvent(event: unknown): boolean {
+    switch (event) {
+    case 'RunStarted':
+    case 'RunContent':
+    case 'ToolCallCompleted':
+    case 'RunCompleted':
+      return true;
+    }
+    return false;
+  };
+
+  // A schema for an Agno sessions list.
   export
   const sessionsListSchema = v.object({
-    data: v.array(sessionsListItemSchema),
-  });
-
-  // A schema for session token metrics.
-  const metricsSchema = v.object({
-    input_tokens: v.number(),
-    output_tokens: v.number(),
-    total_tokens: v.number()
-  });
-
-  // A schema for a chat history message.
-  const chatHistoryMessageSchema = v.object({
-    created_at: v.number(),
-    content: v.fallback(v.string(), ''),
-    role: v.union([
-      v.literal('assistant'),
-      v.literal('user')
-    ])
+    data: v.array(v.object({
+      session_id: v.string(),
+      session_name: v.string(),
+      created_at: v.string(),
+      updated_at: v.string()
+    })),
   });
 
   // A schema for an `agent` session.
@@ -727,7 +790,84 @@ namespace Private {
     session_name: v.string(),
     updated_at: v.string(),
     agent_id: v.string(),
-    metrics: metricsSchema,
-    chat_history: v.array(chatHistoryMessageSchema)
+    metrics: v.object({
+      input_tokens: v.number(),
+      output_tokens: v.number(),
+      total_tokens: v.number()
+    }),
+    chat_history: v.array(v.object({
+      created_at: v.number(),
+      content: v.fallback(v.string(), ''),
+      role: v.union([
+        v.literal('assistant'),
+        v.literal('user')
+      ])
+    }))
   });
+
+
+  // A schema for the Agno session runs.
+  export
+  const sessionRunsSchema = v.array(v.object({
+    agent_id: v.string(),
+    created_at: v.string(),
+    events: v.pipe(
+      v.array(v.looseObject({ event: v.string() })),
+      v.filterItems(item => isUsefulEvent(item.event)),
+      v.array(runEventSchema)
+    ),
+    run_id: v.string(),
+    run_input: v.string()
+  }));
+
+  /**
+   * Convert an Agno run event into an api `RunEvent`.
+   */
+  export
+  function convertRunEvent(re: v.InferOutput<typeof runEventSchema>): RunEvent {
+    switch (re.event) {
+    case 'RunStarted':
+      return {
+        type: 'run-started',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id
+      };
+    case 'RunContent':
+      return {
+        type: 'run-content',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id,
+        content: re.content
+      };
+    case 'ToolCallCompleted':
+      return {
+        type: 'tool-call',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id,
+        toolCall: {
+          toolCallId: re.tool.tool_call_id,
+          toolName: re.tool.tool_name,
+          toolArgs: re.tool.tool_args as ReadonlyJSONObject,
+          result: re.tool.result as ReadonlyJSONValue
+        }
+      };
+    case 'RunCompleted':
+      return {
+        type: 'run-completed',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id,
+        content: re.content
+      };
+    default:
+      throw 'unreachable';
+    }
+  }
 }
