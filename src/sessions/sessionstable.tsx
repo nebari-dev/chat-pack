@@ -50,7 +50,7 @@ function SessionsTable(): ReactNode {
 
   // Create the data table model.
   const table = useReactTable({
-    data: page.sessions as api.SessionDetail[],  // dumb cast required for Tanstack
+    data: page.items as api.SessionDetail[],  // dumb cast required for Tanstack
     columns: Private.columns,
     getCoreRowModel: getCoreRowModel()
   });

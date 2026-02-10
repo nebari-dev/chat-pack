@@ -46,7 +46,7 @@ function DataTable(): ReactNode {
 
   // Create the data table model.
   const table = useReactTable({
-    data: page.memories as api.Memory[],  // dumb cast required for tanstack
+    data: page.items as api.Memory[],  // dumb cast required for tanstack
     columns: Private.columns,
     getCoreRowModel: getCoreRowModel()
   });

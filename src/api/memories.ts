@@ -5,6 +5,10 @@ import * as v from 'valibot';
 
 import * as auth from '@/auth';
 
+import type {
+  Page, PageOptions
+} from './common';
+
 
 /**
  * A type alias for a single agentic memory.
@@ -14,7 +18,7 @@ import * as auth from '@/auth';
 export
 type Memory = {
   /**
-   * The unique id of the agent that create the memory.
+   * The unique id of the agent that created the memory.
    */
   readonly agentId: string;
 
@@ -48,39 +52,7 @@ type Memory = {
  * A type alias for the `getMemories()` handler result.
  */
 export
-type MemoriesPage = {
-  /**
-   * The limit of the number of responses per page.
-   *
-   * This is either echoed from the request, or defined by the server if
-   * pagination info was provided in the request.
-   */
-  readonly limit: number;
-
-  /**
-   * The page number of the provided results.
-   *
-   * This must agree with the `limit`, `pageCount`, and `totalCount`.
-   */
-  readonly pageNumber: number;
-
-  /**
-   * The total number of pages available based on `limit` and `totalCount`.
-   */
-  readonly pageCount: number;
-
-  /**
-   * The total number of records available, independent of `limit`.
-   */
-  readonly totalCount: number;
-
-  /**
-   * The memories for the request.
-   *
-   * This must always be `<= limit`.
-   */
-  readonly memories: readonly Memory[];
-};
+type MemoriesPage = Page<Memory>;
 
 
 /**
@@ -116,7 +88,7 @@ async function getMemories(_options: getMemories.Options): Promise<MemoriesPage>
     pageNumber: 0,
     pageCount: 1,
     totalCount: parsed.data.length,
-    memories: parsed.data.map(mi => ({
+    items: parsed.data.map(mi => ({
       agentId: mi.agent_id,
       content: mi.memory,
       memoryId: mi.memory_id,
@@ -136,34 +108,13 @@ namespace getMemories {
    * A type alias for the `getMemories` options.
    */
   export
-  type Options = {
+  type Options = PageOptions<Memory> & {
     /**
      * The unique id of the agent for filtered results.
      *
      * If this is not provided, the server should return all agents.
      */
     readonly agentId?: string;
-
-    /**
-     * The pagination spec for filtering the request result.
-     *
-     * If this is not provided, the server is free to choose its own.
-     */
-    readonly pagination?: {
-     /**
-       * The upper limit of the number of responses to return per page.
-       */
-      readonly limit?: number;
-      /**
-       * The page to return based on the specified limit.
-       */
-      readonly page?: number;
-
-      /**
-       * The sort order based on the session last updated timestamp.
-       */
-      readonly sort?: 'ascending' | 'descending';
-    };
   };
 }
 

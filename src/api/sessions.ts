@@ -18,6 +18,10 @@ import {
 } from '@/lib/sse';
 
 import type {
+  Page, PageOptions
+} from './common';
+
+import type {
   TokenMetrics
 } from './metrics';
 
@@ -284,39 +288,7 @@ type SessionInfo = {
  * A type alias for the `listSessions()` handler response.
  */
 export
-type SessionsPage = {
-  /**
-   * The limit of the number of responses per page.
-   *
-   * This is either echoed from the request, or defined by the server if
-   * pagination info was provided in the request.
-   */
-  readonly limit: number;
-
-  /**
-   * The page number of the provided results.
-   *
-   * This must agree with the `limit`, `pageCount`, and `totalCount`.
-   */
-  readonly pageNumber: number;
-
-  /**
-   * The total number of pages available based on `limit` and `totalCount`.
-   */
-  readonly pageCount: number;
-
-  /**
-   * The total number of records available, independent of `limit`.
-   */
-  readonly totalCount: number;
-
-  /**
-   * The session summaries for the request.
-   *
-   * This must always have `.length <= limit`.
-   */
-  readonly sessions: readonly SessionInfo[];
-};
+type SessionsPage = Page<SessionInfo>;
 
 
 /**
@@ -450,7 +422,7 @@ async function listSessions(_options: listSessions.Options): Promise<SessionsPag
     pageNumber: 0,
     pageCount: 1,
     totalCount: parsed.data.length,
-    sessions: parsed.data.map(si => ({
+    items: parsed.data.map(si => ({
       createdAt: si.created_at,
       sessionId: si.session_id,
       sessionName: si.session_name,
@@ -469,35 +441,13 @@ namespace listSessions {
    * A type alias for the `listSessions` options.
    */
   export
-  type Options = {
+  type Options = PageOptions<SessionInfo> & {
     /**
      * The agent id for filtering the session result.
      *
      * If this is not provided, all agents will be included in the result.
      */
     readonly agentId?: string;
-
-    /**
-     * The pagination spec for filtering the request result.
-     *
-     * If this is not provided, the server is free to choose its own.
-     */
-    readonly pagination?: {
-      /**
-       * The upper limit of the number of responses to return per page.
-       */
-      readonly limit?: number;
-
-      /**
-       * The page to return based on the specified limit.
-       */
-      readonly page?: number;
-
-      /**
-       * The sort order based on the session updated timestamp.
-       */
-      readonly sort?: 'ascending' | 'descending';
-    };
   };
 }
 
