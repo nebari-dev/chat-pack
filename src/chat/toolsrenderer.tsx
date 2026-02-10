@@ -1,10 +1,6 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import type {
-  EChartsOption
-} from 'echarts';
-
 import {
   JsonEditor
 } from 'json-edit-react';
@@ -31,17 +27,17 @@ import {
   EChartRenderer
 } from '@/components/charts/echartrenderer';
 
-import {
-  HITLRenderer
-} from '@/components/hitl/hitlrenderer';
+// import {
+//   HITLRenderer
+// } from '@/components/hitl/hitlrenderer';
 
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from '@/components/ui/accordion';
 
-import {
-  useChatRuntime
-} from './chatruntimeprovider';
+// import {
+//   useChatRuntime
+// } from './chatruntime';
 
 
 /**
@@ -53,31 +49,31 @@ function ToolsRenderer(props: ToolsRenderer.Props): ReactNode {
   const { events } = props;
 
   // Filter the events.
-  const { toolEvents, pausedEvent } = Private.filterEvents(events);
+  const { toolCallEvents, runPausedEvent } = Private.filterEvents(events);
 
   // Bail early if there is nothing to render.
-  if (toolEvents.length === 0 && pausedEvent === null) {
+  if (toolCallEvents.length === 0 && runPausedEvent === null) {
     return null;
   }
 
   // Dispatch the tool events to their renderers.
-  const content = toolEvents.map(evt =>
+  const content = toolCallEvents.map(evt =>
     <Private.ToolRendererDispatchMemo
-      key={ evt.tool.tool_call_id }
+      key={ evt.toolCall.toolCallId }
       event={ evt } />
   );
 
   // Create the HTIL content, if needed.
   const hitl = (
-    pausedEvent ?
-    <Private.HITLWrapper pausedEvent={ pausedEvent } /> :
+    runPausedEvent ?
+    <Private.HITLWrapper runPausedEvent={ runPausedEvent } /> :
     null
   );
 
   // Return the rendered component.
   return (
     <div className='flex flex-col gap-4'>
-      <Private.ToolAccordion toolEvents={ toolEvents } />
+      <Private.ToolAccordion toolCallEvents={ toolCallEvents } />
       { content }
       { hitl }
     </div>
@@ -113,9 +109,9 @@ namespace Private {
   export
   type FilterEventsResult = {
     /**
-     * The completed tool call events from the event stream.
+     * The tool call events from the event stream.
      */
-    readonly toolEvents: readonly api.ToolCallCompletedEvent[];
+    readonly toolCallEvents: readonly api.ToolCallEvent[];
 
     /**
      * The run paused event for HITL tool calls.
@@ -124,7 +120,7 @@ namespace Private {
      * in the event stream, indicating the HITL tool needs to be rendered.
      * Otherwise, it will be `null`.
      */
-    readonly pausedEvent: api.RunPausedEvent | null;
+    readonly runPausedEvent: api.RunPausedEvent | null;
   };
 
   /**
@@ -133,17 +129,17 @@ namespace Private {
   export
   function filterEvents(events: readonly api.RunEvent[]): FilterEventsResult {
     // Filter for the completed tool events.
-    const toolEvents = events.filter(e => e.event === 'ToolCallCompleted');
+    const toolCallEvents = events.filter(e => e.type === 'tool-call');
 
-    // Filter the paused event, if there is one at the end of the stream.
-    const pausedEvent = (
-      events.length > 0 && events[events.length - 1].event === 'RunPaused' ?
+    // Get the run paused event, if there is one at the end of the stream.
+    const runPausedEvent = (
+      events.length > 0 && events[events.length - 1].type === 'run-paused' ?
       events[events.length - 1] :
       null
     ) as api.RunPausedEvent | null;
 
     // Return the filtered results.
-    return { toolEvents, pausedEvent };
+    return { toolCallEvents, runPausedEvent };
   }
 
   /**
@@ -152,9 +148,9 @@ namespace Private {
   export
   type ToolAccordionProps = {
     /**
-     * The completed tool call events from the event stream.
+     * The tool call events from the event stream.
      */
-    readonly toolEvents: readonly api.ToolCallCompletedEvent[];
+    readonly toolCallEvents: readonly api.ToolCallEvent[];
   };
 
   /**
@@ -165,10 +161,10 @@ namespace Private {
   export
   function ToolAccordion(props: ToolAccordionProps): ReactNode {
     // Extract the props.
-    const { toolEvents } = props;
+    const { toolCallEvents } = props;
 
     // Fetch the tool count.
-    const count = toolEvents.length;
+    const count = toolCallEvents.length;
 
     // Bail early if there is nothing to render.
     if (count === 0) {
@@ -176,16 +172,17 @@ namespace Private {
     }
 
     // Create the JSON viewer content for the tool calls.
-    const content = toolEvents.map(evt => {
+    const content = toolCallEvents.map(evt => {
       return (
-        <div key={ evt.tool.tool_call_id } className='flex flex-col gap-4'>
+        <div key={ evt.toolCall.toolCallId } className='flex flex-col gap-4'>
           <div className='font-semibold'>
-            { evt.tool.tool_name.toUpperCase() }
+            { evt.toolCall.toolName.toUpperCase() }
           </div>
           <JsonEditor
             className='ot-ChatPlusPlus-jer'
-            data={ evt.tool }
+            data={ evt.toolCall }
             maxWidth='100%'
+            rootName=''
             viewOnly={ true }
             rootFontSize={ 12 }
             collapse={ true } />
@@ -222,7 +219,7 @@ namespace Private {
     /**
      * The tool completed event to render.
      */
-    readonly event: api.ToolCallCompletedEvent;
+    readonly event: api.ToolCallEvent;
   };
 
   /**
@@ -234,27 +231,27 @@ namespace Private {
     const { event } = props;
 
     // Try to cast the result to a mime result.
-    const mimeResult = castResult(event.tool.result);
+    const mimeResult = castResult(event.toolCall.result);
 
     // Bail early if the cast failed.
     if (!mimeResult) {
       return null;
     }
 
-    // Bail if mime type is not known.
-    if (mimeResult.mimeType !== 'application/vnd.openteams-echart') {
+    // Extract the mime type and mime data.
+    const { mimeType, data } = mimeResult;
+
+    // Dispatch to the known mimetype renderers.
+    switch (mimeType) {
+    case 'application/vnd.openteams-echart':
+      return (
+        <EChartRenderer
+          option={ (data as any).option }
+          className='h-120 p-4 border rounded-md' />
+      );
+    default:
       return null;
     }
-
-    // Cast the mime data to the known type.
-    const option = (mimeResult.data as any).option as EChartsOption;
-
-    // Return the rendered component.
-    return (
-      <EChartRenderer
-        option={ option }
-        className='h-120 p-4 border rounded-md' />
-    );
   }
 
   /**
@@ -285,40 +282,13 @@ namespace Private {
    */
   export
   function castResult(result: unknown): MimeResult | null {
-    // Bail if the result is empty.
-    if (!result) {
-      return null;
-    }
-
-    // Bail is the result type is not a string.
-    if (typeof result !== 'string') {
-      return null;
-    }
-
-    // Try to parse the string as JSON.
-    try {
-      result = JSON.parse(result);
-    } catch {
-      return null;
-    }
-
-    // Bail if the result is empty.
-    if (!result) {
-      return null;
-    }
-
     // Bail if the result is not an object.
-    if (typeof result !== 'object') {
+    if (!result || typeof result !== 'object') {
       return null;
     }
 
-    // Bail if the result does not have a mime type.
-    if (!('mime_type' in result)) {
-      return null;
-    }
-
-    // Bail if the mime type is not a string.
-    if (typeof result.mime_type !== 'string') {
+    // Bail if the result does not have a valid mime type.
+    if (!('mimeType' in result) || typeof result.mimeType !== 'string') {
       return null;
     }
 
@@ -327,7 +297,8 @@ namespace Private {
       return null;
     }
 
-    return { mimeType: result.mime_type, data: result.data };
+    // Return the casted result.
+    return { mimeType: result.mimeType, data: result.data };
   }
 
   /**
@@ -336,9 +307,9 @@ namespace Private {
   export
   type HITLWrapperProps = {
     /**
-     * The api paused event that triggers the HITL renderer.
+     * The run paused event that triggers the HITL renderer.
      */
-    readonly pausedEvent: api.RunPausedEvent;
+    readonly runPausedEvent: api.RunPausedEvent;
   };
 
   /**
@@ -348,27 +319,28 @@ namespace Private {
    */
   export
   function HITLWrapper(props: HITLWrapperProps): ReactNode {
-    // Extract the props.
-    const { pausedEvent } = props;
+    return null;
+    // // Extract the props.
+    // const { pausedEvent } = props;
 
-    // Fetch the resume run handler handler from the runtime.
-    const { onResumeRun } = useChatRuntime();
+    // // Fetch the resume run handler handler from the runtime.
+    // const { onResumeRun } = useChatRuntime();
 
-    // Create the callback to handle the HITL submit.
-    const handleSubmitExecutions = (exc: readonly api.ToolExecution[]) => {
-      onResumeRun({
-        agentId: pausedEvent.agent_id,
-        runId: pausedEvent.run_id,
-        sessionId: pausedEvent.session_id,
-        tools: exc
-      });
-    };
+    // // Create the callback to handle the HITL submit.
+    // const handleSubmitExecutions = (exc: readonly api.ToolExecution[]) => {
+    //   onResumeRun({
+    //     agentId: pausedEvent.agent_id,
+    //     runId: pausedEvent.run_id,
+    //     sessionId: pausedEvent.session_id,
+    //     tools: exc
+    //   });
+    // };
 
-    // Return the rendered component.
-    return (
-      <HITLRenderer
-        pausedEvent={ pausedEvent }
-        submitExecutions={ handleSubmitExecutions } />
-    );
+    // // Return the rendered component.
+    // return (
+    //   <HITLRenderer
+    //     pausedEvent={ pausedEvent }
+    //     submitExecutions={ handleSubmitExecutions } />
+    // );
   }
 }

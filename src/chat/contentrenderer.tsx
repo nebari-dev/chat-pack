@@ -65,15 +65,15 @@ namespace Private {
       return '';
     }
 
-    // If the last event is `RunCompleted`, use that as the truth.
+    // If the last event is `run-completed`, use that as the truth.
     const lastEvent = events[events.length - 1];
-    if (lastEvent.event === 'RunCompleted') {
+    if (lastEvent.type === 'run-completed') {
       return lastEvent.content;
     }
 
     // Otherwise, join the `RunContent` events.
     return events.reduce((content, e) => {
-      return content + (e.event === 'RunContent' ? e.content : '');
+      return content + (e.type === 'run-content' ? e.content : '');
     }, '');
   }
 }

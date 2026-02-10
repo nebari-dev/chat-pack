@@ -23,7 +23,7 @@ import {
 
 import {
   useChatRuntime
-} from './chatruntimeprovider';
+} from './chatruntime';
 
 
 /**
@@ -58,7 +58,7 @@ namespace Private {
     const chatConfig = useChatConfig();
 
     // Create the value for the select.
-    const value = chatConfig.agentId ?? config.agents[0]?.agentId ?? '';
+    const value = chatConfig.agentId;
 
     // Setup the callback to handle the select change.
     const handleValueChange = (value: string) => {
@@ -110,7 +110,7 @@ namespace Private {
     // Return the rendered component.
     return (
       <div className='px-4 flex items-center'>
-        { runs[0].run_input }
+        { runs[0].prompt }
       </div>
     );
   }

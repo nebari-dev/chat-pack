@@ -12,9 +12,9 @@ import {
 export
 type ChatConfig = {
   /**
-   * The unique id of the agent.
+   * The unique id of the selected agent.
    */
-  readonly agentId: string | undefined;
+  readonly agentId: string;
 
   /**
    * The unique id for the session.

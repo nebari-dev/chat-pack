@@ -23,7 +23,7 @@ import {
 
 import {
   useChatRuntime
-} from './chatruntimeprovider';
+} from './chatruntime';
 
 
 /**

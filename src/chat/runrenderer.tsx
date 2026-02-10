@@ -31,7 +31,7 @@ function RunRenderer(props: RunRenderer.Props): ReactNode {
   // Return the rendered component.
   return (
     <div className='mt-12 flex flex-col gap-6'>
-      <RunInputMemo prompt={ run.run_input } />
+      <RunInputMemo prompt={ run.prompt } />
       <RunOutput events={ run.events ?? [] } />
     </div>
   );

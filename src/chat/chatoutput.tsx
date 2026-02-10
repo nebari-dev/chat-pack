@@ -7,7 +7,7 @@ import type {
 
 import {
   useChatRuntime
-} from './chatruntimeprovider';
+} from './chatruntime';
 
 import {
   RunRendererMemo
@@ -24,7 +24,7 @@ function ChatOutput(): ReactNode {
 
   // Create the content for the runs.
   const content = runs.map(run =>
-    <RunRendererMemo key={ run.run_id } run={ run } />
+    <RunRendererMemo key={ run.runId } run={ run } />
   );
 
   // Return the rendered component.

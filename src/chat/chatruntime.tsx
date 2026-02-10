@@ -35,12 +35,16 @@ import {
   useChatConfig
 } from '@/context';
 
+import type {
+  ReadonlyJSONObject
+} from '@/lib/json';
+
 
 /**
  * A type alias for the chat runtime.
  */
 export
-type ChatRuntime = ChatConfig & {
+type ChatRuntime = {
   /**
    * Whether the runtime is currently loading the chat history.
    */
@@ -54,7 +58,7 @@ type ChatRuntime = ChatConfig & {
   /**
    * The session runs for the chat.
    */
-  readonly runs: api.SessionRuns;
+  readonly runs: readonly api.SessionRun[];
 
   /**
    * A callback to submit a new user message to the session.
@@ -62,9 +66,9 @@ type ChatRuntime = ChatConfig & {
   readonly onUserSubmit: (prompt: string) => void;
 
   /**
-   * A callback to resume a run after a HITL tool pause.
+   * A callback to continue a run after a HITL tool pause.
    */
-  readonly onResumeRun: (args: ChatRuntime.ResumeRunArgs) => void;
+  readonly onContinueRun: (options: ChatRuntime.ContinueRunOptions) => void;
 };
 
 
@@ -74,29 +78,24 @@ type ChatRuntime = ChatConfig & {
 export
 namespace ChatRuntime {
   /**
-   * A type alias for chat runtime `ResumeRunArgs`.
+   * A type alias for the `onContinueRun()` options.
    */
   export
-  type ResumeRunArgs = {
+  type ContinueRunOptions = {
     /**
-     * The unique agent id.
-     */
-    readonly agentId: string;
-
-    /**
-     * The unique run id.
+     * The unique id of the run to continue.
      */
     readonly runId: string;
 
     /**
-     * The unique session id.
+     * The id of the form that has been completed.
      */
-    readonly sessionId: string;
+    readonly formId: string;
 
     /**
-     * The array of updated tool executions.
+     * The completed data for the form.
      */
-    readonly tools: readonly api.ToolExecution[];
+    readonly formData: ReadonlyJSONObject;
   };
 }
 
@@ -104,7 +103,7 @@ namespace ChatRuntime {
 /**
  * The chat runtime context.
  *
- * This is explicitly non-exported.
+ * This is explicitly not exported.
  *
  * Use the `ChatRuntimeProvider` component instead.
  */
@@ -118,7 +117,7 @@ export
 function useChatRuntime(): ChatRuntime {
   const runtime = useContext(ChatRuntimeContext);
   if (runtime === undefined) {
-    throw new Error('missing `ChatRuntimeProvider`');
+    throw new Error('`useChatRuntime` must be called within a `ChatRuntimeProvider`');
   }
   return runtime;
 }
@@ -130,11 +129,11 @@ function useChatRuntime(): ChatRuntime {
 export
 function ChatRuntimeProvider(props: PropsWithChildren): ReactNode {
   // Fetch the chat config.
-  const config = useChatConfig();
+  const chatConfig = useChatConfig();
 
   // Create the runs query.
   const loadRuns = useQuery({
-    queryKey: Private.createQueryKey(config.sessionId),
+    queryKey: Private.createQueryKey(chatConfig.sessionId),
     queryFn: Private.loadRuns,
     staleTime: 'static',
     placeholderData: []
@@ -145,29 +144,28 @@ function ChatRuntimeProvider(props: PropsWithChildren): ReactNode {
     mutationFn: Private.createRun
   });
 
-  // Create the callback to handle the user submit.
-  const handleUserSubmit = useCallback(async (prompt: string) => {
-    await createRun.mutateAsync({ prompt, config });
-  }, [createRun.mutateAsync, config]);
-
   // Create the mutation for continuing runs.
-  const resumeRun = useMutation({
-    mutationFn: Private.resumeRun
+  const continueRun = useMutation({
+    mutationFn: Private.continueRun
   });
 
+  // Create the callback to handle the user submit.
+  const handleUserSubmit = useCallback((prompt: string) => {
+    createRun.mutate({ prompt, chatConfig });
+  }, [createRun.mutate, chatConfig]);
+
   // Create the callback from resuming a run after it is paused..
-  const handleResumeRun = useCallback((args: ChatRuntime.ResumeRunArgs) => {
-    resumeRun.mutate(args);
-  }, [resumeRun.mutate]);
+  const handleContinueRun = useCallback((options: ChatRuntime.ContinueRunOptions) => {
+    continueRun.mutate({ options, chatConfig });
+  }, [continueRun.mutate]);
 
   // Create the chat runtime.
   const runtime: ChatRuntime = {
-    ...config,
     isLoading: loadRuns.isFetching,
-    isRunning: createRun.isPending,
+    isRunning: createRun.isPending || continueRun.isPending,
     runs: loadRuns.data!,
     onUserSubmit: handleUserSubmit,
-    onResumeRun: handleResumeRun
+    onContinueRun: handleContinueRun
   };
 
   // Return the rendered component.
@@ -187,14 +185,14 @@ namespace Private {
    * A type alias for the session query key.
    */
   export
-  type QueryKey = ['session', string | undefined];
+  type QueryKey = ['session-runs', string | undefined];
 
   /**
    * A function that creates the session query key.
    */
   export
   function createQueryKey(sessionId: string | undefined): QueryKey {
-    return ['session', sessionId];
+    return ['session-runs', sessionId];
   }
 
   /**
@@ -203,7 +201,7 @@ namespace Private {
   export
   async function loadRuns(
     context: QueryFunctionContext<QueryKey>
-  ): Promise<api.SessionRuns> {
+  ): Promise<readonly api.SessionRun[]> {
     // Extract the query key from the context.
     const { queryKey } = context;
 
@@ -232,7 +230,7 @@ namespace Private {
     /**
      * The current chat config.
      */
-    readonly config: ChatConfig;
+    readonly chatConfig: ChatConfig;
   };
 
   /**
@@ -243,63 +241,45 @@ namespace Private {
     args: CreateRunArgs, context: MutationFunctionContext
   ): Promise<void> {
     // Extract the args.
-    const { prompt, config } = args;
+    const { prompt, chatConfig } = args;
 
-    // Bail early for unhandled chat types.
-    //
-    // TODO handle other chat types.
-    if (config.type !== 'agent') {
-      throw new Error(`Unhandled chat type: ${config.type}`);
-    }
-
-    // Bail early if no agent is defined.
-    if (!config.id) {
-      throw new Error('missing agent id');
-    }
+    // Extract the agent id.
+    const agentId = chatConfig.agentId;
 
     // Extract the query client.
     const client = context.client;
 
     // Extract or create the session id.
-    const sessionId = config.sessionId ?? crypto.randomUUID();
+    const sessionId = chatConfig.sessionId ?? crypto.randomUUID();
 
     // Create the query key for the run.
     const queryKey = createQueryKey(sessionId);
 
-    // Ensure the chat config is synchronized with the session.
-    config.update({ type: config.type, id: config.id, sessionId });
-
-    // Initialize the cache with the new run.
-    client.setQueryData<api.SessionRuns>(
+    // Seed the query cache with a new empty run.
+    //
+    // TODO - the api should allow the client to provide the new run id.
+    // The Agno backend does not allow this, so we have to use an empty
+    // run id and then patch it on the first run-started event.
+    client.setQueryData<api.SessionRun[]>(
       queryKey,
       prev => [...(prev ?? []), {
-        agent_id: config.id!,
-        content: '',
-        created_at: '',
+        agentId,
+        createdAt: '',
         events: [],
-        metrics: {
-          duration: 0,
-          input_tokens: 0,
-          output_tokens: 0,
-          time_to_first_token: 0,
-          total_tokens: 0
-        },
-        run_id: '',
-        run_input: prompt,
-        user_id: ''
+        prompt,
+        runId: ''
       }]
     );
 
+    // Ensure the chat config is synchronized with the session.
+    chatConfig.update({ agentId, sessionId });
+
     // Set up the event stream for the Agno API.
-    const stream = api.createAgentRun({
-      session_id: sessionId,
-      agent_id: config.id,
-      message: prompt
-    });
+    const stream = api.createRun({ sessionId, agentId, prompt });
 
     // Handle the stream events from the Agno API.
     for await (const evt of stream) {
-      client.setQueryData<api.SessionRuns>(
+      client.setQueryData<api.SessionRun[]>(
         queryKey,
         produce(draft => { processEvent(evt, draft!); })
       );
@@ -307,9 +287,58 @@ namespace Private {
   }
 
   /**
+   * A type alias for the arguments to `continueRun`.
+   */
+  export
+  type ContinueRunArgs = {
+    /**
+     * The options for continuing the run.
+     */
+    readonly options: ChatRuntime.ContinueRunOptions;
+
+    /**
+     * The current chat config.
+     */
+    readonly chatConfig: ChatConfig;
+  };
+
+  /**
+   * A mutation function which continues a run after HITL interaction.
+   */
+  export
+  async function continueRun(
+    args: ContinueRunArgs, context: MutationFunctionContext
+  ): Promise<void> {
+    // // Extract the args.
+    // const { options, chatConfig } = args;
+
+    // // Extract the query client.
+    // const client = context.client;
+
+    // // Create the query key for updating the run.
+    // const queryKey = createQueryKey(sessionId);
+
+    // // Set up the event stream for the Agno API.
+    // const stream = api.continueAgentRun({
+    //   agent_id: agentId,
+    //   run_id: runId,
+    //   session_id: sessionId,
+    //   tools
+    // });
+
+    // // Handle the stream events from the Agno API.
+    // for await (const evt of stream) {
+    //   client.setQueryData<api.SessionRuns>(
+    //     queryKey,
+    //     produce(draft => { processEvent(evt, draft!); })
+    //   );
+    // }
+  }
+
+  /**
    * A type alias for a writeable AUI thread draft.
    */
-  type Draft = WritableDraft<api.SessionRuns>;
+  type Draft = WritableDraft<api.SessionRun[]>;
 
   /**
    * Process an Agno event and add it's effects to the thread draft.
@@ -319,62 +348,28 @@ namespace Private {
    * @param draft - The AUI thread message draft to modify.
    */
   function processEvent(evt: api.RunEvent, draft: Draft): void {
+    // Patch the creation time and run id on run started.
     //
-    if (draft.length === 0) {
-      console.error('Unexpected zero-length session runs array');
-      return;
+    // TODO this clause can be eliminated when the backend API supports
+    // allowing the client to specify a new run id. This logic is not
+    // perfect, but it's good enough for now if the backend behaves.
+    if (evt.type === 'run-started') {
+      const run = draft[draft.length - 1];
+      run.createdAt = evt.createdAt;
+      run.runId = evt.runId;
     }
 
+    // Find the matching run for the event.
     //
-    const run = draft[draft.length - 1];
+    // This should be a quick match to the most recent run.
+    const run = draft.findLast(run => run.runId === evt.runId);
 
-    //
-    if (evt.event === 'RunStarted') {
-      run.agent_id = evt.agent_id;
-      run.created_at = new Date(evt.created_at).toISOString();
-      run.run_id = evt.run_id;
+    // Throw an error if the run is not found.
+    if (!run) {
+      throw new Error(`Run id ${evt.runId} not found`);
     }
 
-    // TODO patch the run as more info streams in.
-
-    //
-    if (run.events) {
-      run.events.push(evt);
-    } else {
-      run.events = [evt];
-    }
-  }
-
-  /**
-   * A mutation function which continues a run after HITL interaction.
-   */
-  export
-  async function resumeRun(
-    args: ChatRuntime.ResumeRunArgs, context: MutationFunctionContext
-  ): Promise<void> {
-    // Extract the args.
-    const { agentId, runId, sessionId, tools } = args;
-
-    // Extract the query client.
-    const client = context.client;
-
-    // Create the query key for updating the run.
-    const queryKey = createQueryKey(sessionId);
-
-    // Set up the event stream for the Agno API.
-    const stream = api.continueAgentRun({
-      agent_id: agentId,
-      run_id: runId,
-      session_id: sessionId,
-      tools
-    });
-
-    // Handle the stream events from the Agno API.
-    for await (const evt of stream) {
-      client.setQueryData<api.SessionRuns>(
-        queryKey,
-        produce(draft => { processEvent(evt, draft!); })
-      );
-    }
+    // Add the event to the run events array.
+    run.events.push(evt);
   }
 }

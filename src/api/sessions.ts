@@ -13,6 +13,10 @@ import type {
   ReadonlyJSONObject, ReadonlyJSONValue
 } from '@/lib/json';
 
+import {
+  SSEParserStream
+} from '@/lib/sse';
+
 import type {
   TokenMetrics
 } from './metrics';
@@ -169,9 +173,10 @@ type RunContinuedEvent = EventCommon & {
 export
 type ToolCall = {
   /**
-   * The unique id of the tool being called.
+   * The unique id of the tool call.
    */
-  readonly toolId: string;
+   // Should this just be id?
+  readonly toolCallId: string;
 
   /**
    * The human readable name of the tool.
@@ -402,21 +407,17 @@ type SessionRun = {
   readonly events: readonly RunEvent[];
 
   /**
-   * The unique id for the run.
-   */
-  readonly runId: string;
-
-  /**
-   * The ISO UTC timestamp of the most recent update to the run.
-   */
-  readonly updatedAt: string;
-
-  /**
    * The user prompt for the run.
    *
    * This is echoed from the user submitted prompt.
    */
-  readonly userPrompt: string;
+  readonly prompt: string;
+
+  /**
+   * The unique id for the run.
+   */
+   // Should this just be id?
+  readonly runId: string;
 };
 
 
@@ -595,8 +596,31 @@ async function getSessionDetail(id: string): Promise<SessionDetail> {
  */
 export
 async function getSessionRuns(id: string): Promise<readonly SessionRun[]> {
-    // undefined
-  return [];
+  // Fetch the resource.
+  const resp = await fetch(`/api/sessions/${id}/runs`, {
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
+  });
+
+  // Guard against fetch failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Convert the response to JSON.
+  const json = await resp.json();
+
+  // Parse the Agno response
+  const parsed = v.parse(Private.sessionRunsSchema, json);
+
+  // Return the translated result.
+  return parsed.map(sr => ({
+    agentId: sr.agent_id,
+    createdAt: sr.created_at,
+    events: sr.events.map(Private.convertRunEvent),
+    prompt: sr.run_input,
+    runId: sr.run_id
+  }));
+
 }
 
 
@@ -609,7 +633,51 @@ async function getSessionRuns(id: string): Promise<readonly SessionRun[]> {
  */
 export
 async function *createRun(options: createRun.Options): AsyncGenerator<RunEvent> {
-  throw 'not implemented';
+  // Extract the options.
+  const { sessionId, agentId, prompt } = options;
+
+  // Create the form data for the request.
+  // Why form and not JSON?
+  const fd = new FormData();
+  fd.append('message', prompt);
+  fd.append('stream', 'true');
+  // CamelCase?
+  fd.append('session_id', sessionId);
+
+  // Fetch the endpoint.
+  // shouldn't the path be /api/sessions/${sessionId}/runs and the agent is passed as parameter?
+  const resp = await fetch(`/api/agents/${agentId}/runs`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` },
+    body: fd
+  });
+
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Setup the SSE stream parser.
+  const stream = resp.body!
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(new SSEParserStream());
+
+  // Yield the run events.
+  for await (const evt of stream) {
+    // Parse the SSE data into json.
+    const json = JSON.parse(evt.data);
+
+    // Yield only the events that we care about.
+    //
+    // Agno has a bunch of events that we can skip that would fail to parse.
+    //
+    // For now, we just log those skipped events for ease of debugging.
+    if (v.is(Private.runEventSchema, json)) {
+      yield Private.convertRunEvent(json);
+    } else {
+      console.log('skipping Agno event', json);
+    }
+  }
 }
 
 
@@ -624,7 +692,7 @@ namespace createRun {
   export
   type Options = {
     /**
-     * The new session id for the run.
+     * The unique id for the session.
      *
      * This must be a random UUIDv4.
      *
@@ -640,7 +708,7 @@ namespace createRun {
     /**
      * The user prompt for the run.
      */
-    readonly userPrompt: string;
+    readonly prompt: string;
   };
 }
 
@@ -679,6 +747,11 @@ namespace continueRun {
     readonly runId: string;
 
     /**
+     * The unique id of the agent for the run.
+     */
+    readonly agentId: string;
+
+    /**
      * The id of the form that has been completed.
      */
     readonly formId: string;
@@ -695,35 +768,76 @@ namespace continueRun {
  * The namespace for the module implementation details.
  */
 namespace Private {
-   // A schema for a sessions list item.
-  const sessionsListItemSchema = v.object({
-    session_id: v.string(),
-    session_name: v.string(),
-    created_at: v.string(),
-    updated_at: v.string()
+  // A schema for the common `Agno` event properties.
+  const eventCommonSchema = v.object({
+    created_at: v.number(),
+    agent_id: v.string(),
+    run_id: v.string(),
+    session_id: v.string()
   });
 
-   // A schema for a sessions list.
+  // A schema for the Agno `RunStarted` event.
+  const runStartedEventSchema = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('RunStarted')
+  });
+
+  // A schema for the Agno `RunContent` event.
+  const runContentEventSchema = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('RunContent'),
+    content: v.string()
+  });
+
+  // A schema for the Agno `ToolCallCompleted` event.
+  const toolCallCompletedEventSchema = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('ToolCallCompleted'),
+    tool: v.object({
+      tool_call_id: v.string(),
+      tool_name: v.string(),
+      tool_args: v.looseObject({}),
+      result: v.any()
+    })
+  });
+
+  // A schema for the Agno `RunCompleted` event.
+  const runCompletedEvent = v.object({
+    ...eventCommonSchema.entries,
+    event: v.literal('RunCompleted'),
+    content: v.string()
+  });
+
+  // A schema for an Agno run event.
+  export
+  const runEventSchema = v.variant('event', [
+    runStartedEventSchema,
+    runContentEventSchema,
+    toolCallCompletedEventSchema,
+    runCompletedEvent
+  ]);
+
+  // A function which filters for useful agno event types.
+  function isUsefulEvent(event: unknown): boolean {
+    switch (event) {
+    case 'RunStarted':
+    case 'RunContent':
+    case 'ToolCallCompleted':
+    case 'RunCompleted':
+      return true;
+    }
+    return false;
+  };
+
+  // A schema for an Agno sessions list.
   export
   const sessionsListSchema = v.object({
-    data: v.array(sessionsListItemSchema),
-  });
-
-  // A schema for session token metrics.
-  const metricsSchema = v.object({
-    input_tokens: v.number(),
-    output_tokens: v.number(),
-    total_tokens: v.number()
-  });
-
-  // A schema for a chat history message.
-  const chatHistoryMessageSchema = v.object({
-    created_at: v.number(),
-    content: v.fallback(v.string(), ''),
-    role: v.union([
-      v.literal('assistant'),
-      v.literal('user')
-    ])
+    data: v.array(v.object({
+      session_id: v.string(),
+      session_name: v.string(),
+      created_at: v.string(),
+      updated_at: v.string()
+    })),
   });
 
   // A schema for an `agent` session.
@@ -734,7 +848,103 @@ namespace Private {
     session_name: v.string(),
     updated_at: v.string(),
     agent_id: v.string(),
-    metrics: metricsSchema,
-    chat_history: v.array(chatHistoryMessageSchema)
+    metrics: v.object({
+      input_tokens: v.number(),
+      output_tokens: v.number(),
+      total_tokens: v.number()
+    }),
+    chat_history: v.array(v.object({
+      created_at: v.number(),
+      content: v.fallback(v.string(), ''),
+      role: v.union([
+        v.literal('assistant'),
+        v.literal('user')
+      ])
+    }))
   });
+
+
+  // A schema for the Agno session runs.
+  export
+  const sessionRunsSchema = v.array(v.object({
+    agent_id: v.string(),
+    created_at: v.string(),
+    events: v.pipe(
+      v.array(v.looseObject({ event: v.string() })),
+      v.filterItems(item => isUsefulEvent(item.event)),
+      v.array(runEventSchema)
+    ),
+    run_id: v.string(),
+    run_input: v.string()
+  }));
+
+  /**
+   * Convert an Agno run event into an api `RunEvent`.
+   */
+  export
+  function convertRunEvent(re: v.InferOutput<typeof runEventSchema>): RunEvent {
+      // 1. Do we need multiple event types here if the type is an attribute of the data already?
+      // 2. If we need the events, should we call them the same as the event type, e.g. RunStarted <-> run-started?
+    switch (re.event) {
+    case 'RunStarted':
+      return {
+        type: 'run-started',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id
+      };
+    case 'RunContent':
+      return {
+        type: 'run-content',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id,
+        content: re.content
+      };
+  // should this just be ToolCall to align with the other cases?
+    case 'ToolCallCompleted':
+      return {
+        type: 'tool-call',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id,
+        toolCall: {
+          toolCallId: re.tool.tool_call_id,
+          toolName: re.tool.tool_name,
+          toolArgs: re.tool.tool_args as ReadonlyJSONObject,
+          result: tryParseToolResult(re.tool.result)
+        }
+      };
+    case 'RunCompleted':
+      return {
+        type: 'run-completed',
+        createdAt: new Date(re.created_at).toISOString(),
+        agentId: re.agent_id,
+        runId: re.run_id,
+        sessionId: re.session_id,
+        content: re.content
+      };
+    default:
+      throw 'unreachable';
+    }
+  }
+
+  // Try to parse the value of a tool call result.
+  //
+  // If the value is a string, it will try to be converted via
+  // `JSON.parse()`. If the parsing fails, or if the value is
+  // not a string, the original value will be returned.
+  function tryParseToolResult(value: any): ReadonlyJSONValue {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
 }
