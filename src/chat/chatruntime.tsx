@@ -246,11 +246,6 @@ namespace Private {
     // Extract the agent id.
     const agentId = chatConfig.agentId;
 
-    // Bail early if the agent id is undefined.
-    if (!agentId) {
-      throw new Error('agent id is undefined');
-    }
-
     // Extract the query client.
     const client = context.client;
 

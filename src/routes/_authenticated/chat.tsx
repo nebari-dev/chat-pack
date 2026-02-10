@@ -20,7 +20,7 @@ import type {
 } from '@/context';
 
 import {
-  ChatConfigContext
+  ChatConfigContext, useConfig
 } from '@/context';
 
 
@@ -46,6 +46,9 @@ const Route = createFileRoute('/_authenticated/chat')({
  * The component that renders the `/chat` route.
  */
 function RouteComponent() {
+  // Fetch the agents from the application config.
+  const { agents } = useConfig();
+
   // Fetch the search parameters.
   const { agentId, sessionId } = Route.useSearch();
 
@@ -57,8 +60,11 @@ function RouteComponent() {
     navigate({ search: { ...options } });
   }, []);
 
+  // Determine the agent id to use.
+  const $agentId = agentId ?? agents[0]?.agentId ?? '';
+
   // Create the chat config.
-  const chatConfig: ChatConfig = { agentId, sessionId, update };
+  const chatConfig: ChatConfig = { agentId: $agentId, sessionId, update };
 
   // Return the rendered component.
   return (

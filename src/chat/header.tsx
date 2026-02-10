@@ -58,7 +58,7 @@ namespace Private {
     const chatConfig = useChatConfig();
 
     // Create the value for the select.
-    const value = chatConfig.agentId ?? config.agents[0]?.agentId ?? '';
+    const value = chatConfig.agentId;
 
     // Setup the callback to handle the select change.
     const handleValueChange = (value: string) => {
