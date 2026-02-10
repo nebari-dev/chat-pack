@@ -11,9 +11,9 @@ import {
   ContentRenderer
 } from './contentrenderer';
 
-// import {
-//   ToolsRenderer
-// } from './toolsrenderer';
+import {
+  ToolsRenderer
+} from './toolsrenderer';
 
 
 /**
@@ -27,7 +27,7 @@ function RunOutput(props: RunOutput.Props): ReactNode {
   // Return the rendered component.
   return (
     <div className='flex flex-col gap-4'>
-      {/*<ToolsRenderer events={ events } />*/}
+      <ToolsRenderer events={ events } />
       <ContentRenderer events={ events } />
     </div>
   );

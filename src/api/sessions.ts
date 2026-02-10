@@ -854,7 +854,7 @@ namespace Private {
           toolCallId: re.tool.tool_call_id,
           toolName: re.tool.tool_name,
           toolArgs: re.tool.tool_args as ReadonlyJSONObject,
-          result: re.tool.result as ReadonlyJSONValue
+          result: tryParseToolResult(re.tool.result)
         }
       };
     case 'RunCompleted':
@@ -868,6 +868,22 @@ namespace Private {
       };
     default:
       throw 'unreachable';
+    }
+  }
+
+  // Try to parse the value of a tool call result.
+  //
+  // If the value is a string, it will try to be converted via
+  // `JSON.parse()`. If the parsing fails, or if the value is
+  // not a string, the original value will be returned.
+  function tryParseToolResult(value: any): ReadonlyJSONValue {
+    if (typeof value !== 'string') {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
     }
   }
 }
