@@ -111,14 +111,12 @@ type UserInputForm = {
   /**
    * The initial data for the form.
    */
-  readonly data: ReadonlyJSONObject;
+  readonly formData: ReadonlyJSONObject;
 
   /**
    * The JsonForms schema for the form data.
-   *
-   * If this is not provided, one will be inferred by JsonForms.
    */
-  readonly schema: JsonSchema | null;
+  readonly schema: JsonSchema;
 
   /**
    * The JsonForms schema for the form UI.
@@ -307,11 +305,11 @@ type ChatSummaryMessage = {
    * The `user` role is typically the user input text. Markdown is not
    * supported. It's just plain text.
    *
-   * The `assistant` role is the concatenated output from the agent for
+   * The `agent` role is the concatenated output from the agent for
    * a single run. Markdown is supported, but tool calls are not. This
    * is just the pure text output from the agent for a single run.
    */
-  readonly role: 'user' | 'assistant';
+  readonly role: 'user' | 'agent';
 
   /**
    * The ISO UTC timestamp for when the run was created.
@@ -319,7 +317,7 @@ type ChatSummaryMessage = {
   readonly createdAt: string;
 
   /**
-   * The text content for the user or assistant message.
+   * The text content for the user or agent message.
    */
   readonly content: string;
 };
@@ -520,7 +518,7 @@ async function getSessionDetail(id: string): Promise<SessionDetail> {
       totalTokens: parsed.metrics.output_tokens
     },
     chatSummary: parsed.chat_history.map(ch => ({
-      role: ch.role,
+      role: ch.role === 'assistant' ? 'agent' : 'user',
       createdAt: new Date(ch.created_at).toISOString(),
       content: ch.content
     }))

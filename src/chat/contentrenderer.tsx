@@ -13,14 +13,14 @@ import {
 
 
 /**
- * A react component that renders the assistant content for a run.
+ * A react component that renders the agent content for a run.
  */
 export
 function ContentRenderer(props: ContentRenderer.Props): ReactNode {
   // Extract the props.
   const { events } = props;
 
-  // Create the assistant content from the events.
+  // Create the agent content from the events.
   const content = Private.createContent(events);
 
   // Bail if there is no content to render.
@@ -56,7 +56,7 @@ namespace ContentRenderer {
  */
 namespace Private {
   /**
-   * Create the assistant content string from an array of run events.
+   * Create the agent content string from an array of run events.
    */
   export
   function createContent(events: readonly api.RunEvent[]): string {

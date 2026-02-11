@@ -17,7 +17,7 @@ import {
 
 
 /**
- * A react component that renders the assistant output for a run.
+ * A react component that renders the agent output for a run.
  */
 export
 function RunOutput(props: RunOutput.Props): ReactNode {

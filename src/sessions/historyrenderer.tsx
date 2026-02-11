@@ -38,10 +38,10 @@ function HistoryRenderer(props: HistoryRenderer.Props): ReactNode {
         </div>
       );
     }
-    if (msg.role === 'assistant') {
+    if (msg.role === 'agent') {
       return (
         <MarkdownRenderer
-          key={ `assistant-${i}` }
+          key={ `agent-${i}` }
           content={ msg.content } />
       );
     }
