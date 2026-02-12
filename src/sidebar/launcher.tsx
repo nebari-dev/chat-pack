@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-router';
 
 import {
-  Database, MemoryStick, MessageSquarePlus, MessagesSquare, ChartLine
+  Database, MessageSquarePlus, MessagesSquare, ChartLine
 } from 'lucide-react';
 
 import type {
@@ -44,11 +44,6 @@ function Launcher(props: Launcher.Props): ReactNode {
         text='Knowledge'
         collapsed={ !isSidebarOpen }
         icon={ <Database className='m-auto' size={ 20 } /> } />
-      <Private.LauncherLink
-        to='/memories'
-        text='Memories'
-        collapsed={ !isSidebarOpen }
-        icon={ <MemoryStick className='m-auto' size={ 20 } /> } />
       <Private.LauncherLink
         to='/metrics'
         text='Metrics'

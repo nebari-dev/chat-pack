@@ -3,6 +3,5 @@
 |----------------------------------------------------------------------------*/
 export * from './common';
 export * from './config';
-export * from './memories';
 export * from './metrics';
 export * from './sessions';
