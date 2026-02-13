@@ -32,7 +32,7 @@ import {
 export
 function Chat(): ReactNode {
   return (
-    <main className='grow flex flex-col'>
+    <main className='grow flex flex-col min-w-0'>
       <ChatRuntimeProvider>
         <Header />
         <Private.Viewport>

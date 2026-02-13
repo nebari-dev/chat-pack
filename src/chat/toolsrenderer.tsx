@@ -255,11 +255,9 @@ namespace Private {
 
         // Return the rendered component.
         return (
-          <div className="w-full p-4 border rounded-md">
-            <div className="w-full aspect-[16/9] max-h-[30rem]">
-              <EChartRenderer option={option} className="w-full h-full" />
-            </div>
-          </div>
+          <EChartRenderer
+            option={ option }
+            className='h-120 p-4 border rounded-md' />
         );
 
       default:

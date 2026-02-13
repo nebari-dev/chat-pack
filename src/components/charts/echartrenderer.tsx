@@ -23,8 +23,6 @@ function EChartRenderer(props: EChartRenderer.Props): ReactNode {
   // Create the ref the chart node.
   const ref = useRef<HTMLDivElement>(null);
 
-  const chartRef = useRef<echarts.EChartsType | null>(null);
-
   // Setup the effect to create the chart.
   useEffect(() => {
     // Fetch the chart container node.
@@ -33,48 +31,25 @@ function EChartRenderer(props: EChartRenderer.Props): ReactNode {
     // Initialize the chart.
     const chart = echarts.init(node);
 
-    // Create a reference to the chart for updates
-    chartRef.current = chart;
-
-    const resize = () => requestAnimationFrame(() => chart.resize());
+    // Set the chart option.
+    chart.setOption(option);
 
     // Create the resize observer.
-    const observer = new ResizeObserver( resize );
+    const observer = new ResizeObserver(() => {
+      chart.resize();
+    });
 
     // Observe the chart container.
     observer.observe(node);
 
-    window.addEventListener("resize", resize);
-
     // Return the disposer function.
     return () => {
-      // remove the event listener
-      window.removeEventListener("resize", resize);
+      // Dispose the chart.
+      chart.dispose();
 
       // Disconnect the resize observer.
       observer.disconnect();
-
-      // Dispose the chart.
-      chart.dispose();
-      
-      // Clear the chart reference
-      chartRef.current = null;
     };
-  }, []);
-
-  // Resize effect
-  useEffect(() => {
-    // get the chart reference
-    const chart = chartRef.current;
-
-    // Bail if no chart
-    if (!chart) return;
-
-    // 
-    chart.setOption(option, { notMerge: true, lazyUpdate: true });
-
-    // resize the chart
-    chart.resize();
   }, [option]);
 
   // Return the rendered component.
