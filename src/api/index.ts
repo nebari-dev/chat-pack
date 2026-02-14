@@ -1,6 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+export * from './agent';
 export * from './config';
 export * from './metrics';
 export * from './threads';
