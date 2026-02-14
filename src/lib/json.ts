@@ -1,6 +1,8 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+
+
 /**
  * A type alias for a JSON primitive.
  */
@@ -30,6 +32,13 @@ interface JSONArray extends Array<JSONValue> { }
 
 
 /**
+ * A type alias for a readonly JSON value.
+ */
+export
+type ReadonlyJSONValue = JSONPrimitive | ReadonlyJSONObject | ReadonlyJSONArray;
+
+
+/**
  * A type definition for a readonly JSON object.
  */
 export
@@ -41,13 +50,6 @@ interface ReadonlyJSONObject { readonly [key: string]: ReadonlyJSONValue; }
  */
 export
 interface ReadonlyJSONArray extends ReadonlyArray<ReadonlyJSONValue> { }
-
-
-/**
- * A type alias for a readonly JSON value.
- */
-export
-type ReadonlyJSONValue = JSONPrimitive | ReadonlyJSONObject | ReadonlyJSONArray;
 
 
 /**
