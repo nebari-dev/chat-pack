@@ -19,14 +19,17 @@ import {
 /**
  * Create an agent run and stream the results.
  *
- * @param input - The ag-ui input for the run.
+ * @param options - The options for running the agent.
  *
  * @returns An async generator that streams the ag-ui events.
  */
 export
-async function *runAgent(input: RunAgentInput): AsyncGenerator<AGUIEvent> {
+async function *runAgent(options: runAgent.Options): AsyncGenerator<AGUIEvent> {
+  // Extract the options.
+  const { agentId, input } = options;
+
   // Fetch the resource.
-  const resp = await fetch('/api/run-agent', {
+  const resp = await fetch(`/api/agents/${agentId}/run`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${auth.getAuthToken()}`,
@@ -53,4 +56,27 @@ async function *runAgent(input: RunAgentInput): AsyncGenerator<AGUIEvent> {
     // Yield the parsed/validated event.
     yield EventSchemas.parse(json);
   }
+}
+
+
+/**
+ * The namespace for the `runAgent` statics.
+ */
+export
+namespace runAgent {
+  /**
+   * A type alias for the options to `runAgent()`.
+   */
+  export
+  type Options = {
+    /**
+     * The unique id of the agent to run.
+     */
+    readonly agentId: string;
+
+    /**
+     * The input for running the agent.
+     */
+    readonly input: RunAgentInput;
+  };
 }
