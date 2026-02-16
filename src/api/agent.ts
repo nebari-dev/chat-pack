@@ -29,7 +29,7 @@ async function *runAgent(options: runAgent.Options): AsyncGenerator<AGUIEvent> {
   const { agentId, input } = options;
 
   // Fetch the resource.
-  const resp = await fetch(`/api/agents/${agentId}/run`, {
+  const resp = await fetch(`/api/agents/${agentId}/runs`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${auth.getAuthToken()}`,
