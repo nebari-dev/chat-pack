@@ -17,9 +17,9 @@ type ChatConfig = {
   readonly agentId: string;
 
   /**
-   * The unique id for the session.
+   * The unique id for the thread.
    */
-  readonly sessionId: string | undefined;
+  readonly threadId: string | undefined;
 
   /**
    * A callback to update the chat config.
@@ -44,11 +44,11 @@ namespace ChatConfig {
     readonly agentId: string;
 
     /**
-     * The id for the chat session.
+     * The unique id for the thread.
      *
-     * If this is not provided, the previous session will be cleared.
+     * If this is not provided, the previous thread will be cleared.
      */
-    readonly sessionId?: string;
+    readonly threadId?: string;
   };
 }
 
