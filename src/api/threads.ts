@@ -76,6 +76,30 @@ type ThreadInfoPage = z.infer<typeof ThreadInfoPageSchema>;
 
 
 /**
+ * The schema for a run in a thread.
+ */
+export
+const RunSchema = z.object({
+  /**
+   * The unique id for the run.
+   */
+  runId: z.string(),
+
+  /**
+   * The ag-ui messages for the run.
+   */
+  messages: z.array(MessageSchema)
+});
+
+
+/**
+ * A type alias for a run in a thread.
+ */
+export
+type Run = z.infer<typeof RunSchema>;
+
+
+/**
  * The schema for detailed information about a thread.
  */
 export
@@ -86,9 +110,9 @@ const ThreadDetailSchema = ThreadInfoSchema.extend({
   tokenMetrics: TokenMetricsSchema,
 
   /**
-   * The AG-UI messages for the thread.
+   * The runs for the thread.
    */
-  messages: z.array(MessageSchema)
+  runs: z.array(RunSchema)
 });
 
 
