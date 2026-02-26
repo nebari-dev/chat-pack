@@ -45,30 +45,30 @@ type QuickPrompt = z.infer<typeof QuickPromptSchema>;
 
 
 /**
- * The schema for the details of an Agent in the application.
+ * The schema an Agent config in the application.
  *
  * This type is used to populate the agent dropdown selector, the chat
- * quick prompts, and other UI areas where the agent detail is needed.
+ * quick prompts, and other UI areas where the agent config is needed.
  */
 export
-const AgentDetailSchema = z.object({
+const AgentConfigSchema = z.object({
   /**
    * The unique id of the agent.
    */
-  agentId: z.string(),
+  id: z.string(),
 
   /**
    * The human readable name of the agent.
    */
-  agentName: z.string(),
+  name: z.string(),
 
   /**
-   * The introduction message to the user.
+   * The description for the agent.
    *
    * This is a short description of what the agent does and will be shown
    * at the start of an empty session.
    */
-  introduction: z.string(),
+  description: z.string(),
 
   /**
    * The unique id of the model underlying the agent.
@@ -93,10 +93,10 @@ const AgentDetailSchema = z.object({
 
 
 /**
- * A type alias for the details of an Agent in the application.
+ * A type alias for an Agent config in the application.
  */
 export
-type AgentDetail = z.infer<typeof AgentDetailSchema>;
+type AgentConfig = z.infer<typeof AgentConfigSchema>;
 
 
 /**
@@ -112,7 +112,7 @@ const ConfigSchema = z.object({
   /**
    * The agents available to the application.
    */
-  agents: z.array(AgentDetailSchema)
+  agents: z.array(AgentConfigSchema)
 });
 
 
