@@ -27,7 +27,7 @@ import {
 
 
 /**
- * A React component that renders the chat sidebar.
+ * A React component that renders the application sidebar.
  */
 export
 function Sidebar(): ReactNode {

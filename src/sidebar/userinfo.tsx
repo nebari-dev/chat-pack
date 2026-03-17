@@ -50,9 +50,7 @@ function UserInfo(props: UserInfo.Props): ReactNode {
     setUser(auth.getUser());
 
     // Subscribe to auth changes.
-    return auth.onUserChange((_token, record) => {
-      setUser(record);
-    });
+    return auth.onUserChange((_token, record) => { setUser(record); });
   }, []);
 
   // Bail early if no user is logged in.
