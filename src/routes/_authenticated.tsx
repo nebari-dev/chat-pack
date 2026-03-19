@@ -9,33 +9,26 @@ import type {
   ReactNode,
 } from 'react';
 
-import * as api from '@/api';
+import * as auth from '@/auth';
 
 import {
-  ConfigProvider
-} from '@/config';
+  AppConfigContext
+} from '@/context';
+
+import {
+  appConfigQuery
+} from '@/queries';
+
+import {
+  Sidebar
+} from '@/sidebar';
 
 
-/**
- * Auth bypass for the dev environment.
- * 
- * (IMPORTANT) - update the .env variables before deployment.
- */
-function shouldEnforceAuth(): boolean {
-  const bypass = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true';
-  const prod = import.meta.env.VITE_MODE === 'production';
-  return !(bypass && !prod);
-}
-
-
-/**
- * The query params for loading the core Agno OS config.
- */
-const configQuery = {
-  queryKey: ['config'],
-  queryFn: api.getConfig,
-  staleTime: 'static'
-} as const;
+// A flag controlling whether authentication is enabled.
+const AUTH_ENABLED = (
+  import.meta.env.VITE_MODE === 'prod' ||
+  import.meta.env.VITE_DEV_AUTH_ENABLED === 'true'
+);
 
 
 /**
@@ -44,17 +37,14 @@ const configQuery = {
 export
 const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ location }) => {
-    if (shouldEnforceAuth() && api.getUser() === null) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: location.href },
-      });
+    if (AUTH_ENABLED && auth.getUser() === null) {
+      throw redirect({ to: '/login', search: { redirect: location.href } });
     }
   },
-  component: RouteComponent,
   loader: ({ context }) => {
-    return context.client.ensureQueryData(configQuery);
-  }
+    return context.client.fetchQuery(appConfigQuery);
+  },
+  component: RouteComponent
 });
 
 
@@ -62,13 +52,16 @@ const Route = createFileRoute('/_authenticated')({
  * The component that renders the authenticated route.
  */
 function RouteComponent(): ReactNode {
-  // Fetch the Agno config object.
-  const config = Route.useLoaderData();
+  // Fetch the app config object.
+  const appConfig = Route.useLoaderData();
+
+  // TODO show an error page if there are no configured agents.
 
   // Return the rendered component.
   return (
-    <ConfigProvider value={ config }>
+    <AppConfigContext value={ appConfig }>
+      <Sidebar />
       <Outlet />
-    </ConfigProvider>
+    </AppConfigContext>
   );
 }

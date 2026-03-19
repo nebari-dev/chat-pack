@@ -2,4 +2,5 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 export * from './app';
-export * from './threads';
+export * from './chat';
+export * from './history';

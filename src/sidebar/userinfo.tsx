@@ -10,12 +10,14 @@ import type {
 } from 'react';
 
 import {
-  useAuthConfig
-} from '@/auth';
+  useEffect, useState
+} from 'react';
 
 import {
   Link
 } from '@tanstack/react-router';
+
+import * as auth from '@/auth';
 
 import {
   Avatar, AvatarFallback, AvatarImage
@@ -39,10 +41,19 @@ function UserInfo(props: UserInfo.Props): ReactNode {
   // Extract the props.
   const { isSidebarOpen } = props;
 
-  // Fetch the user record from the auth config.
-  const { user } = useAuthConfig();
+  // Create the state to track the user record.
+  const [user, setUser] = useState<auth.AuthRecord>(null);
 
-  // Bail early if the user is not logged in.
+  // Sync the user record with the config state.
+  useEffect(() => {
+    // Sync the auth state on mount.
+    setUser(auth.getUser());
+
+    // Subscribe to auth changes.
+    return auth.onUserChange((_token, record) => { setUser(record); });
+  }, []);
+
+  // Bail early if no user is logged in.
   if (!user) {
     return null;
   }

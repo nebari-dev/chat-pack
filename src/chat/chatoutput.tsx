@@ -1,17 +1,25 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  useQuery
+} from '@tanstack/react-query';
+
 import type {
   ReactNode
 } from 'react';
 
 import {
-  useChatRuntime
-} from './chatruntimeprovider';
+  useChatConfig
+} from '@/context';
 
 import {
-  RunRendererMemo
-} from './runrenderer';
+  threadMessagesQuery
+} from '@/queries';
+
+import {
+  MessageRendererMemo
+} from './messagerenderer';
 
 
 /**
@@ -19,17 +27,23 @@ import {
  */
 export
 function ChatOutput(): ReactNode {
-  // Fetch the chat runtime.
-  const { runs } = useChatRuntime();
+  // Fetch the current thread from the chat config.
+  const { thread } = useChatConfig();
 
-  // Create the content for the runs.
-  const content = runs.map(run =>
-    <RunRendererMemo key={ run.run_id } run={ run } />
+  // Create the query for the thread messages.
+  const query = threadMessagesQuery(thread?.id);
+
+  // Fetch the thread messages for the chat.
+  const { data } = useQuery(query);
+
+  // Create the content for the thread.
+  const content = (data ?? []).map(msg =>
+    <MessageRendererMemo key={ msg.id } msg={ msg } />
   );
 
   // Return the rendered component.
   return (
-    <div className='grow mx-auto w-full min-w-3xs max-w-3xl'>
+    <div className='grow mx-auto mt-4 w-full min-w-3xs max-w-3xl'>
       { content }
     </div>
   );

@@ -5,7 +5,7 @@ import {
   createFileRoute, redirect
 } from '@tanstack/react-router';
 
-import * as api from '@/api';
+import * as auth from '@/auth';
 
 
 /**
@@ -14,7 +14,7 @@ import * as api from '@/api';
 export
 const Route = createFileRoute('/logout')({
   beforeLoad: () => {
-    api.logout();
+    auth.logout();
     throw redirect({ to: '/' });
-  },
+  }
 });

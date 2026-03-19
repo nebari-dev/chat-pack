@@ -2,70 +2,31 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  createFileRoute
+  createFileRoute, redirect
 } from '@tanstack/react-router';
 
+import * as z from 'zod';
+
+import * as api from '@/api';
+
 import {
-  useCallback
-} from 'react';
-
-import * as v from 'valibot';
-
-import type {
-  ChatConfig, ChatConfigUpdateOptions
+  Chat
 } from '@/chat';
 
 import {
-  Chat, ChatConfigProvider
-} from '@/chat';
+  ChatConfigContext
+} from '@/context';
 
 import {
-  useConfig
-} from '@/config';
-
-
-// The schema for the agent search params
-const agentSchema = v.object({
-  type: v.literal('agent'),
-  id: v.string(),
-  sessionId: v.optional(v.string())
-});
-
-
-// The schema for the team search params
-const teamSchema = v.object({
-  type: v.literal('team'),
-  id: v.string(),
-  sessionId: v.optional(v.string())
-});
-
-
-// The schema for the workflow search params
-const workflowSchema = v.object({
-  type: v.literal('workflow'),
-  id: v.string(),
-  sessionId: v.optional(v.string())
-});
-
-
-// The schema for empty search params
-const emptySchema = v.object({
-  type: v.undefined(),
-  id: v.undefined(),
-  sessionId: v.undefined()
-});
+  appConfigQuery, threadQuery
+} from '@/queries';
 
 
 // The schema for the `/chat` route search params
-const searchSchema = v.fallback(
-  v.variant('type', [
-    agentSchema,
-    teamSchema,
-    workflowSchema,
-    emptySchema
-  ]),
-  { type: undefined, id: undefined, sessionId: undefined }
-);
+const searchSchema = z.object({
+  agentId: z.string().optional(),
+  threadId: z.string().optional()
+});
 
 
 /**
@@ -74,7 +35,72 @@ const searchSchema = v.fallback(
 export
 const Route = createFileRoute('/_authenticated/chat')({
   validateSearch: searchSchema,
-  component: RouteComponent,
+  loaderDeps: ({ search }) => search,
+  beforeLoad: async ({ context, search }) => {
+    // Extract the query client.
+    const { client } = context;
+
+    // Extract the search params.
+    const { agentId, threadId } = search;
+
+    // Fetch the agents for the application.
+    const { agents } = await client.fetchQuery(appConfigQuery);
+
+    // Fetch the thread for the query.
+    //
+    // If the `threadId` is `undefined` the fetch will return `null`.
+    //
+    // If the fetch throws, redirect to an empty thread.
+    let thread: api.Thread | null;
+    try {
+      thread = await client.fetchQuery(threadQuery(threadId));
+    } catch {
+      throw redirect({
+        replace: true,
+        search: { agentId }
+      });
+    }
+
+    // Branch based on whether a thread was loaded.
+    if (thread) {
+      // If the `agentId` matches the loaded thread, we are done.
+      if (thread.agentId === agentId) {
+        return;
+      }
+
+      // Otherwise, redirect to sync the `agentId` with the thread.
+      throw redirect({
+        replace: true,
+        search: { agentId: thread.agentId, threadId: thread.id }
+      });
+    } else {
+      // If the `agentId` is valid, we are done.
+      if (agents.some(a => a.id === agentId)) {
+        return;
+      }
+
+      // Otherwise, redirect to the first available agent.
+      throw redirect({
+        replace: true,
+        search: { agentId: agents[0].id }
+      });
+    }
+  },
+  loader: async ({ context, deps }) => {
+    // Extract the query client.
+    const { client } = context;
+
+    // Extract the search params.
+    const { agentId, threadId } = deps;
+
+    // Fetch the thread.
+    const thread = await client.fetchQuery(threadQuery(threadId));
+
+    // Return the loaded data. The `beforeLoad` handler ensures
+    // that the `agentId` is valid and is synced with the thread.
+    return { thread, agentId: agentId! };
+  },
+  component: RouteComponent
 });
 
 
@@ -82,63 +108,13 @@ const Route = createFileRoute('/_authenticated/chat')({
  * The component that renders the `/chat` route.
  */
 function RouteComponent() {
-  // Fetch the search parameters.
-  const { type, id, sessionId } = Route.useSearch();
-
-  // Fetch the navigator.
-  const navigate = Route.useNavigate();
-
-  // Fetch the OS config.
-  const { agents, teams, workflows } = useConfig();
-
-  // Create the callback for updating the chat config.
-  const update = useCallback((options: ChatConfigUpdateOptions) => {
-    navigate({ search: { ...options } });
-  }, []);
-
-  // Create the chat config, filling in defaults when possible.
-  let chatConfig: ChatConfig;
-  if (type && id) {
-    chatConfig = {
-      type,
-      id,
-      sessionId,
-      update
-    };
-  } else if (agents.length > 0) {
-    chatConfig = {
-      type: 'agent',
-      id: agents[0].id!,
-      sessionId: undefined,
-      update
-    };
-  } else if (teams.length > 0) {
-    chatConfig = {
-      type: 'team',
-      id: teams[0].id!,
-      sessionId: undefined,
-      update
-    };
-  } else if (workflows.length > 0) {
-    chatConfig = {
-      type: 'workflow',
-      id: workflows[0].id!,
-      sessionId: undefined,
-      update
-    };
-  } else {
-    chatConfig = {
-      type: undefined,
-      id: undefined,
-      sessionId: undefined,
-      update
-    };
-  }
+  // Fetch the loader data.
+  const config = Route.useLoaderData();
 
   // Return the rendered component.
   return (
-    <ChatConfigProvider value={ chatConfig }>
+    <ChatConfigContext value={ config }>
       <Chat />
-    </ChatConfigProvider>
+    </ChatConfigContext>
   );
 }

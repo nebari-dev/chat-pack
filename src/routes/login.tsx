@@ -1,13 +1,13 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import * as v from 'valibot';
-
 import {
   createFileRoute, redirect, useNavigate
 } from '@tanstack/react-router';
 
-import * as api from '@/api';
+import * as z from 'zod';
+
+import * as auth from '@/auth';
 
 import {
   Login
@@ -17,8 +17,8 @@ import {
 /**
  * The schema for `/login` search params.
  */
-const searchSchema = v.object({
-  redirect: v.fallback(v.string(), '/')
+const searchSchema = z.object({
+  redirect: z.string().default('/')
 });
 
 
@@ -29,11 +29,11 @@ export
 const Route = createFileRoute('/login')({
   validateSearch: searchSchema,
   beforeLoad: ({ search }) => {
-    if (api.getUser() !== null) {
+    if (auth.getUser() !== null) {
       throw redirect({ to: search.redirect })
     }
   },
-  component: RouteComponent,
+  component: RouteComponent
 });
 
 
@@ -48,8 +48,8 @@ function RouteComponent() {
   const { redirect } = Route.useSearch();
 
   // Create the callback to handle the login.
-  const handleLogin = async (options: api.login.Options) => {
-    await api.login(options);
+  const handleLogin = async (options: auth.login.Options) => {
+    await auth.login(options);
     await navigate({ to: redirect });
   };
 

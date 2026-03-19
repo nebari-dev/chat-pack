@@ -27,7 +27,5 @@ const Route = createFileRoute('/_authenticated/')({
  * A react component that renders the home route.
  */
 function RouteComponent(): ReactNode {
-  return (
-    <Home />
-  );
+  return <Home />;
 }

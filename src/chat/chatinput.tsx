@@ -10,7 +10,7 @@ import type {
 } from 'react';
 
 import {
-  useCallback, useRef
+  useCallback, useRef, useState
 } from 'react';
 
 import {
@@ -22,8 +22,8 @@ import {
 } from '@/lib/utils';
 
 import {
-  useChatRuntime
-} from './chatruntimeprovider';
+  useSubmitPrompt
+} from './hooks';
 
 
 /**
@@ -31,11 +31,11 @@ import {
  */
 export
 function ChatInput(): ReactNode {
-  // Fetch the chat runtime.
-  //
-  // TODO figure out a way to cache this so the input doesnt
-  // re-render on every assistant chunk update.
-  const { onUserSubmit } = useChatRuntime();
+  // Fetch the submit handler from the runtime.
+  const submitPrompt = useSubmitPrompt();
+
+  // Create the disabled state.
+  const [isDisabled, setIsDisabled] = useState(false);
 
   // Create the ref for the form element.
   const formRef = useRef<HTMLFormElement>(null);
@@ -44,7 +44,7 @@ function ChatInput(): ReactNode {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   // Create the handler for the form submit.
-  const handleSubmit = useCallback((event: FormEvent) => {
+  const handleSubmit = useCallback(async (event: FormEvent) => {
     // Stop the event when submitting a chat request.
     event.stopPropagation();
     event.preventDefault();
@@ -64,8 +64,13 @@ function ChatInput(): ReactNode {
     }
 
     // Submit the user the prompt.
-    onUserSubmit(prompt);
-  }, [onUserSubmit]);
+    try {
+      setIsDisabled(true);
+      await submitPrompt(prompt);
+    } finally {
+      setIsDisabled(false);
+    }
+  }, [submitPrompt]);
 
   // Create the handler for the keydown event.
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -101,12 +106,14 @@ function ChatInput(): ReactNode {
           'has-[textarea:focus-visible]:border-bd-brand-default' ) }>
         <textarea
           ref={ textAreaRef }
+          disabled={ isDisabled }
           onKeyDown={ handleKeyDown }
           placeholder='Send a message...'
           className='outline-none resize-none field-sizing-content w-full' />
         <div className='flex justify-between'>
           <Button
             aria-label='Attach'
+            disabled={ isDisabled }
             className={ cn(
               'rounded-full size-8 bg-bg-neutral-default',
               'text-text-neutral-default hover:bg-bg-neutral-dark',
@@ -115,6 +122,7 @@ function ChatInput(): ReactNode {
           </Button>
           <Button
             aria-label='Submit'
+            disabled={ isDisabled }
             onClick={ handleClick }
             className={ cn(
               'rounded-full size-8 bg-bd-brand-default',

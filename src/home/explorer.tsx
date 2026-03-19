@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  ChartLine, Database, MemoryStick, MessageSquarePlus, MessagesSquare
+  MessageSquarePlus, MessagesSquare
 } from 'lucide-react';
 
 import type {
@@ -24,28 +24,13 @@ function Explorer(): ReactNode {
       <LinkCard
         to='/chat'
         title='Chat'
-        description='Chat with your agents, teams, and workflows'
+        description='Chat with agents'
         icon={ <MessageSquarePlus size={ 16 } /> } />
       <LinkCard
-        to='/sessions'
-        title='Sessions'
-        description='View and manage agent, team, and workflow sessions'
+        to='/history'
+        title='History'
+        description='View and manage agent history'
         icon={ <MessagesSquare size={ 16 } /> } />
-      <LinkCard
-        to='/knowledge'
-        title='Knowledge'
-        description='View and manage knowledge bases'
-        icon={ <Database size={ 16 } /> } />
-      <LinkCard
-        to='/memories'
-        title='Memories'
-        description='View and manage agentic memories'
-        icon={ <MemoryStick size={ 16 } /> } />
-      <LinkCard
-        to='/metrics'
-        title='Metrics'
-        description='Monitor the usage of agents, teams, and workflows'
-        icon={ <ChartLine size={ 16 } /> } />
     </div>
   );
 }

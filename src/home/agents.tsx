@@ -10,8 +10,8 @@ import type {
 } from 'react';
 
 import {
-  useConfig
-} from '@/config';
+  useAppConfig
+} from '@/context';
 
 import {
   LinkCard
@@ -23,19 +23,19 @@ import {
  */
 export
 function Agents(): ReactNode {
-  // Fetch the Agno OS config.
-  const config = useConfig();
+  // Fetch the agents from the app config.
+  const { agents } = useAppConfig();
 
   // Bail early if there are no configured agents.
-  if (config.agents.length === 0) {
+  if (agents.length === 0) {
     return null;
   }
 
   // Create the cards for the agents.
-  const cards = config.agents.map(agent =>
+  const cards = agents.map(agent =>
     <LinkCard
       key={ agent.id }
-      to={ `/chat?type=agent&id=${agent.id}` }
+      to={ `/chat?agentId=${agent.id}` }
       title={ `${agent.name}` }
       description={ `Create a new chat with the ${agent.name} agent` }
       icon={ <MessageSquarePlus size={ 16 } /> } />
