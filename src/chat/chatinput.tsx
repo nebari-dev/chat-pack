@@ -22,8 +22,8 @@ import {
 } from '@/lib/utils';
 
 import {
-  useOnSubmit
-} from './runtime';
+  useSubmitPrompt
+} from './hooks';
 
 
 /**
@@ -32,7 +32,7 @@ import {
 export
 function ChatInput(): ReactNode {
   // Fetch the submit handler from the runtime.
-  const onSubmit = useOnSubmit();
+  const submitPrompt = useSubmitPrompt();
 
   // Create the disabled state.
   const [isDisabled, setIsDisabled] = useState(false);
@@ -66,11 +66,11 @@ function ChatInput(): ReactNode {
     // Submit the user the prompt.
     try {
       setIsDisabled(true);
-      await onSubmit(prompt);
+      await submitPrompt(prompt);
     } finally {
       setIsDisabled(false);
     }
-  }, [onSubmit]);
+  }, [submitPrompt]);
 
   // Create the handler for the keydown event.
   const handleKeyDown = useCallback((event: KeyboardEvent) => {

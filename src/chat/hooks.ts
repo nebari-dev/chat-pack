@@ -25,14 +25,14 @@ import {
 
 
 /**
- * A type alias for a thread prompt submit function.
+ * A type alias for a chat prompt submit function.
  */
 export
-type SubmitFunc = (prompt: string) => Promise<void>;
+type SubmitPromptFunc = (prompt: string) => Promise<void>;
 
 
 /**
- * A convenience hook for submitting a user prompt.
+ * A hook for submitting a user prompt.
  *
  * This hooks handles the combined logic of creating the thread if needed,
  * switching to the new thread, creating the user message, then creating
@@ -42,7 +42,7 @@ type SubmitFunc = (prompt: string) => Promise<void>;
  *
  * #### Notes
  * - If the current `threadId` in the chat config is `undefined`, this
- *   function will first create a new thread using the selected agent id,
+ *   function will first create a new thread using the current agent id,
  *   then switch the URL to that new thread id, then submit the user prompt
  *   as the first run.
  *
@@ -50,8 +50,8 @@ type SubmitFunc = (prompt: string) => Promise<void>;
  *   the prompt as a new run for that thread.
  */
 export
-function useOnSubmit(): SubmitFunc {
-  // Fetch the thread id from the chat config.
+function useSubmitPrompt(): SubmitPromptFunc {
+  // Extract the chat config.
   const { thread, agentId } = useChatConfig();
 
   // Fetch the route navigator.
@@ -60,13 +60,13 @@ function useOnSubmit(): SubmitFunc {
   // Fetch the create thread mutation.
   const { mutateAsync: createThread } = useMutation(createThreadMutation);
 
-  // Fetch the create run query.
+  // Fetch the create run mutation.
   const { mutateAsync: createRun } = useMutation(createRunMutation);
 
   // Create the callback function for handling the submit.
-  const onSubmit = useCallback(async (prompt: string) => {
+  const onSubmitPrompt = useCallback(async (prompt: string) => {
     // Determine the thread id for submission, creating one if needed.
-    const $threadId = (
+    const tid = (
       thread?.id ||
       await (async () => {
         // Pick a reasonable name for the thread.
@@ -92,13 +92,13 @@ function useOnSubmit(): SubmitFunc {
 
     // Create the run for the thread.
     await createRun({
-      threadId: $threadId,
+      threadId: tid,
       messages: [msg],
       tools: [],  // TODO support client-side tools.
       context: [] // TODO support client-side context.
     });
-  }, [agentId, thread?.id, createThread, createRun]);
+  }, [agentId, thread, createThread, createRun]);
 
   // Return the submit callback.
-  return onSubmit;
+  return onSubmitPrompt;
 }
