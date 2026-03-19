@@ -3,10 +3,6 @@
 |----------------------------------------------------------------------------*/
 import * as agui from '@ag-ui/core';
 
-import type {
-  MutationFunctionContext
-} from '@tanstack/react-query';
-
 import {
   mutationOptions, queryOptions
 } from '@tanstack/react-query';
@@ -100,23 +96,7 @@ const createThreadMutation = mutationOptions({
  */
 export
 const createRunMutation = mutationOptions({
-  mutationFn: createRun,
-  onError: console.error.bind(console)
-});
-
-
-/**
- * The namespace for the module implementation details.
- */
-// namespace Private {
-  /**
-   * A mutation function to create a run in an existing thread.
-   */
-  export
-  async function createRun(
-    options: api.createRun.Options,
-    context: MutationFunctionContext
-  ): Promise<void> {
+  mutationFn: async (options: api.createRun.Options, context) => {
     // Create the query key for the thread messages.
     const queryKey = ['thread', 'messages', options.threadId];
 
@@ -133,19 +113,28 @@ const createRunMutation = mutationOptions({
     for await (const evt of stream) {
       context.client.setQueryData<api.ThreadMessages>(
         queryKey,
-        produce(draft => { processEvent(evt, draft!); })
+        produce(draft => { Private.processEvent(evt, draft!); })
       );
     }
-  }
+  },
+  onError: console.error.bind(console)
+});
 
+
+/**
+ * The namespace for the module implementation details.
+ */
+namespace Private {
   /**
    * A type alias for a writable draft of thread messages.
    */
+  export
   type Draft = WritableDraft<api.ThreadMessages>;
 
   /**
    * Dispatch an ag-ui event to the appropriate event handler.
    */
+  export
   function processEvent(evt: agui.AGUIEvent, draft: Draft): void {
     switch (evt.type) {
     case agui.EventType.TEXT_MESSAGE_START:
@@ -461,4 +450,4 @@ const createRunMutation = mutationOptions({
   //   }
   //   return null;
   // }
-// }
+}
