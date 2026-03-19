@@ -60,7 +60,7 @@ function ThreadsTable(): ReactNode {
 
   // Create the column -> className mapping.
   const classNames = {
-    name: 'w-[100%]'
+    name: 'w-[60%]'
   } as Record<string, string>;
 
   // Iterate the header groups to create the header rows.
@@ -214,14 +214,43 @@ namespace Private {
   });
 
   /**
+   * Create the column to display the agent Id.
+   */
+  const agentIdColumn = columnHelper.accessor('agentId', {
+    header: 'Agent Id',
+    cell: cellContext => {
+      return (
+        <span className='whitespace-nowrap text-xs text-muted-foreground'>
+          { cellContext.getValue() }
+        </span>
+      );
+    }
+  });
+
+  /**
+   * Create the column to display the created timestamp.
+   */
+  const createdAtColumn = columnHelper.accessor('createdAt', {
+    header: 'Created At',
+    cell: cellContext => {
+      const ts = cellContext.getValue();
+      const dateStr = (new Date(ts)).toLocaleString();
+      return (
+        <span className='whitespace-nowrap text-xs text-muted-foreground'>
+          { dateStr }
+        </span>
+      );
+    }
+  });
+
+  /**
    * Create the column to display the updated timestamp.
    */
   const updatedAtColumn = columnHelper.accessor('updatedAt', {
     header: 'Updated At',
     cell: cellContext => {
-      const original = cellContext.row.original;
-      const ts = original.updatedAt ?? original.createdAt;
-      const dateStr = (new Date(ts)).toLocaleString();
+      const ts = cellContext.getValue();
+      const dateStr = ts ? (new Date(ts)).toLocaleString() : '';
       return (
         <span className='whitespace-nowrap text-xs text-muted-foreground'>
           { dateStr }
@@ -237,6 +266,8 @@ namespace Private {
   const columns = [
     selectColumn,
     nameColumn,
+    agentIdColumn,
+    createdAtColumn,
     updatedAtColumn
   ];
 
