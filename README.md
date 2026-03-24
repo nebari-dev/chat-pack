@@ -55,7 +55,7 @@ as these variables will be built into the bundle, then execute the following com
 npm run build
 ```
 
-If the build succeeds, the results will be in the `./dist` directory ready to be used by a 
+If the build succeeds, the results will be in the `./dist` directory ready to be hosted by a 
 server of your choice.
 
 You can preview the build locally by running the following command and pointing your browser to 
