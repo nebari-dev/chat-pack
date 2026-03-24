@@ -97,14 +97,7 @@ type ThreadMessages = z.infer<typeof ThreadMessagesSchema>;
 export
 async function getThread(threadId: string): Promise<Thread> {
   // Fetch the resource.
-  const resp = await fetch(`/api/threads/${threadId}`, {
-    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
-  });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
+  const resp = await auth.fetch(`/api/threads/${threadId}`);
 
   // Return the parsed result.
   return ThreadSchema.parse(await resp.json());
@@ -121,14 +114,7 @@ async function getThread(threadId: string): Promise<Thread> {
 export
 async function getThreadMessages(threadId: string): Promise<ThreadMessages> {
   // Fetch the resource.
-  const resp = await fetch(`/api/threads/${threadId}/messages`, {
-    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
-  });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
+  const resp = await auth.fetch(`/api/threads/${threadId}/messages`);
 
   // Return the parsed result.
   return ThreadMessagesSchema.parse(await resp.json());
@@ -162,14 +148,7 @@ async function getThreadPage(options: getThreadPage.Options): Promise<ThreadPage
   }
 
   // Fetch the resource.
-  const resp = await fetch(`/api/threads?${params}`, {
-    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
-  });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
+  const resp = await auth.fetch(`/api/threads?${params}`);
 
   // Return the parsed result.
   return ThreadPageSchema.parse(await resp.json());
@@ -199,19 +178,11 @@ namespace getThreadPage {
 export
 async function createThread(options: createThread.Options): Promise<Thread> {
   // Fetch the resource.
-  const resp = await fetch('/api/threads', {
+  const resp = await auth.fetch('/api/threads', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${auth.getAuthToken()}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(options)
   });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
 
   // Return the parsed result.
   return ThreadSchema.parse(await resp.json());
@@ -248,20 +219,11 @@ namespace createThread {
  */
 export
 async function deleteThreads(threadIds: readonly string[]): Promise<void> {
-  // Fetch the resource.
-  const resp = await fetch('/api/threads', {
+  await auth.fetch('/api/threads', {
     method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${auth.getAuthToken()}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ids: threadIds })
   });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
 }
 
 
@@ -280,17 +242,9 @@ async function *createRun(options: createRun.Options): AsyncGenerator<agui.AGUIE
   // Fetch the resource.
   const resp = await fetch(`/api/threads/${threadId}/run`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${auth.getAuthToken()}`,
-      'Content-Type': 'application/json'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(rest)
   });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
 
   // Setup the SSE stream parser.
   const stream = resp.body!

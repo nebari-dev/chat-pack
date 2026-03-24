@@ -1,97 +1,144 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import type {
-  AuthRecord
-} from 'pocketbase';
-
-import PocketBase from 'pocketbase';
+import Keycloak from 'keycloak-js';
 
 
-// A singleton pocketbase instance for managing auth.
-const pb = new PocketBase(import.meta.env.VITE_PB_URL);
+// Whether auth is enabled for the application.
+const AUTH_ENABLED = import.meta.env.VITE_AUTH_ENABLED === 'true';
+
+
+// The singleton `Keycloak` instance for handling authentication.
+const keycloak = new Keycloak({
+  url: import.meta.env.VITE_KEYCLOAK_URL,
+  realm: import.meta.env.VITE_KEYCLOAK_REALM,
+  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID
+});
+
+
+// If auth is enabled, init keycloak before anything else is loaded.
+//
+// This allows redirects to happen cleanly after a login and prevents
+// redirect loops if it were to be performed lazily in `login()`.
+if (AUTH_ENABLED) {
+  await keycloak.init({ checkLoginIframe: false });
+}
+
+
+// Save a reference to the native fetch before it can be overridden.
+//
+// This does two things:
+//   1) It prevents a monkey-patched fetch from intercepting the
+//      the auth token, unless it's patched before this module loads.
+//   2) It allows us to define our own `fetch` without name-clashing.
+const nativeFetch = window.fetch;
 
 
 /**
- * A type alias for a user auth record.
- */
-export type { AuthRecord }
-
-
-/**
- * A function which handles the user login via UN/PW.
+ * A fetch wrapper that adds the bearer token to the request headers.
  *
- * @param options - The options for logging in the user.
- *
+ * This function provides several benefits:
+ *   1) It prevents the exposure of any tokens
+ *   2) It automatically handles refreshing the bearer token
+ *   3) It handles the `!response.okay` condition
  */
 export
-async function login(options: login.Options): Promise<void> {
-  // Extract the options
-  const { username, password } = options;
+async function fetch(url: string, init: RequestInit = {}): Promise<Response> {
+  // Ensure we have an unexpired token.
+  if (AUTH_ENABLED) {
+    await keycloak.updateToken();
+  }
 
-  // Auth with password using Pocketbase
-  await pb.collection('users').authWithPassword(username, password);
+  // Create the extra headers if needed.
+  const headers = (
+    AUTH_ENABLED ? { 'Authorization': `Bearer ${keycloak.token ?? ''}` } : { }
+  ) as HeadersInit;
+
+  // Clone the init object and headers to prevent snooping by the caller.
+  const options = { ...init, headers: { ...init.headers, ...headers } };
+
+  // Fetch the resource.
+  const resp = await nativeFetch(url, options);
+
+  // Guard against request failure.
+  if (!resp.ok) {
+    throw new Error(`Fetch failure: ${resp.status} ${resp.statusText}`);
+  }
+
+  // Return the response.
+  return resp;
 }
 
 
 /**
- * The namespace for the `login` statics.
+ * A function which handles the user login via Keycloak.
+ *
+ * If the user is already logged-in this is a no-op.
  */
 export
-namespace login {
+async function login(): Promise<void> {
+  // Bail early if login is not needed.
+  if (!AUTH_ENABLED || keycloak.authenticated) {
+    return;
+  }
+
+  // Authenticate the user.
+  await keycloak.login({ redirectUri: window.location.origin });
+}
+
+
+/**
+ * A function which handles user logout via Keycloack.
+ *
+ * If the user is already logged-out this is just a redirect to origin.
+ */
+export
+async function logout(): Promise<void> {
+  // Redirect if auth is not enabled.
+  //
+  // On execution, `keycloak.authenticated` might be `false` if the user
+  // is authed but the `keycloak.init()` promise has not yet resolved,
+  // which would yield a false negative, so don't check for it.
+  if (!AUTH_ENABLED) {
+    window.location.replace(window.location.origin);
+    return;
+  }
+
+  // Log out the user.
+  await keycloak.logout({ redirectUri: window.location.origin });
+}
+
+
+/**
+ * A type alias for a user profile.
+ */
+export
+type UserProfile = {
   /**
-   * A type alias for the `login` options.
+   * The user name.
    */
-  export
-  type Options = {
-    /**
-     * The username for the login.
-     */
-    readonly username: string;
+  name: string;
 
-    /**
-     * The password for login.
-     */
-    readonly password: string
-  };
-}
-
-
-/**
- * A function which handles user logout.
- */
-export
-function logout(): void {
-  pb.authStore.clear();
-}
-
-
-/**
- * Get the auth record for the logged in user, or `null`.
- */
-export
-function getUser(): AuthRecord {
-  return pb.authStore.record;
+  /**
+   * The user email.
+   */
+  email: string;
 };
 
 
 /**
- * Get the auth token for the logged in user.
+ * Get the profile for the logged in user, or `null`.
  */
 export
-function getAuthToken(): string {
-  return pb.authStore.token;
-}
+function getUserProfile(): UserProfile | null {
+  // Bail early if auth is not enabled.
+  if (!AUTH_ENABLED || !keycloak.authenticated) {
+    return null;
+  }
 
-
-/**
- * Register a callback to be notified of user change.
- *
- * @param cb - A callback to invoke when the auth record changes.
- *
- * @returns A function that will unregister the callback.
- */
-export
-function onUserChange(cb: (token: string, record: AuthRecord) => void): () => void {
-  return pb.authStore.onChange((token, record) => { cb(token, record); });
+  // Return the user profile from the parsed token data.
+  return {
+    name: keycloak.tokenParsed?.name ?? '',
+    email: keycloak.tokenParsed?.email ?? ''
+  };
 }

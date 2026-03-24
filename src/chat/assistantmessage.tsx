@@ -11,6 +11,10 @@ import {
   MarkdownRenderer
 } from '@/components/markdown/markdownrenderer';
 
+import {
+  ToolCallsRenderer
+} from './toolcallsrenderer';
+
 
 /**
  * A react component that renders an ag-ui assistant message.
@@ -20,13 +24,11 @@ function AssistantMessage(props: AssistantMessage.Props): ReactNode {
   // Extract the props.
   const { msg } = props;
 
-  // TODO compute tool calls here
-
   // Return the rendered component.
   return (
-    <div className='flex flex-col gap-4'>
-      {/* TODO render tool calls here */}
+    <div className='flex flex-col gap-0'>
       <MarkdownRenderer content={ msg.content ?? '' } />
+      <ToolCallsRenderer toolCalls={ msg.toolCalls ?? [] } />
     </div>
   );
 }

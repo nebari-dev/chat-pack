@@ -41,6 +41,10 @@ function MessageRenderer(props: MessageRenderer.Props): ReactNode {
   case 'assistant':
     content = <AssistantMessage msg={ msg } />;
     break;
+  case 'tool':
+    // Ignore tool messages, as they will be caught by the `ToolCallsRenderer`.
+    content = null;
+    break;
   default:
     // ignore other messages for now
     console.log(`Ingoring rendering for msg role: '${msg.role}'`);

@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root';
 import { Route as LogoutRouteImport } from './routes/logout';
-import { Route as LoginRouteImport } from './routes/login';
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated';
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index';
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history';
@@ -19,11 +18,6 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 const LogoutRoute = LogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
-  getParentRoute: () => rootRouteImport,
-} as any);
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any);
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -47,14 +41,12 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
 } as any);
 
 export interface FileRoutesByFullPath {
-  '/login': typeof LoginRoute;
   '/logout': typeof LogoutRoute;
   '/chat': typeof AuthenticatedChatRoute;
   '/history': typeof AuthenticatedHistoryRoute;
   '/': typeof AuthenticatedIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/login': typeof LoginRoute;
   '/logout': typeof LogoutRoute;
   '/chat': typeof AuthenticatedChatRoute;
   '/history': typeof AuthenticatedHistoryRoute;
@@ -63,7 +55,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   '/_authenticated': typeof AuthenticatedRouteWithChildren;
-  '/login': typeof LoginRoute;
   '/logout': typeof LogoutRoute;
   '/_authenticated/chat': typeof AuthenticatedChatRoute;
   '/_authenticated/history': typeof AuthenticatedHistoryRoute;
@@ -71,13 +62,12 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/login' | '/logout' | '/chat' | '/history' | '/';
+  fullPaths: '/logout' | '/chat' | '/history' | '/';
   fileRoutesByTo: FileRoutesByTo;
-  to: '/login' | '/logout' | '/chat' | '/history' | '/';
+  to: '/logout' | '/chat' | '/history' | '/';
   id:
     | '__root__'
     | '/_authenticated'
-    | '/login'
     | '/logout'
     | '/_authenticated/chat'
     | '/_authenticated/history'
@@ -86,7 +76,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren;
-  LoginRoute: typeof LoginRoute;
   LogoutRoute: typeof LogoutRoute;
 }
 
@@ -97,13 +86,6 @@ declare module '@tanstack/react-router' {
       path: '/logout';
       fullPath: '/logout';
       preLoaderRoute: typeof LogoutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    '/login': {
-      id: '/login';
-      path: '/login';
-      fullPath: '/login';
-      preLoaderRoute: typeof LoginRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_authenticated': {
@@ -155,7 +137,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
 };
 export const routeTree = rootRouteImport

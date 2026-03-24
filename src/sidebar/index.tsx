@@ -22,8 +22,8 @@ import {
 } from './launcher';
 
 import {
-  UserInfo
-} from './userinfo';
+  UserProfile
+} from './userprofile';
 
 
 /**
@@ -50,7 +50,7 @@ function Sidebar(): ReactNode {
         toggleSidebar={ toggleSidebar } />
       <Launcher isSidebarOpen={ isSidebarOpen } />
       <div className='grow' />
-      <UserInfo isSidebarOpen={ isSidebarOpen } />
+      <UserProfile isSidebarOpen={ isSidebarOpen } />
     </div>
   );
 }

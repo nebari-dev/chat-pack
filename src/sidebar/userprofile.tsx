@@ -10,17 +10,13 @@ import type {
 } from 'react';
 
 import {
-  useEffect, useState
-} from 'react';
-
-import {
   Link
 } from '@tanstack/react-router';
 
 import * as auth from '@/auth';
 
 import {
-  Avatar, AvatarFallback, AvatarImage
+  Avatar, AvatarFallback
 } from '@/components/ui/avatar';
 
 import {
@@ -34,39 +30,27 @@ import {
 
 
 /**
- * A react component that renders the user info in the sidebar.
+ * A react component that renders the user profile in the sidebar.
  */
 export
-function UserInfo(props: UserInfo.Props): ReactNode {
+function UserProfile(props: UserProfile.Props): ReactNode {
   // Extract the props.
   const { isSidebarOpen } = props;
 
-  // Create the state to track the user record.
-  const [user, setUser] = useState<auth.AuthRecord>(null);
+  // Get the user profile.
+  const profile = auth.getUserProfile();
 
-  // Sync the user record with the config state.
-  useEffect(() => {
-    // Sync the auth state on mount.
-    setUser(auth.getUser());
-
-    // Subscribe to auth changes.
-    return auth.onUserChange((_token, record) => { setUser(record); });
-  }, []);
-
-  // Bail early if no user is logged in.
-  if (!user) {
+  // Bail early if the user is not logged in.
+  if (!profile) {
     return null;
   }
 
-  // Get the user name to display, falling back on the email.
-  const userName = (user.name || user.email) as string;
-
-  // Create the extra user content when the sidebar is open.
-  const userContent = (
+  // Create the extra content when the sidebar is open.
+  const content = (
     isSidebarOpen ?
       <>
         <span className='truncate'>
-          { userName }
+          { profile.name }
         </span>
         <span className='grow' />
         <ChevronsUpDown />
@@ -83,12 +67,11 @@ function UserInfo(props: UserInfo.Props): ReactNode {
             variant='ghost'
             className='h-12 cursor-pointer w-full rounded-none'>
             <Avatar>
-              <AvatarImage src={ user.avatar } />
               <AvatarFallback className='bg-black text-muted'>
-                { userName.charAt(0).toUpperCase() }
+                { profile.name.charAt(0).toUpperCase() }
               </AvatarFallback>
             </Avatar>
-            { userContent }
+            { content }
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -96,7 +79,7 @@ function UserInfo(props: UserInfo.Props): ReactNode {
           alignOffset={ 12 }
           className='min-w-60 rounded-sm'>
           <DropdownMenuLabel>
-            { user.email }
+            { profile.email }
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant='destructive'>
@@ -112,12 +95,12 @@ function UserInfo(props: UserInfo.Props): ReactNode {
 
 
 /**
- * The namespace for the `UserInfo` statics.
+ * The namespace for the `UserProfile` statics.
  */
 export
-namespace UserInfo {
+namespace UserProfile {
   /**
-   * A type alias for the `UserInfo` props.
+   * A type alias for the `UserProfile` props.
    */
   export
   type Props = {

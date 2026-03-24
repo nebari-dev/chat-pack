@@ -111,14 +111,7 @@ type AppConfig = z.infer<typeof AppConfigSchema>;
 export
 async function getAppConfig(): Promise<AppConfig> {
   // Fetch the resource.
-  const resp = await fetch('/api/config', {
-    headers: { 'Authorization': `Bearer ${auth.getAuthToken()}` }
-  });
-
-  // Guard against request failure.
-  if (!resp.ok) {
-    throw new Error(`Response: ${resp.status} ${resp.statusText}`);
-  }
+  const resp = await auth.fetch('/api/config');
 
   // Return the parsed result.
   return AppConfigSchema.parse(await resp.json());

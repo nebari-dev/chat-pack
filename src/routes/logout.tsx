@@ -2,7 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import {
-  createFileRoute, redirect
+  createFileRoute
 } from '@tanstack/react-router';
 
 import * as auth from '@/auth';
@@ -13,8 +13,5 @@ import * as auth from '@/auth';
  */
 export
 const Route = createFileRoute('/logout')({
-  beforeLoad: () => {
-    auth.logout();
-    throw redirect({ to: '/' });
-  }
+  beforeLoad: auth.logout
 });
