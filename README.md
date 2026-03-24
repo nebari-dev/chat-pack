@@ -25,8 +25,10 @@ npm install
 ```
 
 Then copy the example `env` file and edit the `VITE_API_URL` to match your Hrafnar deployment.
-If you are not using authentication, set `VITE_AUTH_ENABLED=false`, otherwise set the rest of
-variables to match your Keycloak deployment.
+
+Chat++ uses KeyCloak for authentication. To bypass authentication for local development, set 
+`VITE_AUTH_ENABLED=false`, otherwise set it to `true` and set the rest of the variables to 
+match your Keycloak deployment.
 
 ```
 cp .env.example .env
