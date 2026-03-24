@@ -11,7 +11,7 @@ Before you can run Chat++ you need a [Hrafnar](https://github.com/openteams-ai/h
 compatible server running somewhere. Follow the Hrafnar instructions for creating your
 agents and deploying the server.
 
-To get started with a local dev version of Chat++, first checkout the repo:
+To get started with a local version of Chat++, first checkout the repo:
 
 ```
 git clone https://github.com/openteams-ai/chat-plus-plus.git
