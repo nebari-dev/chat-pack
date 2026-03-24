@@ -4,8 +4,6 @@ other agentic server that implments the Hrafnar API, which is essentially just t
 [AG-UI](https://docs.ag-ui.com/introduction) protocol with some additional endpoints for
 managing thread history.
 
-## Prerequisites
-
 # Instructions
 
 Before you can run Chat++ you need a [Hrafnar](https://github.com/openteams-ai/hrafnar)
@@ -41,3 +39,24 @@ dev server with the following command and point your browser at the URL displaye
 ```
 npm run dev
 ```
+
+## Running with Docker
+
+Build the image, passing your environment values as build arguments:
+
+```
+docker build \
+  --build-arg VITE_API_URL=http:localhost:8000 \
+  --build-arg VITE_KEYCLOAK_URL=https://keycloak.hrafnar-nebari-dev.openteams.app \
+  --build-arg VITE_KEYCLOAK_REALM=nebari \
+  --build-arg VITE_KEYCLOAK_CLIENT_ID=chat-plus-plus-nebariapp \
+  -t chat-plus-plus .
+```
+
+Then run the container, supplying the backend URL at runtime:
+
+```
+docker run -p 8080:8080 -e API_URL=http://your-hrafnar-server:8000 chat-plus-plus
+```
+
+Open your browser at `http://localhost:8080`.

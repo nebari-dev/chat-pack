@@ -5,6 +5,8 @@ import * as z from 'zod';
 
 import * as auth from '@/auth';
 
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
+
 
 /**
  * The schema for a quick prompt for a specific agent.
@@ -111,7 +113,7 @@ type AppConfig = z.infer<typeof AppConfigSchema>;
 export
 async function getAppConfig(): Promise<AppConfig> {
   // Fetch the resource.
-  const resp = await auth.fetch('/api/config');
+  const resp = await auth.fetch(`${API_BASE}/api/config`);
 
   // Return the parsed result.
   return AppConfigSchema.parse(await resp.json());
