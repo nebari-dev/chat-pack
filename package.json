@@ -36,7 +36,6 @@
     "katex": "^0.16.28",
     "keycloak-js": "^26.2.3",
     "lucide-react": "^0.544.0",
-    "pocketbase": "^0.26.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",
