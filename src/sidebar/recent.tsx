@@ -25,7 +25,7 @@ import {
 
 
 /**
- * A react component that renders the recent chats in the side bar.
+ * A react component that renders the recent threads in the sidebar.
  */
 export
 function Recent(props: Recent.Props): ReactNode {
@@ -44,15 +44,14 @@ function Recent(props: Recent.Props): ReactNode {
     return null;
   }
 
-  // Create the links for threads.
+  // Create the links for the threads.
   const links = (page.data?.items || []).map(thread =>
     <Private.ThreadLink key={ thread.id } thread={ thread } />
   );
 
-  // Create the content.
+  // Create the content for the section.
   const content = (
-    links.length > 0 ?
-    links :
+    links.length > 0 ? links :
     <div className='py-1 text-muted-foreground'>
       Recently modified threads will appear here.
     </div>
