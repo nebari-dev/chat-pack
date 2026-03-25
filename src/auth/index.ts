@@ -7,19 +7,8 @@ import Keycloak from 'keycloak-js';
 // Whether auth is enabled for the application.
 const AUTH_ENABLED = import.meta.env.VITE_AUTH_ENABLED === 'true';
 
-
-// Fetch runtime config from /config.json (served as a static asset).
-// This allows Keycloak settings to be injected at container start time
-// without requiring a rebuild.
-const runtimeConfig = await window.fetch('/config.json').then(r => r.json());
-
-
 // The singleton `Keycloak` instance for handling authentication.
-const keycloak = new Keycloak({
-  url: runtimeConfig.keycloak.url,
-  realm: runtimeConfig.keycloak.realm,
-  clientId: runtimeConfig.keycloak.clientId
-});
+const keycloak = new Keycloak('/keycloak-config.json');
 
 
 // If auth is enabled, init keycloak before anything else is loaded.

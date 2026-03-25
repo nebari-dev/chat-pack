@@ -1,7 +1,0 @@
-{
-  "keycloak": {
-    "url": "https://keycloak.hrafnar-nebari-dev.openteams.app",
-    "realm": "nebari",
-    "clientId": "chat-plus-plus-nebariapp"
-  }
-}
