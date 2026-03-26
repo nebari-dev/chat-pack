@@ -43,7 +43,7 @@ function ChatOutput(): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='grow mx-auto mt-4 w-full min-w-3xs max-w-3xl'>
+    <div className='grow mx-auto w-full min-w-3xs max-w-3xl'>
       { content }
     </div>
   );

@@ -7,6 +7,10 @@ import {
   mutationOptions, queryOptions
 } from '@tanstack/react-query';
 
+import {
+  applyPatch
+} from 'fast-json-patch';
+
 import type {
   WritableDraft
 } from 'immer';
@@ -136,7 +140,6 @@ namespace Private {
    */
   export
   function processEvent(evt: agui.AGUIEvent, draft: Draft): void {
-    console.log(evt);
     switch (evt.type) {
     case agui.EventType.TEXT_MESSAGE_START:
       evtTextMessageStart(evt, draft);
@@ -183,10 +186,10 @@ namespace Private {
       evtMessagesSnapshot(evt, draft);
       break;
     case agui.EventType.ACTIVITY_SNAPSHOT:
-      // evtActivitySnapshot(evt, draft);
+      evtActivitySnapshot(evt, draft);
       break;
     case agui.EventType.ACTIVITY_DELTA:
-      // evtActivityDelta(evt, draft);
+      evtActivityDelta(evt, draft);
       break;
     case agui.EventType.RAW:
       // Ingored until needed
@@ -358,63 +361,63 @@ namespace Private {
     draft.splice(0, draft.length, ...evt.messages);
   }
 
-  // /**
-  //  * Handle the ag-ui `ActivitySnapshot` event.
-  //  */
-  // function evtActivitySnapshot(evt: agui.ActivitySnapshotEvent, draft: Draft): void {
-  //   // Find the message with the matching id.
-  //   const msg = draft.messages.findLast(msg => msg.id === evt.messageId);
+  /**
+   * Handle the ag-ui `ActivitySnapshot` event.
+   */
+  function evtActivitySnapshot(evt: agui.ActivitySnapshotEvent, draft: Draft): void {
+    // Find the message with the matching id.
+    const msg = draft.findLast(msg => msg.id === evt.messageId);
 
-  //   // Log an error if the message exists and has an invalid type.
-  //   if (msg && msg.role !== 'activity') {
-  //     console.error(`'ActivitySnapshot' message has invalid role: ${msg.role}`);
-  //     return;
-  //   }
+    // Log an error if the message exists and has an invalid role.
+    if (msg && msg.role !== 'activity') {
+      console.error(`'ActivitySnapshot' message has invalid role: ${msg.role}`);
+      return;
+    }
 
-  //   // If the activity message exists, update its type and content.
-  //   if (msg) {
-  //     msg.activityType = evt.activityType;
-  //     msg.content = evt.content;
-  //     return;
-  //   }
+    // If the activity message exists, update its type and content.
+    if (msg) {
+      msg.activityType = evt.activityType;
+      msg.content = evt.content;
+      return;
+    }
 
-  //   // Add the new activity message to the messages history.
-  //   draft.messages.push({
-  //     role: 'activity',
-  //     id: evt.messageId,
-  //     activityType: evt.activityType,
-  //     content: evt.content
-  //   });
-  // }
+    // Otherwise, add the new activity message to the history.
+    draft.push({
+      role: 'activity',
+      id: evt.messageId,
+      activityType: evt.activityType,
+      content: evt.content
+    });
+  }
 
-  // /**
-  //  * Handle the ag-ui `ActivityDelta` event.
-  //  */
-  // function evtActivityDelta(evt: agui.ActivityDeltaEvent, draft: Draft): void {
-  //   // Find the message with the matching id.
-  //   const msg = draft.messages.findLast(msg => msg.id === evt.messageId);
+  /**
+   * Handle the ag-ui `ActivityDelta` event.
+   */
+  function evtActivityDelta(evt: agui.ActivityDeltaEvent, draft: Draft): void {
+    // Find the message with the matching id.
+    const msg = draft.findLast(msg => msg.id === evt.messageId);
 
-  //   // Log an error the message is not found.
-  //   if (!msg) {
-  //     console.error(`Message with id ${evt.messageId} not found.`);
-  //     return;
-  //   }
+    // Log an error the message is not found.
+    if (!msg) {
+      console.error(`Message with id ${evt.messageId} not found.`);
+      return;
+    }
 
-  //   // Log an error if the message has an invalid type.
-  //   if (msg.role !== 'activity') {
-  //     console.error(`'ActivityDelta' message has invalid role: ${msg.role}`);
-  //     return;
-  //   }
+    // Log an error if the message has an invalid role.
+    if (msg.role !== 'activity') {
+      console.error(`'ActivityDelta' message has invalid role: ${msg.role}`);
+      return;
+    }
 
-  //   // Log an error if the activity type has changed.
-  //   if (msg.activityType !== evt.activityType) {
-  //     console.error(`'ActivityDelta' changed activity type: ${msg.activityType} -> ${evt.activityType}`);
-  //     return;
-  //   }
+    // Log an error if the activity type has changed.
+    if (msg.activityType !== evt.activityType) {
+      console.error(`'ActivityDelta' changed activity type: ${msg.activityType} -> ${evt.activityType}`);
+      return;
+    }
 
-  //   // Update the activity message content with the JSON patch.
-  //   msg.content = applyPatch(msg.content, evt.patch, false, false).newDocument;
-  // }
+    // Update the activity message content with the JSON patch.
+    msg.content = applyPatch(msg.content, evt.patch, false, false).newDocument;
+  }
 
   // /**
   //  * Handle the ag-ui `ReasoningStart` event.

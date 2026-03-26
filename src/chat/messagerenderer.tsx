@@ -18,6 +18,10 @@ import {
 } from './assistantmessage';
 
 import {
+  ActivityMessage
+} from './activitymessage';
+
+import {
   UserMessage
 } from './usermessage';
 
@@ -42,18 +46,30 @@ function MessageRenderer(props: MessageRenderer.Props): ReactNode {
     content = <AssistantMessage msg={ msg } />;
     break;
   case 'tool':
-    // Ignore tool messages, as they will be caught by the `ToolCallsRenderer`.
+    // Ignore tool messages. They will be caught by the `ToolCallsRenderer`.
     content = null;
+    break;
+  case 'activity':
+    content = <ActivityMessage msg={ msg } />;
     break;
   default:
     // ignore other messages for now
-    console.log(`Ingoring rendering for msg role: '${msg.role}'`);
+    console.log(`Ignoring message role: ${msg.role}`);
     content = null;
     break;
   }
 
-  // Return the content.
-  return content;
+  // Bail early if there is no content to render.
+  if (!content) {
+    return null;
+  }
+
+  // Return the rendered component.
+  return (
+    <div className='mt-4'>
+      { content}
+    </div>
+  );
 }
 
 
