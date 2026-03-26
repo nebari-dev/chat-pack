@@ -57,7 +57,7 @@ api:
   url: ""
 
 nebariapp:
-  hostname: "qux"
+  hostname: ""
   auth:
     enabled: true
     provider: keycloak
