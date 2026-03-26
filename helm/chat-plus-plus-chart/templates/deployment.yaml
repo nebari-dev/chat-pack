@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chat-plus-plus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "chat-plus-plus.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "chat-plus-plus.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "chat-plus-plus.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.securityContext.pod }}
+      securityContext:
+        {{- . | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: chat-plus-plus
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext.container }}
+          securityContext:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "chat-plus-plus.fullname" . }}
+                  key: API_URL
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/nginx/html/keycloak-config.json
+              subPath: keycloak-config.json
+              readOnly: true
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          startupProbe:
+            httpGet:
+              port: {{ .Values.service.targetPort }}
+              path: /
+            periodSeconds: 1
+            timeoutSeconds: 1
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.service.targetPort }}
+              path: /
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "chat-plus-plus.fullname" . }}

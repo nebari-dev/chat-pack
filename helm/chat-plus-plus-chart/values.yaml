@@ -1,0 +1,71 @@
+# -- String to override the default name of the chart deployment
+nameOverride: ""
+# -- String to override the default full name of the chart deployment
+fullnameOverride: ""
+
+# -- Number of replicas for the main application pod
+replicaCount: 1
+
+image:
+  # -- The repository of the main application image
+  repository: quay.io/reiemp/chat-plus-plus
+  # -- The tag of the main application image. If not set, the chart's appVersion is used.
+  tag: ""
+  # -- The pull policy for the main application image
+  pullPolicy: IfNotPresent
+
+securityContext:
+  pod:
+    # -- The user ID to run the pod with
+    runAsUser: 1000
+    # -- The group ID to run the pod with
+    runAsGroup: 1000
+    # -- The group ID for the pod's filesystem
+    fsGroup: 1000
+  container:
+    # -- Whether to run the container with a read-only root filesystem
+    readOnlyRootFilesystem: true
+
+resources:
+  # -- Resource limits for the main application container
+  limits:
+    # -- CPU limit for the main application container
+    cpu: 500m
+    # -- Memory limit for the main application container
+    memory: 512Mi
+  # -- Resource requests for the main application container
+  requests:
+    # -- CPU request for the main application container
+    cpu: 500m
+    # -- Memory request for the main application container
+    memory: 512Mi
+
+service:
+  # -- The type of service to create
+  type: ClusterIP
+  # -- The port that the service should expose
+  port: 80
+  # -- The target port on the container
+  targetPort: 80
+
+keycloak:
+  authServerUrl: ""
+  realm: "nebari"
+  resource: ""
+
+api:
+  url: ""
+
+nebariapp:
+  hostname: "qux"
+  auth:
+    enabled: true
+    provider: keycloak
+    provisionClient: true
+    redirectURI: /
+    scopes:
+      - openid
+      - profile
+      - email
+  gateway: public
+

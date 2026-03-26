@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chat-plus-plus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "chat-plus-plus.labels" . | nindent 4 }}
+data:
+  keycloak-config.json: |
+    {{-
+    dict
+      "auth-server-url" (required "keycloak.authServerUrl is required" .Values.keycloak.authServerUrl)
+      "realm" (required "keycloak.realm is required" .Values.keycloak.realm)
+      "resource" (required "keycloak.resource is required" .Values.keycloak.resource)
+    | toPrettyJson | nindent 4
+    }}
+  API_URL: {{ required "api.url is required" .Values.api.url }}
