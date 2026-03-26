@@ -26,7 +26,7 @@ function AssistantMessage(props: AssistantMessage.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className='flex flex-col gap-0'>
+    <div className='flex flex-col'>
       <MarkdownRenderer content={ msg.content ?? '' } />
       <ToolCallsRenderer toolCalls={ msg.toolCalls ?? [] } />
     </div>
