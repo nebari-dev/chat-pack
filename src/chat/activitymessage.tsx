@@ -11,6 +11,10 @@ import {
   EChartRenderer
 } from '@/components/charts/echartrenderer';
 
+import {
+  LeafletRenderer
+} from '@/components/maps/leafletrenderer';
+
 
 /**
  * A react component that renders an ag-ui `ActivityMessage`.
@@ -30,6 +34,14 @@ function ActivityMessage(props: ActivityMessage.Props): ReactNode {
       <EChartRenderer
         className='h-120 p-4 border rounded-md'
         option={ msg.content } />
+    );
+    break;
+  case 'application/json+leaflet':
+    content = (
+      <LeafletRenderer
+        className='h-120 p-4 border rounded-md'
+        center={ msg.content.center }
+        features={ msg.content.features } />
     );
     break;
   default:
