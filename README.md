@@ -99,12 +99,8 @@ helm push chat-plus-plus-chart-<version>.tgz oci://quay.io/openteams
 ```
 
 This publishes to `quay.io/openteams/chat-plus-plus-chart:<version>`. Push to `oci://quay.io/openteams`
-(the org level) so the chart name from `Chart.yaml` becomes the repo name. Do **not** push to
-`oci://quay.io/openteams/chat-plus-plus-chart` as that creates an unwanted nested path.
+(the org level) so the chart name from `Chart.yaml` becomes the repo name.
 
-After pushing, update `targetRevision` and `image.tag` in the gitops repo
-([hrafnar-nebari-dev](https://github.com/openteams-ai/hrafnar-nebari-dev)) at
-`apps/apps/chat-plus-plus.yaml`.
 
 # Run a Production Build
 
