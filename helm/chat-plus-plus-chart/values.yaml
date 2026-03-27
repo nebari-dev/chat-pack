@@ -22,9 +22,11 @@ securityContext:
     runAsGroup: 1000
     # -- The group ID for the pod's filesystem
     fsGroup: 1000
+    # -- Prevent privilege escalation
+    runAsNonRoot: true
   container:
-    # -- Whether to run the container with a read-only root filesystem
-    readOnlyRootFilesystem: true
+    # -- Whether to allow privilege escalation
+    allowPrivilegeEscalation: false
 
 resources:
   # -- Resource limits for the main application container

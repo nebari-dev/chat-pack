@@ -19,6 +19,7 @@ spec:
     enabled: {{ .enabled }}
     provider: {{ .provider }}
     provisionClient: {{ .provisionClient }}
+    enforceAtGateway: {{ .enforceAtGateway }}
     redirectURI: {{ .redirectURI }}
     {{- with .scopes }}
     scopes:
