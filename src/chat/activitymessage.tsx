@@ -39,7 +39,7 @@ function ActivityMessage(props: ActivityMessage.Props): ReactNode {
   case 'application/json+leaflet':
     content = (
       <LeafletRenderer
-        className='h-120 p-4 border rounded-md'
+        className='h-120 border rounded-md'
         center={ msg.content.center }
         features={ msg.content.features } />
     );
