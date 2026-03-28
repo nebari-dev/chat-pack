@@ -12,7 +12,7 @@ import {
 } from 'json-edit-react';
 
 import {
-  Hammer
+  X
 } from 'lucide-react';
 
 import type {
@@ -20,16 +20,20 @@ import type {
 } from 'react';
 
 import {
-  cn
-} from '@/lib/utils';
+  Button
+} from '@/components/ui/button';
 
 import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger
-} from '@/components/ui/accordion';
+  Separator
+} from '@/components/ui/separator';
 
 import {
   useChatConfig
-} from '@/context';
+} from '@/context/chat';
+
+import type {
+  ToolCallsDetail
+} from '@/context/chatsidebar';
 
 import {
   threadMessagesQuery
@@ -37,41 +41,82 @@ import {
 
 
 /**
- * A react component that renders the tool executions for a run.
+ * A react component that renders the tools for an assistant message.
  */
 export
-function ToolCallsRenderer(props: ToolCallsRenderer.Props): ReactNode {
+function SidebarTools(props: SidebarTools.Props): ReactNode {
   // Extract the props.
-  const { toolCalls } = props;
+  const { detail, onClose } = props;
 
-  // Bail early if there is nothing to render.
-  if (toolCalls.length === 0) {
+  // Fetch the current thread from the chat config.
+  const { thread } = useChatConfig();
+
+  // Create the query for the thread messages.
+  const query = threadMessagesQuery(thread?.id);
+
+  // Find the relevant relevant thread message.
+  const { data: message } = useQuery({
+    ...query,
+    select: msgs => {
+      return (msgs ?? []).find(msg => msg.id === detail.messageId);
+    }
+  });
+
+  // Bail early if the message is not found.
+  if (!message || message.role !== 'assistant') {
     return null;
   }
 
+  // Bail early if there are no tool calls for the message.
+  if (!message.toolCalls || message.toolCalls.length === 0) {
+    return null;
+  }
+
+  // Create the content for the tool calls.
+  const content = message.toolCalls.map(tc =>
+    <Private.ToolCallItem key={ tc.id } toolCall={ tc } />
+  );
+
   // Return the rendered component.
   return (
-    <div className='flex flex-col gap-4 isolate'>
-      <Private.ToolCallsAccordion toolCalls={ toolCalls } />
-    </div>
+    <section>
+      <h1 className='p-2 flex flex-row justify-between items-center'>
+        <span className='text-xl font-bold'>
+          Tool Calls
+        </span>
+        <Button
+          className='hover:cursor-pointer'
+          variant='ghost'
+          onClick={ onClose }>
+          <X />
+        </Button>
+      </h1>
+      <Separator />
+      { content }
+    </section>
   );
 }
 
 
 /**
- * The namespace for the `ToolCallsRenderer` statics.
+ * The namespace for the `SidebarTools` statics.
  */
 export
-namespace ToolCallsRenderer {
+namespace SidebarTools {
   /**
-   * A type alias for the `ToolCallsRenderer` props.
+   * A type alias for the `SidebarTools` props.
    */
   export
   type Props = {
     /**
-     * The tool calls for the message.
+     * The tool calls detail for the component.
      */
-    readonly toolCalls: readonly agui.ToolCall[];
+    readonly detail: ToolCallsDetail;
+
+    /**
+     * A callback to close the sidebar.
+     */
+    readonly onClose: () => void;
   };
 }
 
@@ -81,67 +126,16 @@ namespace ToolCallsRenderer {
  */
 namespace Private {
   /**
-   * A type alias for the `ToolCallsAccordion` props.
-   */
-  export
-  type ToolCallsAccordionProps = {
-    /**
-     * The tool calls for the message.
-     */
-    readonly toolCalls: readonly agui.ToolCall[];
-  };
-
-  /**
-   * A react component that renders the tool calls accordion.
-   *
-   * This component allows the user to inspect the raw JSON tool data.
-   */
-  export
-  function ToolCallsAccordion(props: ToolCallsAccordionProps): ReactNode {
-    // Extract the props.
-    const { toolCalls } = props;
-
-    // Get the number of tools called.
-    //
-    // The parent enforces this to be `> 0`.
-    const count = toolCalls.length;
-
-    // Create the tool call items for the accordion.
-    const items = toolCalls.map(tc =>
-      <ToolCallItem key={ tc.id } toolCall={ tc } />
-    );
-
-    // Return the rendered component.
-    return (
-      <Accordion type='single' collapsible>
-        <AccordionItem value='tools'>
-          <AccordionTrigger
-            className={ cn(
-              'px-2 py-1 gap-2 items-center flex-0 text-nowrap text-xs',
-              'rounded-sm cursor-pointer bg-bg-neutral-dark',
-              'hover:no-underline hover:bg-bg-neutral-default' ) }>
-            <Hammer size={ 14 } />
-            { `${count} TOOL${count === 1 ? '' : 'S'} CALLED` }
-          </AccordionTrigger>
-          <AccordionContent
-            className='mt-4 p-4 flex flex-col gap-6 border rounded-md'>
-            { items }
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-    );
-  }
-
-  /**
    * A react component that renders the item for a tool call.
    */
+  export
   function ToolCallItem(props: ToolCallItem.Props): ReactNode {
     // Extract the props.
     const { toolCall } = props;
 
     // Return the rendered component.
     return (
-      <div className='flex flex-col gap-4'>
+      <div className='px-2 flex flex-col gap-4'>
         <div className='font-semibold'>
           { toolCall.function.name.toUpperCase() }
         </div>
@@ -154,6 +148,7 @@ namespace Private {
   /**
    * The namespace for the `ToolCallItem` statics.
    */
+  export
   namespace ToolCallItem {
     /**
      * A type alias for the `ToolCallItem` props.

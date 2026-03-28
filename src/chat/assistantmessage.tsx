@@ -12,8 +12,8 @@ import {
 } from '@/components/markdown/markdownrenderer';
 
 import {
-  ToolCallsRenderer
-} from './toolcallsrenderer';
+  ToolCountRenderer
+} from './toolcountrenderer';
 
 
 /**
@@ -28,7 +28,7 @@ function AssistantMessage(props: AssistantMessage.Props): ReactNode {
   return (
     <div className='flex flex-col'>
       <MarkdownRenderer content={ msg.content ?? '' } />
-      <ToolCallsRenderer toolCalls={ msg.toolCalls ?? [] } />
+      <ToolCountRenderer messageId={ msg.id } />
     </div>
   );
 }
