@@ -54,7 +54,7 @@ function SidebarTools(props: SidebarTools.Props): ReactNode {
   // Create the query for the thread messages.
   const query = threadMessagesQuery(thread?.id);
 
-  // Fetch the target thread messages from the chat.
+  // Fetch the target thread message from the chat.
   const { data: message } = useQuery({
     ...query,
     select: msgs => (
