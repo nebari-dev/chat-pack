@@ -6,12 +6,28 @@ import type {
 } from 'react';
 
 import {
+  useState
+} from 'react';
+
+import type {
+  ChatSidebarConfigDetail
+} from '@/context/chatsidebar';
+
+import {
+  ChatSidebarConfigContext,
+} from '@/context/chatsidebar';
+
+import {
   ChatInput
 } from './chatinput';
 
 import {
   ChatOutput
 } from './chatoutput';
+
+import {
+  ChatSidebar
+} from './chatsidebar';
 
 import {
   Header
@@ -29,13 +45,27 @@ import {
  */
 export
 function Chat(): ReactNode {
+  // Create the state for managing the sidebar detail.
+  //
+  // TODO: move this into a URL param on the chat config context?
+  const [detail, setDetail] = useState<ChatSidebarConfigDetail | null>(null);
+
+  // Create the sidebar config.
+  const sidebarConfig = { detail, setDetail } as const;
+
+  // Return the rendered component.
   return (
     <main className='grow flex flex-col'>
       <Header />
-      <Viewport>
-        <ChatOutput />
-        <ChatInput />
-      </Viewport>
+      <ChatSidebarConfigContext value={ sidebarConfig }>
+        <div className='min-h-0 grow flex flex-row'>
+          <Viewport>
+            <ChatOutput />
+            <ChatInput />
+          </Viewport>
+          <ChatSidebar />
+        </div>
+      </ChatSidebarConfigContext>
     </main>
   );
 }
