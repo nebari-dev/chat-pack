@@ -1,6 +1,8 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import * as agui from '@ag-ui/core';
+
 import {
   useQuery
 } from '@tanstack/react-query';
@@ -49,26 +51,30 @@ function ToolCountRenderer(props: ToolCountRenderer.Props): ReactNode {
   // Create the query for the thread messages.
   const query = threadMessagesQuery(thread?.id);
 
-  // Fetch the target thread messages from the chat.
+  // Fetch the target thread message from the chat.
   const { data: message } = useQuery({
     ...query,
-    select: msgs => {
-      return (msgs ?? []).find(msg => msg.id === messageId);
-    }
+    select: msgs => (
+      (msgs ?? []).find(msg =>
+        msg.id === messageId &&
+        msg.role === 'assistant' &&
+        msg.toolCalls &&
+        msg.toolCalls.length > 0
+    ))
   });
 
-  // Bail early if the target message is not found.
-  if (!message || message.role !== 'assistant') {
+  // Bail early if a valid message is not found.
+  if (!message) {
     return null;
   }
 
-  // Bail early if the target message doesn't have tool calls.
-  if (!message.toolCalls || message.toolCalls.length === 0) {
-    return null;
-  }
+  // Cast the message to the known type with tool calls > 0.
+  //
+  // See the query `select` clause above.
+  const msg = message as agui.AssistantMessage;
 
   // Compute the count of tool calls for the message.
-  const count = message.toolCalls.length;
+  const count = msg.toolCalls!.length;
 
   // Determine whether these tools are opened in the chat sidebar.
   const opened = (

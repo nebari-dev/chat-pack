@@ -24,7 +24,7 @@ type ToolCallsDetail = {
 
 
 /**
- * A type alias for the support chat sidebar detail types.
+ * A type alias for the supported chat sidebar detail types.
  */
 export
 type ChatSidebarConfigDetail = ToolCallsDetail;

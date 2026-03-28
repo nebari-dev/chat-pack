@@ -54,26 +54,30 @@ function SidebarTools(props: SidebarTools.Props): ReactNode {
   // Create the query for the thread messages.
   const query = threadMessagesQuery(thread?.id);
 
-  // Find the relevant relevant thread message.
+  // Fetch the target thread messages from the chat.
   const { data: message } = useQuery({
     ...query,
-    select: msgs => {
-      return (msgs ?? []).find(msg => msg.id === detail.messageId);
-    }
+    select: msgs => (
+      (msgs ?? []).find(msg =>
+        msg.id === detail.messageId &&
+        msg.role === 'assistant' &&
+        msg.toolCalls &&
+        msg.toolCalls.length > 0
+    ))
   });
 
-  // Bail early if the message is not found.
-  if (!message || message.role !== 'assistant') {
+  // Bail early if a valid message is not found.
+  if (!message) {
     return null;
   }
 
-  // Bail early if there are no tool calls for the message.
-  if (!message.toolCalls || message.toolCalls.length === 0) {
-    return null;
-  }
+  // Cast the message to the known type with tool calls > 0.
+  //
+  // See the query `select` clause above.
+  const msg = message as agui.AssistantMessage;
 
   // Create the content for the tool calls.
-  const content = message.toolCalls.map(tc =>
+  const content = msg.toolCalls!.map(tc =>
     <Private.ToolCallItem key={ tc.id } toolCall={ tc } />
   );
 
