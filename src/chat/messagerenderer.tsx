@@ -22,6 +22,10 @@ import {
 } from './activitymessage';
 
 import {
+  ReasoningButton
+} from './reasoningbutton';
+
+import {
   UserMessage
 } from './usermessage';
 
@@ -45,8 +49,12 @@ function MessageRenderer(props: MessageRenderer.Props): ReactNode {
   case 'assistant':
     content = <AssistantMessage msg={ msg } />;
     break;
+  case 'reasoning':
+    content = <ReasoningButton messageId={ msg.id } />;
+    break;
   case 'tool':
-    // Ignore tool messages. They will be caught by the `ToolCallsRenderer`.
+    // Ignore tool messages. The tool call count is caught by the assistant
+    // message renderer, and the content is opened in the chat sidebar.
     content = null;
     break;
   case 'activity':

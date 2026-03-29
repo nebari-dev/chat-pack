@@ -10,6 +10,10 @@ import {
 } from '@/context/chatsidebar';
 
 import {
+  SidebarReasoning
+} from './sidebarreasoning';
+
+import {
   SidebarTools
 } from './sidebartools';
 
@@ -35,6 +39,9 @@ function ChatSidebar(): ReactNode {
 
   // Dispatch on the detail type.
   switch (detail.type) {
+  case 'reasoning':
+    content = <SidebarReasoning detail={ detail } onClose={ onClose } />;
+    break
   case 'tool-calls':
     content = <SidebarTools detail={ detail } onClose={ onClose } />;
     break;

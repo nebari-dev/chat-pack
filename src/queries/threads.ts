@@ -141,19 +141,13 @@ namespace Private {
   export
   function processEvent(evt: agui.AGUIEvent, draft: Draft): void {
     switch (evt.type) {
+
+    // Events that can be converted into messages.
     case agui.EventType.TEXT_MESSAGE_START:
       evtTextMessageStart(evt, draft);
       break;
     case agui.EventType.TEXT_MESSAGE_CONTENT:
       evtTextMessageContent(evt, draft);
-      break;
-    case agui.EventType.TEXT_MESSAGE_END:
-      // Ignored until needed.
-      break;
-    case agui.EventType.TEXT_MESSAGE_CHUNK:
-      // Chunk events are just a more complicated way of expressing
-      // start -> content -> end. Don't support them.
-      console.log('`TextMessageChunk` events are not supported');
       break;
     case agui.EventType.TOOL_CALL_START:
       evtToolCallStart(evt, draft);
@@ -161,26 +155,8 @@ namespace Private {
     case agui.EventType.TOOL_CALL_ARGS:
       evtToolCallArgs(evt, draft);
       break;
-    case agui.EventType.TOOL_CALL_END:
-      // Ignored until needed
-      break;
-    case agui.EventType.TOOL_CALL_CHUNK:
-      // Chunk events are just a more complicated way of expressing
-      // start -> content -> end. Don't support them.
-      console.log('`ToolCallChunk` events are not supported');
-      break;
     case agui.EventType.TOOL_CALL_RESULT:
       evtToolCallResult(evt, draft);
-      break;
-    case agui.EventType.STATE_SNAPSHOT:
-      // State events have no real meaning or use to the UI.
-      // Don't support them.
-      console.log('`StateSnapshot` events are not supported');
-      break;
-    case agui.EventType.STATE_DELTA:
-      // State events have no real meaning or use to the UI.
-      // Don't support them.
-      console.log('`StateDelta` events are not supported');
       break;
     case agui.EventType.MESSAGES_SNAPSHOT:
       evtMessagesSnapshot(evt, draft);
@@ -191,53 +167,46 @@ namespace Private {
     case agui.EventType.ACTIVITY_DELTA:
       evtActivityDelta(evt, draft);
       break;
-    case agui.EventType.RAW:
-      // Ingored until needed
-      break;
-    case agui.EventType.CUSTOM:
-      // Ignored until needed
-      break;
-    case agui.EventType.RUN_STARTED:
-      // Ignored until needed
-      break;
-    case agui.EventType.RUN_FINISHED:
-      // Ignored until needed
-      break;
-    case agui.EventType.RUN_ERROR:
-      // Just log it for now
-      console.error(evt);
-      break;
-    case agui.EventType.STEP_STARTED:
-      // Ignored until needed. There is no corresponding step message.
-      break;
-    case agui.EventType.STEP_FINISHED:
-      // Ignored until needed. There is no corresponding step message.
-      break;
-    case agui.EventType.REASONING_START:
-      // evtReasoningStart(evt, draft);
-      break;
     case agui.EventType.REASONING_MESSAGE_START:
-      // evtReasoningMessageStart(evt, draft);
+      evtReasoningMessageStart(evt, draft);
       break;
     case agui.EventType.REASONING_MESSAGE_CONTENT:
-      // evtReasoningMessageContent(evt, draft);
+      evtReasoningMessageContent(evt, draft);
       break;
-    case agui.EventType.REASONING_MESSAGE_END:
-      // evtReasoningMessageEnd(evt, draft);
+
+    // Backend error events.
+    case agui.EventType.RUN_ERROR:
+      console.error('Error during run:', evt);
       break;
+
+    // Unsupported events, since they don't make sense, or are just
+    // a more complicated way of expressing start->content->end.
+    case agui.EventType.TEXT_MESSAGE_CHUNK:
+    case agui.EventType.TOOL_CALL_CHUNK:
+    case agui.EventType.STATE_SNAPSHOT:
+    case agui.EventType.STATE_DELTA:
     case agui.EventType.REASONING_MESSAGE_CHUNK:
-      // Chunk events are just a more complicated way of expressing
-      // start -> content -> end. Don't support them.
-      console.log('`ReasoningMessageChunk` events are not supported');
+      console.log(`${evt.type} events are not supported:`, evt);
       break;
+
+    // Ignored events, since they aren't needed for now.
+    case agui.EventType.TEXT_MESSAGE_END:
+    case agui.EventType.TOOL_CALL_END:
+    case agui.EventType.RAW:
+    case agui.EventType.CUSTOM:
+    case agui.EventType.RUN_STARTED:
+    case agui.EventType.RUN_FINISHED:
+    case agui.EventType.STEP_STARTED:
+    case agui.EventType.STEP_FINISHED:
+    case agui.EventType.REASONING_START:
+    case agui.EventType.REASONING_MESSAGE_END:
     case agui.EventType.REASONING_END:
-      // evtReasoningEnd(evt, draft);
-      break;
     case agui.EventType.REASONING_ENCRYPTED_VALUE:
-      // Ignored until needed
       break;
+
+    // Last resort. Log anything unexpected.
     default:
-      console.error('unhandled ag-ui event', evt);
+      console.log('Unhandled ag-ui event:', evt);
     }
   }
 
@@ -252,7 +221,7 @@ namespace Private {
     }
 
     // Create a new empty assistant message.
-    draft.push({ role: 'assistant', id: evt.messageId });
+    draft.push({ role: 'assistant', id: evt.messageId, content: '' });
   }
 
   /**
@@ -264,7 +233,13 @@ namespace Private {
 
     // Log an error the message is not found.
     if (!msg) {
-      console.error(`Message with id ${evt.messageId} not found`);
+      console.error(`Message ${evt.messageId} not found`);
+      return;
+    }
+
+    // If a message is found, validate its role.
+    if (msg.role !== 'assistant') {
+      console.error(`Message ${msg.id} has invalid role: ${msg.role}`);
       return;
     }
 
@@ -279,6 +254,13 @@ namespace Private {
     // Fetch the parent message id from the event.
     const pid = evt.parentMessageId;
 
+    // Create the new tool call.
+    const toolCall = {
+      type: 'function',
+      id: evt.toolCallId,
+      function: { name: evt.toolCallName, arguments: '' }
+    } as const;
+
     // Find the best message to associate with the tool call.
     const msg = (
       evt.pid ?
@@ -286,24 +268,28 @@ namespace Private {
       draft.findLast(m => m.role === 'assistant')
     );
 
+    // It's an error if a parent id was specified but not found.
+    //
+    // FIXME: this should be an error, but some models (like GPT-5.4) in
+    // Pydantic seem to invent parent message ids that don't exist. For
+    // now, just sythesize the message, until we can find out what causes
+    // it.
+    if (pid && !msg) {
+      console.warn(`Message ${pid} not found. Synthesizing one.`);
+      draft.push({
+        id: pid,
+        role: 'assistant',
+        content: '',
+        toolCalls: [toolCall]
+      });
+      return;
+    }
+
     // If a message is found, validate its role.
     if (msg && msg.role !== 'assistant') {
-      console.error(`Tool call parent message ${msg.id} has invalid role: ${msg.role}`);
+      console.error(`Message ${msg.id} has invalid role: ${msg.role}`);
       return;
     }
-
-    // It's an error if a parent id was specified but not found.
-    if (pid && !msg) {
-      console.error(`Tool call parent message ${pid} not found`);
-      return;
-    }
-
-    // Create the new tool call.
-    const toolCall = {
-      type: 'function',
-      id: evt.toolCallId,
-      function: { name: evt.toolCallName, arguments: '' }
-    } as const;
 
     // If a parent message was found, add the tool call.
     if (msg) {
@@ -370,7 +356,7 @@ namespace Private {
 
     // Log an error if the message exists and has an invalid role.
     if (msg && msg.role !== 'activity') {
-      console.error(`'ActivitySnapshot' message has invalid role: ${msg.role}`);
+      console.error(`Message ${msg.id} has invalid role: ${msg.role}`);
       return;
     }
 
@@ -399,19 +385,19 @@ namespace Private {
 
     // Log an error the message is not found.
     if (!msg) {
-      console.error(`Message with id ${evt.messageId} not found.`);
+      console.error(`Message ${evt.messageId} not found`);
       return;
     }
 
     // Log an error if the message has an invalid role.
     if (msg.role !== 'activity') {
-      console.error(`'ActivityDelta' message has invalid role: ${msg.role}`);
+      console.error(`Message ${msg.id} has invalid role: ${msg.role}`);
       return;
     }
 
     // Log an error if the activity type has changed.
     if (msg.activityType !== evt.activityType) {
-      console.error(`'ActivityDelta' changed activity type: ${msg.activityType} -> ${evt.activityType}`);
+      console.error(`Activity type changed: ${msg.activityType} -> ${evt.activityType}`);
       return;
     }
 
@@ -419,40 +405,36 @@ namespace Private {
     msg.content = applyPatch(msg.content, evt.patch, false, false).newDocument;
   }
 
-  // /**
-  //  * Handle the ag-ui `ReasoningStart` event.
-  //  */
-  // function evtReasoningStart(evt: agui.ReasoningStartEvent, draft: Draft): void {
+  /**
+   * Handle the ag-ui `ReasoningMessageStart` event.
+   */
+  function evtReasoningMessageStart(evt: agui.ReasoningMessageStartEvent, draft: Draft): void {
+    // Create a new empty reasoning message.
+    draft.push({ role: 'reasoning', id: evt.messageId, content: '' });
+  }
 
-  // }
+  /**
+   * Handle the ag-ui `ReasoningMessageContent` event.
+   */
+  function evtReasoningMessageContent(evt: agui.ReasoningMessageContentEvent, draft: Draft): void {
+    // Find the message with specified id.
+    const msg = draft.findLast(m => m.id === evt.messageId);
 
-  // /**
-  //  * Handle the ag-ui `ReasoningMessageStart` event.
-  //  */
-  // function evtReasoningMessageStart(evt: agui.ReasoningMessageStartEvent, draft: Draft): void {
+    // Log an error the message is not found.
+    if (!msg) {
+      console.error(`Message ${evt.messageId} not found`);
+      return;
+    }
 
-  // }
+    // If a message is found, validate its role.
+    if (msg.role !== 'reasoning') {
+      console.error(`Message ${msg.id} has invalid role: ${msg.role}`);
+      return;
+    }
 
-  // /**
-  //  * Handle the ag-ui `ReasoningMessageContent` event.
-  //  */
-  // function evtReasoningMessageContent(evt: agui.ReasoningMessageContentEvent, draft: Draft): void {
-
-  // }
-
-  // /**
-  //  * Handle the ag-ui `ReasoningMessageEnd` event.
-  //  */
-  // function evtReasoningMessageEnd(evt: agui.ReasoningMessageEndEvent, draft: Draft): void {
-
-  // }
-
-  // /**
-  //  * Handle the ag-ui `ReasoningEnd` event.
-  //  */
-  // function evtReasoningEnd(evt: agui.ReasoningEndEvent, draft: Draft): void {
-
-  // }
+    // Add the content delta to the message.
+    msg.content = msg.content + evt.delta;
+  }
 
   /**
    * Find the tool call with the given id.
