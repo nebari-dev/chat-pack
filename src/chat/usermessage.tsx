@@ -14,10 +14,10 @@ import type {
 export
 function UserMessage(props: UserMessage.Props): ReactNode {
   // Extract the props.
-  const { msg } = props;
+  const { message } = props;
 
   // Collect the text from the user message.
-  const text = Private.collectText(msg);
+  const text = Private.collectText(message);
 
   // Return the rendered component.
   return (
@@ -43,7 +43,7 @@ namespace UserMessage {
     /**
      * The ag-ui user message.
      */
-    readonly msg: agui.UserMessage;
+    readonly message: agui.UserMessage;
   };
 }
 
@@ -56,16 +56,16 @@ namespace Private {
    * Collect the complete text from an ag-ui user message.
    */
   export
-  function collectText(msg: agui.UserMessage): string {
+  function collectText(message: agui.UserMessage): string {
     // Quick exit if the content is a string.
-    if (typeof msg.content === 'string') {
-      return msg.content;
+    if (typeof message.content === 'string') {
+      return message.content;
     }
 
     // Otherwise, filter the message for text parts.
     //
     // TODO - handle binary content attachments.
-    const text = msg.content.reduce((acc, part) => {
+    const text = message.content.reduce((acc, part) => {
       return part.type === 'text' ? acc + part.text : acc;
     }, '');
 

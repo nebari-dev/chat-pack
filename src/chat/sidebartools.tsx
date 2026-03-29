@@ -4,6 +4,10 @@
 import * as agui from '@ag-ui/core';
 
 import {
+  Link
+} from '@tanstack/react-router';
+
+import {
   useQuery
 } from '@tanstack/react-query';
 
@@ -20,10 +24,6 @@ import type {
 } from 'react';
 
 import {
-  Button
-} from '@/components/ui/button';
-
-import {
   Separator
 } from '@/components/ui/separator';
 
@@ -31,53 +31,21 @@ import {
   useChatConfig
 } from '@/context/chat';
 
-import type {
-  ToolCallsDetail
-} from '@/context/chatsidebar';
-
 import {
   threadMessagesQuery
 } from '@/queries';
 
 
 /**
- * A react component that renders the tools for an assistant message.
+ * A react component that renders the sidebar tool content.
  */
 export
 function SidebarTools(props: SidebarTools.Props): ReactNode {
   // Extract the props.
-  const { detail, onClose } = props;
-
-  // Fetch the current thread from the chat config.
-  const { thread } = useChatConfig();
-
-  // Create the query for the thread messages.
-  const query = threadMessagesQuery(thread?.id);
-
-  // Fetch the target thread message from the chat.
-  const { data: message } = useQuery({
-    ...query,
-    select: msgs => (
-      (msgs ?? []).find(msg =>
-        msg.id === detail.messageId &&
-        msg.role === 'assistant' &&
-        msg.toolCalls &&
-        msg.toolCalls.length > 0
-    ))
-  });
-
-  // Bail early if a valid message is not found.
-  if (!message) {
-    return null;
-  }
-
-  // Cast the message to the known type with tool calls > 0.
-  //
-  // See the query `select` clause above.
-  const msg = message as agui.AssistantMessage;
+  const { message } = props;
 
   // Create the content for the tool calls.
-  const content = msg.toolCalls!.map(tc =>
+  const content = (message.toolCalls ?? []).map(tc =>
     <Private.ToolCallItem key={ tc.id } toolCall={ tc } />
   );
 
@@ -88,12 +56,9 @@ function SidebarTools(props: SidebarTools.Props): ReactNode {
         <span className='text-xl font-bold'>
           Tool Calls
         </span>
-        <Button
-          className='hover:cursor-pointer'
-          variant='ghost'
-          onClick={ onClose }>
+        <Link to='.' search={ prev => ({ ...prev, detailId: undefined }) }>
           <X />
-        </Button>
+        </Link>
       </h1>
       <Separator />
       { content }
@@ -113,14 +78,9 @@ namespace SidebarTools {
   export
   type Props = {
     /**
-     * The tool calls detail for the component.
+     * The assistant message the holds the tools.
      */
-    readonly detail: ToolCallsDetail;
-
-    /**
-     * A callback to close the sidebar.
-     */
-    readonly onClose: () => void;
+    readonly message: agui.AssistantMessage;
   };
 }
 
@@ -139,7 +99,7 @@ namespace Private {
 
     // Return the rendered component.
     return (
-      <div className='px-2 flex flex-col gap-4'>
+      <div className='px-2 py-4 flex flex-col gap-4'>
         <div className='font-semibold'>
           { toolCall.function.name.toUpperCase() }
         </div>

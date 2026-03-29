@@ -25,7 +25,8 @@ import {
 // The schema for the `/chat` route search params
 const searchSchema = z.object({
   agentId: z.string().optional(),
-  threadId: z.string().optional()
+  threadId: z.string().optional(),
+  detailId: z.string().optional()
 });
 
 
@@ -91,14 +92,14 @@ const Route = createFileRoute('/_authenticated/chat')({
     const { client } = context;
 
     // Extract the search params.
-    const { agentId, threadId } = deps;
+    const { agentId, threadId, detailId } = deps;
 
     // Fetch the thread.
     const thread = await client.fetchQuery(threadQuery(threadId));
 
     // Return the loaded data. The `beforeLoad` handler ensures
     // that the `agentId` is valid and is synced with the thread.
-    return { thread, agentId: agentId! };
+    return { thread, agentId: agentId!, detailId };
   },
   component: RouteComponent
 });

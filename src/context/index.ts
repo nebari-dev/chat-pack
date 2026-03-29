@@ -3,5 +3,4 @@
 |----------------------------------------------------------------------------*/
 export * from './app';
 export * from './chat';
-export * from './chatsidebar';
 export * from './history';

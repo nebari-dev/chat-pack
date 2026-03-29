@@ -111,6 +111,8 @@ namespace Private {
 
   /**
    * A react component that renders a link to create a new chat.
+   *
+   * The current agent id is maintained, everything else is cleared.
    */
   export
   function NewChatLink(): ReactNode {
@@ -124,7 +126,7 @@ namespace Private {
     return (
       <Link
         to='.'
-        search={ prev => ({ ...prev, threadId: undefined }) }
+        search={ prev => ({ agentId: prev.agentId }) }
         className={ cn(
           'h-7 w-24 flex justify-center items-center rounded-sm text-white',
           isDisabled ? 'bg-bd-brand-default/50' : 'bg-bd-brand-default'

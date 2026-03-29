@@ -14,7 +14,7 @@ import * as api from '@/api';
 export
 type ChatConfig = {
   /**
-   * The thread object loaded for the `/chat` `threadId` search param.
+   * The loaded thread object for the `/chat` `threadId` search param.
    *
    * This can be changed by navigating to the `/chat` route with the
    * desired `threadId` search param.
@@ -36,6 +36,15 @@ type ChatConfig = {
    * deesired `agentId` search param.
    */
   readonly agentId: string;
+
+  /**
+   * The id of the message to show as a detail in the chat sidebar.
+   *
+   * This is not guaranteed by the loader to be a valid message id.
+   * i.e. it might not reference an actual message in the thread.
+   * Consumers should account for that possibility.
+   */
+  readonly detailId: string | undefined;
 };
 
 

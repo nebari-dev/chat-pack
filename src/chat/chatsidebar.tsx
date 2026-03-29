@@ -1,13 +1,21 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import {
+  useQuery
+} from '@tanstack/react-query';
+
 import type {
   ReactNode
 } from 'react';
 
 import {
-  useChatSidebarConfig
-} from '@/context/chatsidebar';
+  useChatConfig
+} from '@/context';
+
+import {
+  threadMessagesQuery
+} from '@/queries';
 
 import {
   SidebarReasoning
@@ -23,30 +31,43 @@ import {
  */
 export
 function ChatSidebar(): ReactNode {
-  // Fetch the detail from the chat sidebar config.
-  const { detail, setDetail } = useChatSidebarConfig();
+  // Fetch the thread and detail id from the chat sidebar config.
+  const { thread, detailId } = useChatConfig();
 
-  // Bail early if the config detail is `null`.
-  if (detail === null) {
+  // Create the query for the thread messages.
+  const query = threadMessagesQuery(thread?.id);
+
+  // Fetch the detail target message from the thread.
+  const { data: message } = useQuery({
+    ...query,
+    select: msgs => (
+      detailId ? (msgs ?? []).find(msg => msg.id === detailId) : undefined
+    )
+  });
+
+  // Bail early if there is no message to render.
+  if (!message) {
     return null;
   }
-
-  // Create the close handler for the sidebar.
-  const onClose = () => { setDetail(null); };
 
   // Create the variable to the hold the content.
   let content: ReactNode;
 
   // Dispatch on the detail type.
-  switch (detail.type) {
+  switch (message.role) {
   case 'reasoning':
-    content = <SidebarReasoning detail={ detail } onClose={ onClose } />;
+    content = <SidebarReasoning message={ message } />;
     break
-  case 'tool-calls':
-    content = <SidebarTools detail={ detail } onClose={ onClose } />;
+  case 'assistant':
+    content = <SidebarTools message={ message } />;
     break;
   default:
-    throw 'unreachable';
+    content = null;
+  }
+
+  // Bail early if there is no content to render.
+  if (!content) {
+    return null;
   }
 
   // Return the rendered component.

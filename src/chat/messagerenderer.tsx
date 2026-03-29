@@ -1,9 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import type {
-  Message
-} from '@ag-ui/core';
+import * as agui from '@ag-ui/core';
 
 import type {
   ReactNode
@@ -22,8 +20,8 @@ import {
 } from './activitymessage';
 
 import {
-  ReasoningButton
-} from './reasoningbutton';
+  ReasoningLink
+} from './reasoninglink';
 
 import {
   UserMessage
@@ -36,33 +34,33 @@ import {
 export
 function MessageRenderer(props: MessageRenderer.Props): ReactNode {
   // Extract the message.
-  const { msg } = props;
+  const { message } = props;
 
   // Create the variable to hold the generated content.
   let content: ReactNode;
 
   // Dipspatch on the message role.
-  switch (msg.role) {
+  switch (message.role) {
   case 'user':
-    content = <UserMessage msg={ msg } />;
+    content = <UserMessage message={ message } />;
     break;
   case 'assistant':
-    content = <AssistantMessage msg={ msg } />;
+    content = <AssistantMessage message={ message } />;
     break;
   case 'reasoning':
-    content = <ReasoningButton messageId={ msg.id } />;
+    content = <ReasoningLink message={ message } />;
     break;
   case 'tool':
     // Ignore tool messages. The tool call count is caught by the assistant
-    // message renderer, and the content is opened in the chat sidebar.
+    // message renderer, and the tool content is opened in the chat sidebar.
     content = null;
     break;
   case 'activity':
-    content = <ActivityMessage msg={ msg } />;
+    content = <ActivityMessage message={ message } />;
     break;
   default:
     // ignore other messages for now
-    console.log(`Ignoring message role: ${msg.role}`);
+    console.log(`Ignoring message role: ${message.role}`);
     content = null;
     break;
   }
@@ -92,9 +90,9 @@ namespace MessageRenderer {
   export
   type Props = {
     /**
-     * The message to be rendered.
+     * The ag-ui message to be rendered.
      */
-    readonly msg: Message;
+    readonly message: agui.Message;
   };
 }
 

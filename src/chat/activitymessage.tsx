@@ -22,31 +22,31 @@ import {
 export
 function ActivityMessage(props: ActivityMessage.Props): ReactNode {
   // Extract the props.
-  const { msg } = props;
+  const { message } = props;
 
   // Create the variable to hold the generated content.
   let content: ReactNode;
 
   // Dipspatch on the message activity type.
-  switch (msg.activityType) {
+  switch (message.activityType) {
   case 'application/json+echart':
     content = (
       <EChartRenderer
         className='h-120 p-4 border rounded-md'
-        option={ msg.content } />
+        option={ message.content } />
     );
     break;
   case 'application/json+leaflet':
     content = (
       <LeafletRenderer
         className='h-120 border rounded-md'
-        center={ msg.content.center }
-        features={ msg.content.features } />
+        center={ message.content.center }
+        features={ message.content.features } />
     );
     break;
   default:
     // ignore other activity types for now
-    console.log(`Ignoring activity type: ${msg.activityType}`);
+    console.log(`Ignoring activity type: ${message.activityType}`);
     content = null;
     break;
   }
@@ -69,6 +69,6 @@ namespace ActivityMessage {
     /**
      * The ag-ui activity message to render.
      */
-    readonly msg: agui.ActivityMessage;
+    readonly message: agui.ActivityMessage;
   };
 }

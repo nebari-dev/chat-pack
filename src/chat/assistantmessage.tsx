@@ -12,8 +12,8 @@ import {
 } from '@/components/markdown/markdownrenderer';
 
 import {
-  ToolCountRenderer
-} from './toolcountrenderer';
+  ToolCountLink
+} from './toolcountlink';
 
 
 /**
@@ -22,13 +22,13 @@ import {
 export
 function AssistantMessage(props: AssistantMessage.Props): ReactNode {
   // Extract the props.
-  const { msg } = props;
+  const { message } = props;
 
   // Return the rendered component.
   return (
     <div className='flex flex-col'>
-      <MarkdownRenderer content={ msg.content ?? '' } />
-      <ToolCountRenderer messageId={ msg.id } />
+      <MarkdownRenderer content={ message.content ?? '' } />
+      <ToolCountLink message={ message } />
     </div>
   );
 }
@@ -47,6 +47,6 @@ namespace AssistantMessage {
     /**
      * The ag-ui assistant message.
      */
-    readonly msg: agui.AssistantMessage;
+    readonly message: agui.AssistantMessage;
   };
 }

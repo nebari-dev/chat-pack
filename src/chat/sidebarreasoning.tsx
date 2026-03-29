@@ -4,8 +4,8 @@
 import * as agui from '@ag-ui/core';
 
 import {
-  useQuery
-} from '@tanstack/react-query';
+  Link
+} from '@tanstack/react-router';
 
 import {
   X
@@ -20,24 +20,8 @@ import {
 } from '@/components/markdown/markdownrenderer';
 
 import {
-  Button
-} from '@/components/ui/button';
-
-import {
   Separator
 } from '@/components/ui/separator';
-
-import {
-  useChatConfig
-} from '@/context/chat';
-
-import type {
-  ReasoningDetail
-} from '@/context/chatsidebar';
-
-import {
-  threadMessagesQuery
-} from '@/queries';
 
 
 /**
@@ -46,33 +30,7 @@ import {
 export
 function SidebarReasoning(props: SidebarReasoning.Props): ReactNode {
   // Extract the props.
-  const { detail, onClose } = props;
-
-  // Fetch the current thread from the chat config.
-  const { thread } = useChatConfig();
-
-  // Create the query for the thread messages.
-  const query = threadMessagesQuery(thread?.id);
-
-  // Fetch the target thread message from the chat.
-  const { data: message } = useQuery({
-    ...query,
-    select: msgs => (
-      (msgs ?? []).find(msg =>
-        msg.id === detail.messageId &&
-        msg.role === 'reasoning'
-    ))
-  });
-
-  // Bail early if a valid message is not found.
-  if (!message) {
-    return null;
-  }
-
-  // Cast the message to the known type.
-  //
-  // See the query `select` clause above.
-  const msg = message as agui.ReasoningMessage;
+  const { message } = props;
 
   // Return the rendered component.
   return (
@@ -81,16 +39,13 @@ function SidebarReasoning(props: SidebarReasoning.Props): ReactNode {
         <span className='text-xl font-bold'>
           Reasoning
         </span>
-        <Button
-          className='hover:cursor-pointer'
-          variant='ghost'
-          onClick={ onClose }>
+        <Link to='.' search={ prev => ({ ...prev, detailId: undefined }) }>
           <X />
-        </Button>
+        </Link>
       </h1>
       <Separator />
       <div className='px-2'>
-        <MarkdownRenderer content={ msg.content } />
+        <MarkdownRenderer content={ message.content } />
       </div>
     </section>
   );
@@ -108,13 +63,8 @@ namespace SidebarReasoning {
   export
   type Props = {
     /**
-     * The reasoning detail for the component.
+     * The reasoning message for the component.
      */
-    readonly detail: ReasoningDetail;
-
-    /**
-     * A callback to close the sidebar.
-     */
-    readonly onClose: () => void;
+    readonly message: agui.ReasoningMessage;
   };
 }
