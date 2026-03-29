@@ -99,7 +99,7 @@ namespace Private {
 
     // Return the rendered component.
     return (
-      <div className='px-2 flex flex-col gap-4'>
+      <div className='px-2 py-4 flex flex-col gap-4'>
         <div className='font-semibold'>
           { toolCall.function.name.toUpperCase() }
         </div>
