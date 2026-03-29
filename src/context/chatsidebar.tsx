@@ -7,6 +7,23 @@ import {
 
 
 /**
+ * A type alias for the reasoning details in a chat sidebar context.
+ */
+export
+type ReasoningDetail = {
+  /**
+   * The discriminated type of the object.
+   */
+  readonly type: 'reasoning';
+
+  /**
+   * The id for the ag-ui `reasoning` message of interest.
+   */
+  readonly messageId: string;
+};
+
+
+/**
  * A type alias for the tool call details in a chat sidebar context.
  */
 export
@@ -27,7 +44,7 @@ type ToolCallsDetail = {
  * A type alias for the supported chat sidebar detail types.
  */
 export
-type ChatSidebarConfigDetail = ToolCallsDetail;
+type ChatSidebarConfigDetail = ReasoningDetail | ToolCallsDetail;
 
 
 /**
