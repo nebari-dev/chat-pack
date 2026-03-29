@@ -22,6 +22,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
+      port: 8080,
       proxy: {
         '/api': {
           target: env.API_URL,
