@@ -37,7 +37,7 @@ function Viewport(props: PropsWithChildren): ReactNode {
   return (
     <div
       ref={ ref }
-      className='px-4 grow min-h-0 flex flex-col gap-6 overflow-y-auto'>
+      className='px-4 h-full min-h-0 flex flex-col gap-6 overflow-auto'>
       { children }
     </div>
   );
