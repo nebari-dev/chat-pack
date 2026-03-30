@@ -4,10 +4,6 @@
 import * as agui from '@ag-ui/core';
 
 import {
-  Link
-} from '@tanstack/react-router';
-
-import {
   useQuery
 } from '@tanstack/react-query';
 
@@ -15,17 +11,9 @@ import {
   JsonEditor
 } from 'json-edit-react';
 
-import {
-  X
-} from 'lucide-react';
-
 import type {
   ReactNode
 } from 'react';
-
-import {
-  Separator
-} from '@/components/ui/separator';
 
 import {
   useChatConfig
@@ -51,18 +39,9 @@ function SidebarTools(props: SidebarTools.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <section>
-      <h1 className='p-2 flex flex-row justify-between items-center'>
-        <span className='text-xl font-bold'>
-          Tool Calls
-        </span>
-        <Link to='.' search={ prev => ({ ...prev, detailId: undefined }) }>
-          <X />
-        </Link>
-      </h1>
-      <Separator />
+    <div>
       { content }
-    </section>
+    </div>
   );
 }
 

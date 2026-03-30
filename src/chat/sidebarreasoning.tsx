@@ -3,14 +3,6 @@
 |----------------------------------------------------------------------------*/
 import * as agui from '@ag-ui/core';
 
-import {
-  Link
-} from '@tanstack/react-router';
-
-import {
-  X
-} from 'lucide-react';
-
 import type {
   ReactNode
 } from 'react';
@@ -18,10 +10,6 @@ import type {
 import {
   MarkdownRenderer
 } from '@/components/markdown/markdownrenderer';
-
-import {
-  Separator
-} from '@/components/ui/separator';
 
 
 /**
@@ -33,22 +21,7 @@ function SidebarReasoning(props: SidebarReasoning.Props): ReactNode {
   const { message } = props;
 
   // Return the rendered component.
-  return (
-    <section>
-      <h1 className='p-2 flex flex-row justify-between items-center'>
-        <span className='text-xl font-bold'>
-          Reasoning
-        </span>
-        <Link to='.' search={ prev => ({ ...prev, detailId: undefined }) }>
-          <X />
-        </Link>
-      </h1>
-      <Separator />
-      <div className='px-2'>
-        <MarkdownRenderer content={ message.content } />
-      </div>
-    </section>
-  );
+  return <MarkdownRenderer content={ message.content } />;
 }
 
 
