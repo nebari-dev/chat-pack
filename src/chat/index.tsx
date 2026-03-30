@@ -87,7 +87,7 @@ function Chat(): ReactNode {
   return (
     <main className='grow flex flex-col'>
       <Header />
-      <div className='min-h-0 grow flex flex-row'>
+      <div className='grow min-h-0'>
         <ResizablePanelGroup>
           <ResizablePanel>
             <Viewport>
