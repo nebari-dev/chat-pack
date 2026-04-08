@@ -1,0 +1,6 @@
+apiVersion: v2
+name: chat-plus-plus-chart
+description: A Helm chart for chat-plus-plus
+type: application
+version: 0.1.8
+appVersion: 0.0.7

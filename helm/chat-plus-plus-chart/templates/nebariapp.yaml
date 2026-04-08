@@ -1,0 +1,39 @@
+apiVersion: reconcilers.nebari.dev/v1
+kind: NebariApp
+metadata:
+  name: {{ include "chat-plus-plus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "chat-plus-plus.labels" . | nindent 4 }}
+spec:
+  hostname: {{ required "nebariapp.hostname is required" .Values.nebariapp.hostname }}
+  service:
+    name: {{ include "chat-plus-plus.fullname" . }}
+    port: {{ .Values.service.port }}
+  {{- with .Values.nebariapp.routing }}
+  routing:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.nebariapp.auth }}
+  auth:
+    enabled: {{ .enabled }}
+    provider: {{ .provider }}
+    provisionClient: {{ .provisionClient }}
+    enforceAtGateway: {{ .enforceAtGateway }}
+    redirectURI: {{ .redirectURI }}
+    {{- with .scopes }}
+    scopes:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .groups }}
+    groups:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .spaClient }}
+    spaClient:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  {{- with .Values.nebariapp.gateway }}
+  gateway: {{ . }}
+  {{- end }}

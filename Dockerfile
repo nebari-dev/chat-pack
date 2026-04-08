@@ -39,6 +39,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # without rebuilding the image.
 COPY nginx.conf /tmp/nginx/nginx.conf.template
 
+# Make directories writable for non-root.
+RUN chown -R 1000:1000 /var/cache/nginx /var/log/nginx /usr/share/nginx/html && \
+    chmod -R 755 /var/cache/nginx /var/log/nginx
+
 # Set a default value for API_URL, which will be substituted into the nginx.conf at runtime.
 ENV API_URL=http://host.docker.internal:8000
 
