@@ -1,0 +1,16 @@
+{{- $component := "chat-plus-plus" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+spec:
+  type: {{ .Values.chatPlusPlus.service.type }}
+  selector:
+    {{- include "ravnar.selectorLabels" (dict "top" . "component" $component) | nindent 4 }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.chatPlusPlus.service.port }}
+      targetPort: {{ .Values.chatPlusPlus.service.targetPort }}

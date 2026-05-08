@@ -1,0 +1,40 @@
+{{- $component := "chat-plus-plus" }}
+apiVersion: reconcilers.nebari.dev/v1
+kind: NebariApp
+metadata:
+  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+spec:
+  hostname: {{ required "nebariapp.hostname is required" .Values.chatPlusPlus.nebariapp.hostname }}
+  service:
+    name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+    port: {{ .Values.chatPlusPlus.service.port }}
+  {{- with .Values.chatPlusPlus.nebariapp.routing }}
+  routing:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.chatPlusPlus.nebariapp.auth }}
+  auth:
+    enabled: {{ .enabled }}
+    provider: {{ .provider }}
+    provisionClient: {{ .provisionClient }}
+    enforceAtGateway: {{ .enforceAtGateway }}
+    redirectURI: {{ .redirectURI }}
+    {{- with .scopes }}
+    scopes:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .groups }}
+    groups:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .spaClient }}
+    spaClient:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  {{- with .Values.chatPlusPlus.nebariapp.gateway }}
+  gateway: {{ . }}
+  {{- end }}

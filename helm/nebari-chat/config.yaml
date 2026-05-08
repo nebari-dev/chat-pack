@@ -1,0 +1,7 @@
+security:
+  authenticator:
+    cls_or_fn: ravnar_nebari.keycloak_authenticator
+    params:
+      keycloak_url: '{{ printf "%s://%s" (.Values.nebariapp.tls | ternary "https" "http") .Values.keycloak.hostname }}'
+      realm: "{{ .Values.keycloak.realm }}"
+      client_id: "{{ .Values.keycloak.clientId }}"

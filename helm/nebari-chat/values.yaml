@@ -1,0 +1,100 @@
+# -- String to override the default name of the chart deployment
+nameOverride: ""
+# -- String to override the default full name of the chart deployment
+fullnameOverride: ""
+
+config:
+  inline: {}
+
+nebariapp:
+  tls: true
+  hostname: "ravnar.nebari-chat-pack.openteams.dev"
+
+keycloak:
+  hostname: "keycloak.nebari-chat-pack.openteams.dev"
+  realm: "nebari"
+  clientId: ""
+
+ravnar:
+  config:
+    existingConfigMap:
+      name: '{{ .Release.Name }}-ravnar-nebari'
+  ingress:
+    enabled: false
+
+chatPlusPlus:
+  replicaCount: 1
+
+  image:
+    # -- The repository of the main application image
+    repository: quay.io/nebari/chat-plus-plus
+    # -- The tag of the main application image. If not set, the chart's appVersion is used.
+    tag: ""
+    # -- The pull policy for the main application image
+    pullPolicy: IfNotPresent
+
+  securityContext:
+    pod:
+      # -- The user ID to run the pod with
+      runAsUser: 1000
+      # -- The group ID to run the pod with
+      runAsGroup: 1000
+      # -- The group ID for the pod's filesystem
+      fsGroup: 1000
+      # -- Prevent privilege escalation
+      runAsNonRoot: true
+    container:
+      # -- Whether to allow privilege escalation
+      allowPrivilegeEscalation: false
+
+  resources:
+    # -- Resource limits for the main application container
+    limits:
+      # -- CPU limit for the main application container
+      cpu: 500m
+      # -- Memory limit for the main application container
+      memory: 512Mi
+    # -- Resource requests for the main application container
+    requests:
+      # -- CPU request for the main application container
+      cpu: 500m
+      # -- Memory request for the main application container
+      memory: 512Mi
+
+  service:
+    # -- The type of service to create
+    type: ClusterIP
+    # -- The port that the service should expose
+    port: 80
+    # -- The target port on the container
+    targetPort: 8080
+
+  keycloak:
+    authServerUrl: "keycloak.nebari-chat-pack.openteams.dev"
+    realm: "nebari"
+    resource: ""
+
+  api:
+    url: "ravnar.nebari-chat-pack.openteams.dev"
+
+  nebariapp:
+    hostname: "chat.nebari-chat-pack.openteams.dev"
+    auth:
+      enabled: true
+      provider: keycloak
+      provisionClient: true
+      enforceAtGateway: false
+      redirectURI: /*
+      scopes:
+        - openid
+        - profile
+        - email
+      spaClient:
+        enabled: true
+    routing:
+      publicRoutes:
+        - pathPrefix: /
+          pathType: PathPrefix
+      tls:
+        enabled: true
+    gateway: public

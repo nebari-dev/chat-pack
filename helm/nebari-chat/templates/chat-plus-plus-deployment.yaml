@@ -1,0 +1,63 @@
+{{- $component := "chat-plus-plus" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+spec:
+  replicas: {{ .Values.chatPlusPlus.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ravnar.selectorLabels" (dict "top" . "component" $component) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 8 }}
+    spec:
+      {{- with .Values.chatPlusPlus.securityContext.pod }}
+      securityContext:
+        {{- . | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: chat-plus-plus
+          image: "{{ .Values.chatPlusPlus.image.repository }}:{{ .Values.chatPlusPlus.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.chatPlusPlus.image.pullPolicy }}
+          {{- with .Values.chatPlusPlus.securityContext.container }}
+          securityContext:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.chatPlusPlus.resources | nindent 12 }}
+          env:
+            - name: API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+                  key: API_URL
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/nginx/html/keycloak-config.json
+              subPath: keycloak-config.json
+              readOnly: true
+          ports:
+            - containerPort: {{ .Values.chatPlusPlus.service.targetPort }}
+          startupProbe:
+            httpGet:
+              port: {{ .Values.chatPlusPlus.service.targetPort }}
+              path: /healthz
+            periodSeconds: 1
+            timeoutSeconds: 1
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.chatPlusPlus.service.targetPort }}
+              path: /healthz
+            periodSeconds: 10
+            timeoutSeconds: 1
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}

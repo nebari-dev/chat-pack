@@ -1,0 +1,19 @@
+apiVersion: v2
+name: nebari-chat
+type: application
+description: chat pack for nebari
+version: "0.0.5"
+appVersion: "0.0.1"
+keywords:
+  - nebari
+home: https://github.com/nebari-dev/nebari-chat-pack
+sources:
+  - https://github.com/nebari-dev/nebari-chat-pack
+maintainers:
+  - name: OpenTeams
+    email: info@openteams.com
+
+dependencies:
+  - name: ravnar
+    repository: oci://quay.io/nebari/charts
+    version: "0.0.2"

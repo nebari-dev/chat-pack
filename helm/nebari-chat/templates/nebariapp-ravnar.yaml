@@ -1,0 +1,30 @@
+{{- $component := "nebariapp" }}
+apiVersion: reconcilers.nebari.dev/v1
+kind: NebariApp
+metadata:
+  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+spec:
+  hostname: {{ .Values.nebariapp.hostname }}
+  {{- with dict
+        "Chart" (dict "Name" "ravnar" "Version" .Chart.Version)
+        "Release" .Release
+        "Values" .Values.ravnar
+        "Capabilities" .Capabilities
+        "Template" .Template
+  }}
+  service:
+    name: {{ include "ravnar.fullname" . }}
+    port: {{ .Values.service.port }}
+  {{- end }}
+  routing:
+    publicRoutes:
+      - pathPrefix: /
+        pathType: PathPrefix
+    tls:
+      enabled: {{ .Values.nebariapp.tls }}
+  auth:
+    enabled: false
+  gateway: "public"
