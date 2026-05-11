@@ -1,12 +1,12 @@
-{{- if .Values.chatPlusPlus.enabled }}
-{{- $component := "chat-plus-plus" }}
+{{- if .Values.frontend.enabled }}
+{{- $component := "frontend" }}
 {{- include "nebari-chat.nebariapp" (dict
     "top" .
     "component" $component
     "service" (dict
       "name" (include "ravnar.component-name" (dict "top" . "component" $component))
-      "port" .Values.chatPlusPlus.service.port
+      "port" .Values.frontend.service.port
     )
-    "nebariapp" .Values.chatPlusPlus.nebariapp
+    "nebariapp" .Values.frontend.nebariapp
 ) }}
 {{- end }}

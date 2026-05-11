@@ -1,4 +1,4 @@
-{{- $component := "chat-plus-plus" }}
+{{- $component := "frontend" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
 spec:
-  replicas: {{ .Values.chatPlusPlus.replicaCount }}
+  replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
       {{- include "ravnar.selectorLabels" (dict "top" . "component" $component) | nindent 6 }}
@@ -16,20 +16,20 @@ spec:
       labels:
         {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 8 }}
     spec:
-      {{- with .Values.chatPlusPlus.securityContext.pod }}
+      {{- with .Values.frontend.securityContext.pod }}
       securityContext:
         {{- . | toYaml | nindent 8 }}
       {{- end }}
       containers:
-        - name: chat-plus-plus
-          image: "{{ .Values.chatPlusPlus.image.repository }}:{{ .Values.chatPlusPlus.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.chatPlusPlus.image.pullPolicy }}
-          {{- with .Values.chatPlusPlus.securityContext.container }}
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          {{- with .Values.frontend.securityContext.container }}
           securityContext:
             {{- . | toYaml | nindent 12 }}
           {{- end }}
           resources:
-            {{- toYaml .Values.chatPlusPlus.resources | nindent 12 }}
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
           env:
             - name: API_URL
               valueFrom:
@@ -42,17 +42,17 @@ spec:
               subPath: keycloak-config.json
               readOnly: true
           ports:
-            - containerPort: {{ .Values.chatPlusPlus.service.targetPort }}
+            - containerPort: {{ .Values.frontend.service.targetPort }}
           startupProbe:
             httpGet:
-              port: {{ .Values.chatPlusPlus.service.targetPort }}
+              port: {{ .Values.frontend.service.targetPort }}
               path: /healthz
             periodSeconds: 1
             timeoutSeconds: 1
             failureThreshold: 30
           livenessProbe:
             httpGet:
-              port: {{ .Values.chatPlusPlus.service.targetPort }}
+              port: {{ .Values.frontend.service.targetPort }}
               path: /healthz
             periodSeconds: 10
             timeoutSeconds: 1

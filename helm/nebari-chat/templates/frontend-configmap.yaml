@@ -1,0 +1,21 @@
+{{- $component := "frontend" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+data:
+  keycloak-config.json: |
+    {{-
+    $resource := .Values.frontend.keycloak.resource | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.fullname" .))
+    -}}
+    {{-
+    dict
+      "auth-server-url" (required "keycloak.authServerUrl is required" .Values.frontend.keycloak.authServerUrl)
+      "realm" (required "keycloak.realm is required" .Values.frontend.keycloak.realm)
+      "resource" $resource
+    | toPrettyJson | nindent 4
+    }}
+  API_URL: {{ required "api.url is required" .Values.frontend.api.url }}

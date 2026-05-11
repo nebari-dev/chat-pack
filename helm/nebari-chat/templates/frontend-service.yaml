@@ -1,4 +1,4 @@
-{{- $component := "chat-plus-plus" }}
+{{- $component := "frontend" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,10 +7,10 @@ metadata:
   labels:
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
 spec:
-  type: {{ .Values.chatPlusPlus.service.type }}
+  type: {{ .Values.frontend.service.type }}
   selector:
     {{- include "ravnar.selectorLabels" (dict "top" . "component" $component) | nindent 4 }}
   ports:
     - protocol: TCP
-      port: {{ .Values.chatPlusPlus.service.port }}
-      targetPort: {{ .Values.chatPlusPlus.service.targetPort }}
+      port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.service.targetPort }}

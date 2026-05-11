@@ -1,4 +1,4 @@
-{{- $component := "ravnar-nebari" }}
+{{- $component := "backend" }}
 {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
 {{- include "nebari-chat.nebariapp" (dict
     "top" $
@@ -7,6 +7,6 @@
       "name" (include "ravnar.fullname" .)
       "port" .Values.service.port
     )
-    "nebariapp" $.Values.ravnarNebari.nebariapp
+    "nebariapp" $.Values.backend.nebariapp
 ) }}
 {{- end }}

@@ -1,9 +1,9 @@
-{{- include "ravnar-nebari.validateValues" . -}}
-{{- $component := "ravnar-nebari" }}
+{{- include "backend.validateValues" . -}}
+{{- $component := "backend" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-ravnar-nebari
+  name: {{ .Release.Name }}-backend
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}

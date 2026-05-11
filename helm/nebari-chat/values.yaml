@@ -7,20 +7,20 @@ config:
   inline: {}
 
 keycloak:
-  hostname: "keycloak.nebari-chat-pack.openteams.dev"
+  hostname: ""
   realm: "nebari"
   clientId: ""
 
 ravnar:
   config:
     existingConfigMap:
-      name: '{{ .Release.Name }}-ravnar-nebari'
+      name: '{{ .Release.Name }}-backend'
   ingress:
     enabled: false
 
-ravnarNebari:
+backend:
   nebariapp:
-    hostname: "ravnar.nebari-chat-pack.openteams.dev"
+    hostname: ""
     auth:
       enabled: false
       provider: keycloak
@@ -41,14 +41,14 @@ ravnarNebari:
         enabled: true
     gateway: public
 
-chatPlusPlus:
+frontend:
   enabled: true
 
   replicaCount: 1
 
   image:
     # -- The repository of the main application image
-    repository: quay.io/nebari/chat-plus-plus
+    repository: quay.io/nebari/nebari-chat-frontend
     # -- The tag of the main application image. If not set, the chart's appVersion is used.
     tag: ""
     # -- The pull policy for the main application image
@@ -91,15 +91,15 @@ chatPlusPlus:
     targetPort: 8080
 
   keycloak:
-    authServerUrl: "keycloak.nebari-chat-pack.openteams.dev"
+    authServerUrl: ""
     realm: "nebari"
     resource: ""
 
   api:
-    url: "ravnar.nebari-chat-pack.openteams.dev"
+    url: ""
 
   nebariapp:
-    hostname: "chat.nebari-chat-pack.openteams.dev"
+    hostname: ""
     auth:
       enabled: true
       provider: keycloak
