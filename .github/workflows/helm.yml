@@ -1,0 +1,57 @@
+name: helm
+
+on:
+  pull_request:
+  push:
+    tags: ['chart/v[0-9]+\.[0-9]+\.[0-9]+']
+
+concurrency:
+  group: helm-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    needs: metadata
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Compute versions
+        id: versions
+        uses: ./.github/actions/compute-versions
+
+      - name: Install mise and setup helm
+        uses: jdx/mise-action@v4
+        with:
+          mise_toml: |
+            [tools]
+            helm = "latest"
+
+      - name: Patch helm chart
+        uses: ./.github/actions/patch-helm-chart
+        with:
+          chart-version: ${{ needs.versions.outputs.chart-version }}
+          app-version: ${{ needs.versions.outputs.app-version }}
+
+      - name: Install chart dependencies
+        run: helm dependencies update ./helm/nebari-chat
+
+      - name: Package helm chart
+        run: helm package ./helm/nebari-chat
+
+      - name: Login to Quay.io
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v4
+        with:
+          registry: quay.io
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Push helm chart
+        if: ${{ github.event_name != 'pull_request' }}
+        run: helm push 'nebari-chat-${{ needs.versions.outputs.chart-version }}.tgz' oci://quay.io/nebari/charts

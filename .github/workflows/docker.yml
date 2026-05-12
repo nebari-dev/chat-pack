@@ -1,4 +1,4 @@
-name: docker build
+name: docker
 
 on:
   pull_request:
@@ -8,7 +8,6 @@ on:
 concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 
 jobs:
   build:
