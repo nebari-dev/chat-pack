@@ -1584,7 +1584,7 @@ wheels = [
 
 [[package]]
 name = "ravnar"
-version = "0.0.7"
+version = "0.0.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ag-ui-protocol" },
@@ -1608,9 +1608,9 @@ dependencies = [
     { name = "typer" },
     { name = "universal-pathlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7b/ea/aa989fdad8d61cf54b17cfffea4eaa151a82f27252fb44e2571326b5bad2/ravnar-0.0.7.tar.gz", hash = "sha256:283afd99f384326e3236345ecc642eecd508fa96bc61f4624d4eb368dc1a6154", size = 32922, upload-time = "2026-05-06T07:40:51.723Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/75/af/79c482f10258e01f437990e4f872ea926100247dba5f9bf7ffe256ac5a9e/ravnar-0.0.8.tar.gz", hash = "sha256:c8c0524ed16d3e274a6ef9114fa2cddf2b97e7c569813c5e37d180b376ffa07a", size = 32952, upload-time = "2026-05-11T13:02:26.074Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/32/82e70d37dccd93bb537e7b2d2fef98f4cc575c9c5f17eaac2efed3c75cc8/ravnar-0.0.7-py3-none-any.whl", hash = "sha256:28da0edf5f48b87bb3df825f366821d3f6d26817b1ff3ccbffff0665c286c613", size = 40106, upload-time = "2026-05-06T07:40:50.728Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/45/713d35f664b24e4020afb4603f65d20182c2f1242125594fb486bcb78b18/ravnar-0.0.8-py3-none-any.whl", hash = "sha256:2544c801fb100ba76a7d407db09a993749064da43111adc43ad1bde974c68850", size = 40143, upload-time = "2026-05-11T13:02:24.795Z" },
 ]
 
 [package.optional-dependencies]
@@ -1624,7 +1624,7 @@ serve = [
 ]
 
 [[package]]
-name = "ravnar-nebari"
+name = "ravnar-nebari-chat"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },
@@ -1639,13 +1639,13 @@ dev = [
     { name = "hatch" },
     { name = "mypy" },
     { name = "pre-commit" },
-    { name = "ravnar-nebari" },
+    { name = "ravnar-nebari-chat" },
     { name = "uv-dynamic-versioning" },
 ]
 lint = [
     { name = "mypy" },
     { name = "pre-commit" },
-    { name = "ravnar-nebari" },
+    { name = "ravnar-nebari-chat" },
 ]
 
 [package.metadata]
@@ -1654,7 +1654,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "openai", specifier = ">=2.35.1,<3" },
     { name = "pyjwt", specifier = ">=2.12.1,<3" },
-    { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.7" },
+    { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.8" },
 ]
 
 [package.metadata.requires-dev]
@@ -1662,14 +1662,14 @@ dev = [
     { name = "hatch" },
     { name = "mypy", specifier = "==1.17.*" },
     { name = "pre-commit", specifier = ">=4.2,<5" },
-    { name = "ravnar-nebari" },
+    { name = "ravnar-nebari-chat" },
     { name = "uv-dynamic-versioning" },
 ]
 docs = []
 lint = [
     { name = "mypy", specifier = "==1.17.*" },
     { name = "pre-commit", specifier = ">=4.2,<5" },
-    { name = "ravnar-nebari" },
+    { name = "ravnar-nebari-chat" },
 ]
 test = []
 

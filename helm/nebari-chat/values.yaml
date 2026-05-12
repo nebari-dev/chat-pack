@@ -12,6 +12,9 @@ keycloak:
   clientId: ""
 
 ravnar:
+  image:
+    repository: quay.io/nebari/nebari-chat-backend
+    tag: 0.0.6
   config:
     existingConfigMap:
       name: '{{ .Release.Name }}-backend'
@@ -21,25 +24,10 @@ ravnar:
 backend:
   nebariapp:
     hostname: ""
-    auth:
-      enabled: false
-      provider: keycloak
-      provisionClient: true
-      enforceAtGateway: false
-      redirectURI: /*
-      scopes:
-        - openid
-        - profile
-        - email
-      spaClient:
-        enabled: true
     routing:
       publicRoutes:
         - pathPrefix: /
           pathType: PathPrefix
-      tls:
-        enabled: true
-    gateway: public
 
 frontend:
   enabled: true
@@ -103,19 +91,10 @@ frontend:
     auth:
       enabled: true
       provider: keycloak
-      provisionClient: true
       enforceAtGateway: false
-      redirectURI: /*
-      scopes:
-        - openid
-        - profile
-        - email
       spaClient:
         enabled: true
     routing:
       publicRoutes:
         - pathPrefix: /
           pathType: PathPrefix
-      tls:
-        enabled: true
-    gateway: public

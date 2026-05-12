@@ -1,4 +1,4 @@
-src/ravnar_nebari/_version.py
+src/ravnar_nebari_chat/_version.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -13,7 +13,7 @@ data:
     dict
       "auth-server-url" (required "keycloak.url is required" .Values.keycloak.url)
       "realm" (required "keycloak.realm is required" .Values.keycloak.realm)
-      "resource" (.Values.frontend.keycloak.resource | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.fullname" .)))
+      "resource" (.Values.keycloak.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" $component))))
     | toPrettyJson | nindent 4
     }}
   {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
