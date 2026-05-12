@@ -46,6 +46,41 @@ spec:
   {{- with $nebariapp.gateway }}
   gateway: {{ . }}
   {{- end }}
+  {{- with .nebariapp.landingPage }}
+  landingPage:
+    enabled: {{ .enabled | default false }}
+    {{- with .displayName }}
+    displayName: {{ . | quote }}
+    {{- end }}
+    {{- with .description }}
+    description: {{ . | quote }}
+    {{- end }}
+    {{- with .icon }}
+    icon: {{ . | quote }}
+    {{- end }}
+    {{- with .category }}
+    category: {{ . | quote }}
+    {{- end }}
+    {{- if kindIs "float64" .priority }}
+    priority: {{ .priority }}
+    {{- end }}
+    {{- with .externalUrl }}
+    externalUrl: {{ . | quote }}
+    {{- end }}
+    {{- with .healthCheck }}
+    healthCheck:
+      enabled: {{ .enabled | default false }}
+      {{- with .path }}
+      path: {{ . | quote }}
+      {{- end }}
+      {{- if .intervalSeconds }}
+      intervalSeconds: {{ .intervalSeconds }}
+      {{- end }}
+      {{- if .timeoutSeconds }}
+      timeoutSeconds: {{ .timeoutSeconds }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
