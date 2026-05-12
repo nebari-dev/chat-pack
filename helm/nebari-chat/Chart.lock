@@ -1,6 +1,6 @@
 dependencies:
 - name: ravnar
   repository: oci://quay.io/nebari/charts
-  version: 0.0.2
-digest: sha256:cdbf3170d61c9104e2c734445f46423f3526a921db77c6b2ffa5117e437f03cb
-generated: "2026-05-07T11:42:41.012854103+02:00"
+  version: 0.0.4
+digest: sha256:7c8bd66fad7fc0f13879da3cf19a680176aa59a51178c1f6979a581bc99234cd
+generated: "2026-05-12T15:27:34.827947162+02:00"

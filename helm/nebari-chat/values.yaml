@@ -25,7 +25,7 @@ backend:
   nebariapp:
     hostname: ""
     routing:
-      publicRoutes:
+      routes:
         - pathPrefix: /
           pathType: PathPrefix
 
@@ -91,10 +91,24 @@ frontend:
     auth:
       enabled: true
       provider: keycloak
+      redirectURI: /*
+      scopes:
+        - openid
+        - profile
+        - email
       enforceAtGateway: false
       spaClient:
         enabled: true
     routing:
-      publicRoutes:
+      routes:
         - pathPrefix: /
           pathType: PathPrefix
+    landingPage:
+      enabled: true
+      displayName: Chat
+      description: Chat with AI models
+      category: AI
+      priority: 1
+      healthCheck:
+        enabled: true
+        path: /health
