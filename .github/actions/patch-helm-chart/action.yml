@@ -27,7 +27,7 @@ runs:
           --var="chart=yaml:file:${FILE}" \
           --var="chartVersion='${{ inputs.chart-version }}'" \
           --var="appVersion='${{ inputs.app-version }}'" \
-          '{$chart..., "version": $chartVersion, "appVersion": $appVersion}' \
+          'merge($chart, {"version": $chartVersion, "appVersion": $appVersion})' \
         )
         echo "${CONTENT}" | tee ${FILE}
 
@@ -39,6 +39,6 @@ runs:
         CONTENT=$(dasel --out=yaml \
           --var="values=yaml:file:${FILE}" \
           --var="appVersion='${{ inputs.app-version }}'" \
-          '{$values...,  {"ravnar": {"image": {"tag": $appVersion}}}...}' \
+          'merge($values, {"ravnar": {"image": {"tag": $appVersion}}})' \
         )
         echo "${CONTENT}" | tee ${FILE}
