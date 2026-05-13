@@ -20,7 +20,7 @@ ravnar:
     # -- The repository of the backend application image
     repository: quay.io/nebari/nebari-chat-backend
     # -- The tag of the backend application image. Defaults to the chart's appVersion
-    tag: "{{ .Chart.AppVersion }}"
+    tag: "set-by-cd"
   config:
     existingConfigMap:
       # -- The name of the ConfigMap for backend configuration

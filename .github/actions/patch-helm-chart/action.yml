@@ -30,3 +30,15 @@ runs:
           '{$chart..., "version": $chartVersion, "appVersion": $appVersion}' \
         )
         echo "${CONTENT}" | tee ${FILE}
+
+    - name: Inject app version into ravnar image tag
+      shell: bash
+      run: |
+        FILE='./helm/nebari-chat/values.yaml'
+
+        CONTENT=$(dasel --out=yaml \
+          --var="values=yaml:file:${FILE}" \
+          --var="appVersion='${{ inputs.app-version }}'" \
+          '{$values...,  {"ravnar": {"image": {"tag": $appVersion}}}...}' \
+        )
+        echo "${CONTENT}" | tee ${FILE}
