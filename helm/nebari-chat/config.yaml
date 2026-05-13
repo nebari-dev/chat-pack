@@ -4,4 +4,4 @@ security:
     params:
       keycloak_url: '{{ required "keycloak.url is required" .Values.keycloak.url }}'
       realm: "{{ .Values.keycloak.realm }}"
-      client_id: '{{ (.Values.keycloak.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" "frontend")))) }}'
+      client_id: '{{ .Values.keycloak.clientId }}'
