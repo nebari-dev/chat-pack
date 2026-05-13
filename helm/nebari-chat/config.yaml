@@ -4,4 +4,3 @@ security:
     params:
       keycloak_url: '{{ required "keycloak.url is required" .Values.keycloak.url }}'
       realm: "{{ .Values.keycloak.realm }}"
-      client_id: '{{ .Values.keycloak.clientId }}'
