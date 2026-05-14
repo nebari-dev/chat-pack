@@ -1,4 +1,21 @@
 {{- $component := "backend" }}
+{{- $config := .Files.Get "config.yaml" | fromYaml -}}
+{{- if .Values.backend.austinPermits.enabled -}}
+{{- $ap := .Values.backend.austinPermits -}}
+{{- $austinOverlay := dict "agents" (dict "austin-permits" (dict
+    "cls_or_fn" "ravnar_nebari_chat.austin_permit_agent.create_agent"
+    "params" (dict
+      "name" $ap.name
+      "model_name" $ap.modelName
+      "api_key" (required "backend.austinPermits.apiKey is required when backend.austinPermits.enabled is true" $ap.apiKey)
+      "db_host" (required "backend.austinPermits.database.host is required when backend.austinPermits.enabled is true" $ap.database.host)
+      "db_port" $ap.database.port
+      "db_name" (required "backend.austinPermits.database.name is required when backend.austinPermits.enabled is true" $ap.database.name)
+      "db_user" (required "backend.austinPermits.database.user is required when backend.austinPermits.enabled is true" $ap.database.user)
+      "db_password" (required "backend.austinPermits.database.password is required when backend.austinPermits.enabled is true" $ap.database.password)
+    ))) -}}
+{{- $config = merge $austinOverlay $config -}}
+{{- end -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,4 +25,4 @@ metadata:
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
 data:
   config.yaml: |
-    {{- include "ravnar.recursiveTplJson" (dict "top" . "value" (merge .Values.config.inline (.Files.Get "config.yaml" | fromYaml))) | fromJson | toYaml | nindent 4 }}
+    {{- include "ravnar.recursiveTplJson" (dict "top" . "value" (merge .Values.config.inline $config)) | fromJson | toYaml | nindent 4 }}

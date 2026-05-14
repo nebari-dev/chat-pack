@@ -76,6 +76,9 @@
         "austinPermits": {
           "type": "object",
           "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
             "name": {
               "type": "string"
             },

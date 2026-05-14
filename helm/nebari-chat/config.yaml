@@ -4,15 +4,3 @@ security:
     params:
       keycloak_url: '{{ required "keycloak.url is required" .Values.keycloak.url }}'
       realm: "{{ .Values.keycloak.realm }}"
-agents:
-  austin-permits:
-    cls_or_fn: ravnar_nebari_chat.austin_permit_agent.create_agent
-    params:
-      name: "{{ .Values.backend.austinPermits.name }}"
-      model_name: "{{ .Values.backend.austinPermits.modelName }}"
-      api_key: '{{ required "backend.austinPermits.apiKey is required" .Values.backend.austinPermits.apiKey }}'
-      db_host: '{{ required "backend.austinPermits.database.host is required" .Values.backend.austinPermits.database.host }}'
-      db_port: "{{ .Values.backend.austinPermits.database.port }}"
-      db_name: '{{ required "backend.austinPermits.database.name is required" .Values.backend.austinPermits.database.name }}'
-      db_user: '{{ required "backend.austinPermits.database.user is required" .Values.backend.austinPermits.database.user }}'
-      db_password: '{{ required "backend.austinPermits.database.password is required" .Values.backend.austinPermits.database.password }}'

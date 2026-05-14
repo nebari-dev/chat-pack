@@ -40,6 +40,9 @@ backend:
           pathType: PathPrefix
 
   austinPermits:
+    # -- Whether to register the Austin Permits agent. When true, the api key
+    # and all database.* fields must be set.
+    enabled: false
     # -- Display name for the Austin Permits agent
     name: "Austin Permits Agent (Claude Sonnet 4.6)"
     # -- The OpenRouter model name backing the agent
