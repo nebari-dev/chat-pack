@@ -3,8 +3,8 @@ name: nebari-chat
 type: application
 description: chat pack for nebari
 # tmp change to be used as is in an actual deployment, should NOT be merged with
-version: "0.0.20-dev4"
-appVersion: "0.0.20-dev4"
+version: "0.0.20-dev5"
+appVersion: "0.0.20-dev5"
 keywords:
   - nebari
 home: https://github.com/nebari-dev/nebari-chat-pack
