@@ -4,39 +4,48 @@ from typing import Any
 import psycopg
 from ag_ui.core import ActivitySnapshotEvent
 from pydantic_ai import Agent, ToolReturn
-from pydantic_ai.models.openrouter import OpenRouterModel
-from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from ravnar.agents import PydanticAiAgentWrapper
 
 
-def create_agent(
-    name: str = "Austin Permits Agent",
-    model_name: str = "anthropic/claude-sonnet-4.6",
-    api_key: str = "",
-    db_host: str = "",
-    db_port: str = "",
-    db_name: str = "",
-    db_user: str = "",
-    db_password: str = "",
-) -> PydanticAiAgentWrapper:
-    async def db_conn() -> psycopg.AsyncConnection[Any]:
+class Database:
+    def __init__(
+        self,
+        *,
+        host: str,
+        port: str,
+        name: str,
+        user: str,
+        password: str,
+    ) -> None:
+        self._host = host
+        self._port = port
+        self._name = name
+        self._user = user
+        self._password = password
+
+    async def _connect(self) -> psycopg.AsyncConnection[Any]:
         return await psycopg.AsyncConnection.connect(
-            dbname=db_name,
-            user=db_user,
-            password=db_password,
-            host=db_host,
-            port=db_port,
+            dbname=self._name,
+            user=self._user,
+            password=self._password,
+            host=self._host,
+            port=self._port,
         )
 
-    provider = OpenRouterProvider(api_key=api_key)
+    async def execute(self, query: str) -> list[tuple]:
+        async with await self._connect() as conn, conn.cursor() as cur:
+            await cur.execute(query)
+            return list(await cur.fetchall())
 
-    model = OpenRouterModel(model_name=model_name, provider=provider)
 
-    permits_agent = Agent(
-        model=model,
-        name=name,
-        system_prompt="""
+def create_agent(
+    agent: Agent,
+    database: Database,
+) -> PydanticAiAgentWrapper:
+    @agent.system_prompt
+    def _system_prompt() -> str:
+        return """
             You are an agent with the sole task of answering the user's
             questions related to the Austin Permits Database. You have a suite
             of tools available to fetch the db schema, make queries, and create
@@ -45,10 +54,9 @@ def create_agent(
             query will fail if it attempts to modify the db. Plan your actions
             accordingly by ensuring that you understand the db schema before
             generating SQL queries.
-        """,
-    )
+        """
 
-    @permits_agent.tool_plain
+    @agent.tool_plain
     async def get_db_schema() -> list[tuple]:
         """Get the schema for the Austin Permits database.
 
@@ -68,11 +76,9 @@ def create_agent(
             WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
             ORDER BY t.table_name, c.ordinal_position;
         """
-        async with await db_conn() as conn, conn.cursor() as cur:
-            await cur.execute(query)
-            return list(await cur.fetchall())
+        return await database.execute(query)
 
-    @permits_agent.tool_plain
+    @agent.tool_plain
     async def execute_query(query: str) -> list[tuple]:
         """Execute a query against the Austin Permits database.
 
@@ -85,11 +91,9 @@ def create_agent(
         SQL syntax.
 
         """
-        async with await db_conn() as conn, conn.cursor() as cur:
-            await cur.execute(query)
-            return list(await cur.fetchall())
+        return await database.execute(query)
 
-    @permits_agent.tool_plain
+    @agent.tool_plain
     async def create_chart(option: dict) -> ToolReturn:
         """Create a chart from the data retrieved by a query to the db.
 
@@ -110,7 +114,7 @@ def create_agent(
             ],
         )
 
-    @permits_agent.tool_plain
+    @agent.tool_plain
     async def create_map(data: dict) -> ToolReturn:
         """Create a map with markers from the data retrieved by a query to the db.
 
@@ -141,4 +145,4 @@ def create_agent(
             ],
         )
 
-    return PydanticAiAgentWrapper(permits_agent)
+    return PydanticAiAgentWrapper(agent)
