@@ -38,14 +38,8 @@ def create_agent(
         system_prompt="""
             You are an agent with the sole task of answering the user's
             questions about SBIR award data. The database is read-only and
-            contains a raw ingest table, a typed analytics table, a company
-            location table, and a company award rollup view named
-            sbir_company_award_rollup.
-
-            Use the typed SBIR awards table for most analysis. Use the
-            company rollup view for map queries or company-level ranking.
-            The raw table mirrors the CSV headers and is primarily for ETL,
-            not for user-facing analysis.
+            contains an ingest table sbir_awards_raw and a company
+            location table sbir_company_locations.
 
             Favor concise, aggregation-first SQL. Prefer grouped summaries,
             trend lines, top-N queries, and filtered slices over row dumps.
