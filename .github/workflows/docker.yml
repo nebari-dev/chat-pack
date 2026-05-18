@@ -85,7 +85,7 @@ jobs:
           esac
 
           FROM_JSON=$(jq --null-input --compact-output \
-            --arg prefix 'type=registry,ref=${{ env.IMAGE }}:' \
+            --arg prefix 'type=registry,ref=${{ matrix.image }}:' \
             --args \
             '$ARGS.positional | map($prefix + .)' \
             -- "${FROM_TAGS[@]}" \
@@ -93,7 +93,7 @@ jobs:
           echo "from-json=${FROM_JSON}" | tee --append "${GITHUB_OUTPUT}"
 
           TO_JSON=$(jq --null-input --compact-output \
-            --arg prefix 'type=registry,ref=${{ env.IMAGE }}:' \
+            --arg prefix 'type=registry,ref=${{ matrix.image }}:' \
             --arg postfix ',mode=max' \
             --args \
             '$ARGS.positional | map($prefix + . + $postfix)' \
