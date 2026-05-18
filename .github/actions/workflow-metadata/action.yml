@@ -2,7 +2,7 @@ name: workflow-metadata
 description: "Compute workflow metadata"
 
 outputs:
-  type:
+  workflow-type:
     description: Workflow type. One of 'PR', 'main', or 'release'
     value: ${{ steps.workflow.outputs.type }}
   version-raw:
@@ -25,15 +25,15 @@ runs:
         # Compute workflow type
         case '${{ github.event_name }}' in
           pull_request)
-            TYPE=PR
+            WORKFLOW_TYPE=PR
             ;;
           push)
             case '${{ github.ref }}' in
               refs/heads/main)
-                TYPE=main
+                WORKFLOW_TYPE=main
                 ;;
               refs/tags/*)
-                TYPE=release
+                WORKFLOW_TYPE=release
                 ;;
               *)
               echo "unknown push ref '${{ github.ref }}'" >&2
@@ -47,7 +47,7 @@ runs:
             ;;
         esac
 
-        echo "type=${TYPE}" | tee --append "${GITHUB_OUTPUT}"
+        echo "workflow-type=${WORKFLOW_TYPE}" | tee --append "${GITHUB_OUTPUT}"
         
     - name: Install uv and set the python version
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
