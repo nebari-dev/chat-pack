@@ -41,10 +41,10 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
 } as any);
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute;
   '/logout': typeof LogoutRoute;
   '/chat': typeof AuthenticatedChatRoute;
   '/history': typeof AuthenticatedHistoryRoute;
-  '/': typeof AuthenticatedIndexRoute;
 }
 export interface FileRoutesByTo {
   '/logout': typeof LogoutRoute;
@@ -62,7 +62,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: '/logout' | '/chat' | '/history' | '/';
+  fullPaths: '/' | '/logout' | '/chat' | '/history';
   fileRoutesByTo: FileRoutesByTo;
   to: '/logout' | '/chat' | '/history' | '/';
   id:
@@ -91,7 +91,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated';
       path: '';
-      fullPath: '';
+      fullPath: '/';
       preLoaderRoute: typeof AuthenticatedRouteImport;
       parentRoute: typeof rootRouteImport;
     };
