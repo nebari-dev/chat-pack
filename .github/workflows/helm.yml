@@ -20,9 +20,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
-      - name: Compute versions
-        id: versions
-        uses: ./.github/actions/compute-versions
+      - name: Compute workflow metadata
+        id: workflow-metadata
+        uses: ./.github/actions/workflow-metadata
 
       - name: Install mise and setup helm
         uses: jdx/mise-action@v4
@@ -30,6 +30,31 @@ jobs:
           mise_toml: |
             [tools]
             helm = "latest"
+
+      - name: Set versions
+        id: versions
+        run: |
+          case '${{ steps.workflow-metadata.outputs.workflow-type }}' in
+            PR)
+              CHART_VERSION_SUFFIX='-pr.${{ github.event.number }}'
+              ;;
+            main)
+              CHART_VERSION_SUFFIX='-main'
+              ;;
+            release)
+              CHART_VERSION_SUFFIX=''
+              ;;
+            *)
+              echo "unknown workflow type '${{ steps.workflow-metadata.outputs.workflow-type  }}'" >&2
+              exit 1
+              ;;
+          esac
+          
+          CHART_VERSION="${{ steps.workflow-metadata.outputs.chart-version-latest }}${CHART_VERSION_SUFFIX}"
+          APP_VERSION='${{ steps.workflow-metadata.outputs.app-version-tag }}'
+
+          echo "app-version=${APP_VERSION}" | tee --append "${GITHUB_OUTPUT}"
+          echo "chart-version=${CHART_VERSION}" | tee --append "${GITHUB_OUTPUT}"
 
       - name: Patch helm chart
         uses: ./.github/actions/patch-helm-chart
@@ -44,7 +69,6 @@ jobs:
         run: helm package ./helm/nebari-chat
 
       - name: Login to Quay.io
-        if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v4
         with:
           registry: quay.io
@@ -52,5 +76,5 @@ jobs:
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
 
       - name: Push helm chart
-        if: ${{ github.event_name != 'pull_request' }}
-        run: helm push 'nebari-chat-${{ steps.versions.outputs.chart-version }}.tgz' oci://quay.io/nebari/charts
+        shell: bash
+        run: helm push nebari-chat-*.tgz oci://quay.io/nebari/charts
