@@ -40,6 +40,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Compute tag
+        id: tag
+        run: |
+          TAG=$(echo '${{ steps.workflow.outputs.version-raw }}' | sed 's/+/-/g')
+          echo "tag=${TAG}" | tee --append "${GITHUB_OUTPUT}"
+
       - name: Setup image metadata
         id: image-metadata
         uses: docker/metadata-action@v6
