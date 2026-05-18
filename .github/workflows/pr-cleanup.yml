@@ -1,0 +1,40 @@
+name: PR cleanup
+
+on:
+  pull_request:
+    types:
+      - closed
+
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        image:
+          - quay.io/nebari/nebari-chat-backend
+          - quay.io/nebari/nebari-chat-frontend
+          - quay.io/nebari/charts/nebari-chat
+
+    steps:
+      - name: Install Skopeo and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes skopeo jq
+
+      - name: Login to Quay.io
+        run: |
+          echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | skopeo login --username "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin quay.io
+
+      - name: Delete PR tags
+        run: |
+          PR_NUMBER=${{ github.event.number }}
+          TAGS=$(skopeo list-tags docker://${{ matrix.image }} | jq --raw-output ".Tags[] | select(test(\"(^pr-${PR_NUMBER}-)|(-pr\\.${PR_NUMBER}$)\"))" || true)
+
+          if [[ -z "${TAGS}" ]]; then
+            echo "No tags found for PR #${PR_NUMBER}"
+            exit 0
+          fi
+
+          echo "${TAGS}" | xargs -t -I '{tag}' skopeo delete 'docker://${{ matrix.image }}:{tag}'
