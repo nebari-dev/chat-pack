@@ -1,5 +1,6 @@
-__all__ = ["__version__", "keycloak_authenticator"]
+__all__ = ["__version__", "keycloak_authenticator", "make_austin_permits_agent"]
 
+from ._austin_permits import make_austin_permits_agent
 from ._authenticators import keycloak_authenticator
 
 try:
