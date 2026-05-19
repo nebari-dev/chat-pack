@@ -8,12 +8,12 @@ from pydantic_ai import Agent, ToolReturn
 from ravnar.agents import PydanticAiAgentWrapper
 
 
-class Database:
+class PostgresDatabase:
     def __init__(
         self,
         *,
         host: str,
-        port: str,
+        port: int = 5432,
         name: str,
         user: str,
         password: str,
@@ -41,7 +41,7 @@ class Database:
 
 def create_agent(
     agent: Agent,
-    database: Database,
+    database: PostgresDatabase,
 ) -> PydanticAiAgentWrapper:
     @agent.system_prompt
     def _system_prompt() -> str:
