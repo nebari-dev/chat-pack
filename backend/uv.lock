@@ -1630,6 +1630,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "httpx" },
     { name = "openai" },
+    { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pyjwt" },
     { name = "ravnar", extra = ["pydantic-ai", "serve"] },
 ]
@@ -1653,6 +1654,7 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.7" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "openai", specifier = ">=2.35.1,<3" },
+    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9,<4" },
     { name = "pyjwt", specifier = ">=2.12.1,<3" },
     { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.8" },
 ]
