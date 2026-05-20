@@ -1,48 +1,26 @@
 import uuid
-from typing import Any
 
-import psycopg
 from ag_ui.core import ActivitySnapshotEvent
 from pydantic_ai import Agent, ToolReturn
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from ravnar.agents import PydanticAiAgentWrapper
 
 
-class PostgresDatabase:
-    def __init__(
-        self,
-        *,
-        host: str,
-        port: int = 5432,
-        name: str,
-        user: str,
-        password: str,
-    ) -> None:
-        self._host = host
-        self._port = port
-        self._name = name
-        self._user = user
-        self._password = password
 
-    async def _connect(self) -> psycopg.AsyncConnection[Any]:
-        return await psycopg.AsyncConnection.connect(
-            dbname=self._name,
-            user=self._user,
-            password=self._password,
-            host=self._host,
-            port=self._port,
-        )
-
-    async def execute(self, query: str) -> list[tuple]:
-        async with await self._connect() as conn, conn.cursor() as cur:
-            await cur.execute(query)
-            return list(await cur.fetchall())
-
-
-def create_agent(
+def make_austin_permits_agent(
     agent: Agent,
-    database: PostgresDatabase,
+    *,
+    database_url: str,
 ) -> PydanticAiAgentWrapper:
+    engine = create_async_engine(database_url)
+
+    async def execute(query: str) -> list[tuple]:
+        async with engine.connect() as conn:
+            result = await conn.execute(text(query))
+            return [tuple(row) for row in result.fetchall()]
+
     @agent.system_prompt
     def _system_prompt() -> str:
         return """
@@ -76,7 +54,7 @@ def create_agent(
             WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
             ORDER BY t.table_name, c.ordinal_position;
         """
-        return await database.execute(query)
+        return await execute(query)
 
     @agent.tool_plain
     async def execute_query(query: str) -> list[tuple]:
@@ -91,7 +69,7 @@ def create_agent(
         SQL syntax.
 
         """
-        return await database.execute(query)
+        return await execute(query)
 
     @agent.tool_plain
     async def create_chart(option: dict) -> ToolReturn:

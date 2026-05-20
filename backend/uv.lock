@@ -1633,6 +1633,7 @@ dependencies = [
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pyjwt" },
     { name = "ravnar", extra = ["pydantic-ai", "serve"] },
+    { name = "sqlalchemy", extra = ["asyncio"] },
 ]
 
 [package.dev-dependencies]
@@ -1657,6 +1658,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9,<4" },
     { name = "pyjwt", specifier = ">=2.12.1,<3" },
     { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.8" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
 ]
 
 [package.metadata.requires-dev]
