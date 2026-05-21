@@ -46,11 +46,9 @@ jobs:
         with:
           images: ${{ matrix.image }}
           tags: |
+            type=raw,value=${{ steps.workflow-metadata.outputs.image-tag }}
             type=raw,value=pr-${{ github.event.number }},enable=${{ steps.workflow-metadata.outputs.workflow-type == 'PR' }}
-            type=raw,value=pr-${{ github.event.number }}-${{ steps.workflow-metadata.outputs.app-version-tag }},enable=${{ steps.workflow-metadata.outputs.workflow-type == 'PR' }}
-            type=raw,value=main,enable=${{ steps.workflow-metadata.outputs.workflow-type == 'main' }}
             type=raw,value=latest,enable=${{ steps.workflow-metadata.outputs.workflow-type == 'release' }}
-            type=raw,value=${{ steps.workflow-metadata.outputs.app-version-tag }},enable=${{ steps.workflow-metadata.outputs.workflow-type == 'release' }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
