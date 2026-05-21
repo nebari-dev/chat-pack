@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 def add_database_tools(agent: pydantic_ai.Agent, *, database_url: str, schema_query: str) -> None:
     engine = create_async_engine(database_url)
 
-    async def execute(self, query: str) -> list[tuple]:
+    async def execute(query: str) -> list[tuple]:
         async with engine.connect() as conn:
             result = await conn.execute(text(query))
             return [tuple(row) for row in result.fetchall()]

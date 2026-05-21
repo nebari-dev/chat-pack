@@ -11,7 +11,8 @@ def make_sbir_awards_agent(
     *,
     database_url: str,
 ) -> PydanticAiAgentWrapper:
-    agent.name = "SBIR Awards Agent"
+    if agent.name is None:
+        agent.name = "SBIR Awards Agent"
 
     @agent.system_prompt
     def system_prompt() -> str:

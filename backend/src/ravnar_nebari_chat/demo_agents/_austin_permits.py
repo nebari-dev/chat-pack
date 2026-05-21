@@ -11,7 +11,8 @@ def make_austin_permits_agent(
     *,
     database_url: str,
 ) -> PydanticAiAgentWrapper:
-    agent.name = "Austin Permits Agent"
+    if agent.name is None:
+        agent.name = "Austin Permits Agent"
 
     @agent.system_prompt
     def system_prompt() -> str:
