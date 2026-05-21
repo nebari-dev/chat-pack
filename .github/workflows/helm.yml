@@ -51,7 +51,7 @@ jobs:
           esac
           
           CHART_VERSION="${{ steps.workflow-metadata.outputs.chart-version-latest }}${CHART_VERSION_SUFFIX}"
-          APP_VERSION='${{ steps.workflow-metadata.outputs.app-version-tag }}'
+          APP_VERSION='${{ steps.workflow-metadata.outputs.image-tag }}'
 
           echo "app-version=${APP_VERSION}" | tee --append "${GITHUB_OUTPUT}"
           echo "chart-version=${CHART_VERSION}" | tee --append "${GITHUB_OUTPUT}"

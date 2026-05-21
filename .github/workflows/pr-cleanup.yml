@@ -30,7 +30,7 @@ jobs:
       - name: Delete PR tags
         run: |
           PR_NUMBER=${{ github.event.number }}
-          TAGS=$(skopeo list-tags docker://${{ matrix.image }} | jq --raw-output ".Tags[] | select(test(\"(^pr-${PR_NUMBER}-)|(-pr\\.${PR_NUMBER}$)\"))" || true)
+          TAGS=$(skopeo list-tags docker://${{ matrix.image }} | jq --raw-output ".Tags[] | select(test(\"(^pr-${PR_NUMBER}($|-))|(-pr\\\\.${PR_NUMBER}$)\"))" || true)
 
           if [[ -z "${TAGS}" ]]; then
             echo "No tags found for PR #${PR_NUMBER}"
