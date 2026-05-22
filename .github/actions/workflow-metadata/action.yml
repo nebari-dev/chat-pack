@@ -5,15 +5,18 @@ outputs:
   workflow-type:
     description: Workflow type. One of 'PR', 'main', or 'release'
     value: ${{ steps.workflow.outputs.workflow-type }}
+  stable-tag:
+    description: The canonical versioned tag for this build
+    value: ${{ steps.tags.outputs.stable-tag }}
+  tags-json:
+    description: All tags to push as JSON array (includes stable-tag)
+    value: ${{ steps.tags.outputs.tags-json }}
   app-version-json:
     description: App version info as JSON
     value: ${{ steps.versions.outputs.app-version-json }}
   chart-version-json:
     description: Chart version info as JSON
     value: ${{ steps.versions.outputs.chart-version-json }}
-  tags-json:
-    description: Tag selection as JSON (stable-tag + additional-tags)
-    value: ${{ steps.tags.outputs.tags-json }}
 
 runs:
   using: composite
@@ -63,41 +66,38 @@ runs:
       shell: bash
       working-directory: ./backend
       run: |
-        APP_VERSION_JSON=$(uv run python .github/actions/workflow-metadata/version_script.py --root . --pattern-prefix "")
+        APP_VERSION_JSON=$(uv run python .github/actions/workflow-metadata/compute_version.py --root . --pattern-prefix "")
         echo "app-version-json=${APP_VERSION_JSON}" | tee --append "${GITHUB_OUTPUT}"
 
-        CHART_VERSION_JSON=$(uv run python .github/actions/workflow-metadata/version_script.py --root . --pattern-prefix "chart/")
+        CHART_VERSION_JSON=$(uv run python .github/actions/workflow-metadata/compute_version.py --root . --pattern-prefix "chart/")
         echo "chart-version-json=${CHART_VERSION_JSON}" | tee --append "${GITHUB_OUTPUT}"
 
     - id: tags
       shell: bash
       run: |
+        WORKFLOW_TYPE='${{ steps.workflow.outputs.workflow-type }}'
         APP_BASE=$(echo '${{ steps.versions.outputs.app-version-json }}' | jq --raw-output '.base')
         SHA=$(echo '${{ steps.versions.outputs.app-version-json }}' | jq --raw-output '.commit')
 
-        case '${{ steps.workflow.outputs.workflow-type }}' in
+        case "${WORKFLOW_TYPE}" in
           PR)
             PR_NUMBER='${{ github.event.number }}'
             STABLE_TAG="${APP_BASE}-pr.${PR_NUMBER}.${SHA}"
-            ADDITIONAL_TAGS="[\"${APP_BASE}-pr.${PR_NUMBER}\"]"
+            TAGS="[\"${STABLE_TAG}\", \"${APP_BASE}-pr.${PR_NUMBER}\"]"
             ;;
           main)
             STABLE_TAG="${APP_BASE}-main"
-            ADDITIONAL_TAGS="[]"
+            TAGS="[\"${STABLE_TAG}\"]"
             ;;
           release)
             STABLE_TAG="${APP_BASE}"
-            ADDITIONAL_TAGS="[]"
+            TAGS="[\"${STABLE_TAG}\"]"
             ;;
           *)
-            echo "unknown workflow type '${{ steps.workflow.outputs.workflow-type }}'" >&2
+            echo "unknown workflow type '${WORKFLOW_TYPE}'" >&2
             exit 1
             ;;
         esac
 
-        TAGS_JSON=$(jq --null-input --compact-output \
-          --arg stable "${STABLE_TAG}" \
-          --argjson additional "${ADDITIONAL_TAGS}" \
-          '{"stable-tag": $stable, "additional-tags": $additional}' \
-        )
-        echo "tags-json=${TAGS_JSON}" | tee --append "${GITHUB_OUTPUT}"
+        echo "stable-tag=${STABLE_TAG}" | tee --append "${GITHUB_OUTPUT}"
+        echo "tags-json=${TAGS}" | tee --append "${GITHUB_OUTPUT}"

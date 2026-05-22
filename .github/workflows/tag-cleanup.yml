@@ -2,12 +2,9 @@ name: Tag cleanup
 
 on:
   pull_request:
-    types:
-      - closed
+    types: [closed]
   push:
-    tags: 
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - 'chart/v[0-9]+.[0-9]+.[0-9]+'
+    tags: ['v[0-9]+.[0-9]+.[0-9]+', 'chart/v[0-9]+.[0-9]+.[0-9]+']
 
 concurrency:
   group: tag-cleanup-${{ github.ref }}
@@ -51,19 +48,13 @@ jobs:
           fi
 
           if [[ -z "${TAGS}" ]]; then
-            echo "No tags to delete"
-            echo "found=false" | tee --append "${GITHUB_OUTPUT}"
+            echo "tags-json=[]" >> "${GITHUB_OUTPUT}"
           else
-            echo "Tags to delete:"
-            echo "${TAGS}"
-            # Encode as JSON array for safe iteration
             TAGS_JSON=$(echo "${TAGS}" | jq --raw-input --slurp --compact-output 'split("\n") | map(select(length > 0))')
             echo "tags-json=${TAGS_JSON}" | tee --append "${GITHUB_OUTPUT}"
-            echo "found=true" | tee --append "${GITHUB_OUTPUT}"
           fi
 
       - name: Delete tags
-        if: steps.list-tags.outputs.found == 'true'
         run: |
           echo '${{ steps.list-tags.outputs.tags-json }}' | jq --raw-output '.[]' | while read -r TAG; do
             echo "Deleting tag: ${TAG}"

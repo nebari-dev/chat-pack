@@ -39,11 +39,10 @@ jobs:
             [tools]
             dasel = "3"
 
-      - name: Compute chart versions and app stable tag
+      - name: Compute chart versions
         id: chart-versions
         run: |
           CHART_BASE=$(echo '${{ fromJson(steps.workflow-metadata.outputs.chart-version-json).base }}')
-          APP_BASE=$(echo '${{ fromJson(steps.workflow-metadata.outputs.app-version-json).base }}')
           SHA=$(echo '${{ fromJson(steps.workflow-metadata.outputs.app-version-json).commit }}')
           WORKFLOW_TYPE='${{ steps.workflow-metadata.outputs.workflow-type }}'
 
@@ -51,15 +50,12 @@ jobs:
             PR)
               PR_NUMBER='${{ github.event.number }}'
               CHART_VERSIONS="[\"${CHART_BASE}-pr.${PR_NUMBER}\", \"${CHART_BASE}-pr.${PR_NUMBER}.${SHA}\"]"
-              APP_STABLE_TAG="${APP_BASE}-pr.${PR_NUMBER}"
               ;;
             main)
               CHART_VERSIONS="[\"${CHART_BASE}-main\"]"
-              APP_STABLE_TAG="${APP_BASE}-main"
               ;;
             release)
               CHART_VERSIONS="[\"${CHART_BASE}\"]"
-              APP_STABLE_TAG="${APP_BASE}"
               ;;
             *)
               echo "unknown workflow type '${WORKFLOW_TYPE}'" >&2
@@ -68,12 +64,11 @@ jobs:
           esac
 
           echo "chart-versions-json=${CHART_VERSIONS}" | tee --append "${GITHUB_OUTPUT}"
-          echo "app-stable-tag=${APP_STABLE_TAG}" | tee --append "${GITHUB_OUTPUT}"
 
       - name: Install chart dependencies (first version)
         run: |
           FIRST_CHART_VERSION=$(echo '${{ steps.chart-versions.outputs.chart-versions-json }}' | jq --raw-output '.[0]')
-          APP_STABLE_TAG='${{ steps.chart-versions.outputs.app-stable-tag }}'
+          APP_STABLE_TAG='${{ steps.workflow-metadata.outputs.stable-tag }}'
 
           # Patch Chart.yaml and values.yaml for the first version
           FILE='./helm/nebari-chat/Chart.yaml'
@@ -104,7 +99,7 @@ jobs:
 
       - name: Package and push all chart versions
         run: |
-          APP_STABLE_TAG='${{ steps.chart-versions.outputs.app-stable-tag }}'
+          APP_STABLE_TAG='${{ steps.workflow-metadata.outputs.stable-tag }}'
 
           for CHART_VERSION in $(echo '${{ steps.chart-versions.outputs.chart-versions-json }}' | jq --raw-output '.[]'); do
             echo "--- Packaging chart version: ${CHART_VERSION} ---"
