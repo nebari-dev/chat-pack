@@ -82,15 +82,8 @@ runs:
           case "${WORKFLOW_TYPE}" in
             PR)
               PR_NUMBER='${{ github.event.number }}'
-              if [[ "${TYPE}" == "chart" ]]; then
-                # Chart stable tag is the simpler one (no SHA)
-                STABLE_TAG="${BASE}-pr.${PR_NUMBER}"
-                ALL_TAGS=("${STABLE_TAG}" "${BASE}-pr.${PR_NUMBER}.${COMMIT}")
-              else
-                # App stable tag is the per-commit one
-                STABLE_TAG="${BASE}-pr.${PR_NUMBER}.${COMMIT}"
-                ALL_TAGS=("${STABLE_TAG}" "${BASE}-pr.${PR_NUMBER}")
-              fi
+              STABLE_TAG="${BASE}-pr.${PR_NUMBER}"
+              ALL_TAGS=("${STABLE_TAG}" "${BASE}-pr.${PR_NUMBER}.${COMMIT}")
               ;;
             main)
               STABLE_TAG="${BASE}-main"
@@ -106,11 +99,8 @@ runs:
               ;;
           esac
 
-          # 4. Merge into JSON object
-          TAGS_JSON=$(jq --null-input --compact-output \
-            '$ARGS.positional' \
-            -- "${ALL_TAGS[@]}" \
-          )
+          # 4. Convert bash array to JSON via jq
+          TAGS_JSON=$(printf '%s\n' "${ALL_TAGS[@]}" | jq --raw-input --slurp --compact-output '.')
 
           OUTPUT_JSON=$(jq --null-input --compact-output \
             --arg latest "${LATEST}" \
