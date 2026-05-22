@@ -39,21 +39,13 @@ jobs:
 
           if [[ '${{ github.event_name }}' == 'pull_request' ]]; then
             PR_NUMBER=${{ github.event.number }}
-            TAGS=$(echo "${TAGS_JSON_RAW}" | jq --raw-output --arg pr "pr.${PR_NUMBER}" '.Tags[] | select(contains($pr))' || true)
+            TAGS_JSON=$(echo "${TAGS_JSON_RAW}" | jq --compact-output --arg pr "pr.${PR_NUMBER}" '[.Tags[] | select(contains($pr))]')
           else
-            TAGS=$(echo "${TAGS_JSON_RAW}" | jq --raw-output '.Tags[] | select(endswith("-main"))' || true)
-          fi
-
-          if [[ -z "${TAGS}" ]]; then
-            TAGS_JSON="[]"
-          else
-            TAGS_JSON=$(echo "${TAGS}" | jq --raw-input --slurp --compact-output 'split("\n") | map(select(length > 0))')
+            TAGS_JSON=$(echo "${TAGS_JSON_RAW}" | jq --compact-output '[.Tags[] | select(endswith("-main"))]')
           fi
           echo "tags-json=${TAGS_JSON}" >> "${GITHUB_OUTPUT}"
 
       - name: Delete tags
         run: |
-          echo '${{ steps.list-tags.outputs.tags-json }}' | jq --raw-output '.[]' | while read -r TAG; do
-            echo "Deleting tag: ${TAG}"
-            skopeo delete "docker://${{ matrix.image }}:${TAG}"
-          done
+          TAGS=$(echo '${{ steps.list-tags.outputs.tags-json }}' | jq --raw-output '.[]')
+          echo "${TAGS}" | xargs -t -I '{tag}' skopeo delete 'docker://${{ matrix.image }}:{tag}'
