@@ -46,7 +46,9 @@ jobs:
         id: tags
         run: |
           TAGS=$(echo '${{ steps.workflow-metadata.outputs.app-version-json }}' | jq --raw-output '.tags[]')
-          echo "tags=${TAGS}" | tee --append "${GITHUB_OUTPUT}"
+          echo "tags<<EOF" | tee --append "${GITHUB_OUTPUT}"
+          echo "${TAGS}" | tee --append "${GITHUB_OUTPUT}"
+          echo "EOF" | tee --append "${GITHUB_OUTPUT}"
 
       - name: Setup image metadata
         id: image-metadata
