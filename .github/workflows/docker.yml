@@ -42,13 +42,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Format tags
+        id: tags
+        run:
+          TAGS=$(steps.workflow-metadata.outputs.app-version-json }}' | jq --raw-output '.tags[]')
+          echo "tags=${TAGS}" | tee --append "${GITHUB_OUTPUT}"
+
       - name: Setup image metadata
         id: image-metadata
         uses: docker/metadata-action@v6
         with:
           images: ${{ matrix.image }}
           tags: |
-            ${{ join(fromJson(steps.workflow-metadata.outputs.app-version-json).tags, '\n') }}
+            ${{ steps.tags.outputs.tags }}
             type=raw,value=pr.${{ github.event.number }},enable=${{ steps.workflow-metadata.outputs.workflow-type == 'PR' }}
             type=raw,value=main,enable=${{ steps.workflow-metadata.outputs.workflow-type == 'main' }}
             type=raw,value=latest,enable=${{ steps.workflow-metadata.outputs.workflow-type == 'release' }}
