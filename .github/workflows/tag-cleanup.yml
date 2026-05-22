@@ -46,7 +46,7 @@ jobs:
           else
             TAGS_JSON=$(echo "${TAGS_JSON_RAW}" | jq --compact-output '[.Tags[] | select(endswith("-main"))]')
           fi
-          echo "tags-json=${TAGS_JSON}" >> "${GITHUB_OUTPUT}"
+          echo "tags-json=${TAGS_JSON}" | tee --append "${GITHUB_OUTPUT}"
 
       - name: Delete tags
         run: |
