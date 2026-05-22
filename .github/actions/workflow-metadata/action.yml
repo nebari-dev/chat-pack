@@ -83,15 +83,15 @@ runs:
             PR)
               PR_NUMBER='${{ github.event.number }}'
               STABLE_TAG="${BASE}-pr.${PR_NUMBER}"
-              ADDITONAL_TAGS=("${BASE}-pr.${PR_NUMBER}.${COMMIT}")
+              ADDITIONAL_TAGS=("${BASE}-pr.${PR_NUMBER}.${COMMIT}")
               ;;
             main)
               STABLE_TAG="${BASE}-main"
-              ADDITONAL_TAGS=()
+              ADDITIONAL_TAGS=()
               ;;
             release)
               STABLE_TAG="${BASE}"
-              ADDITONAL_TAGS=()
+              ADDITIONAL_TAGS=()
               ;;
             *)
               echo "unknown workflow type '${WORKFLOW_TYPE}'" >&2
