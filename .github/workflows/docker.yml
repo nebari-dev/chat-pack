@@ -46,15 +46,17 @@ jobs:
         with:
           images: ${{ matrix.image }}
           tags: |
-            type=raw,value=${{ steps.workflow-metadata.outputs.image-tag }}
-            type=raw,value=pr-${{ github.event.number }},enable=${{ steps.workflow-metadata.outputs.workflow-type == 'PR' }}
+            type=raw,value=${{ fromJson(steps.workflow-metadata.outputs.tags-json).stable-tag }}
+            ${{ join(fromJson(steps.workflow-metadata.outputs.tags-json).additional-tags, '\n') }}
+            type=raw,value=pr.${{ github.event.number }},enable=${{ steps.workflow-metadata.outputs.workflow-type == 'PR' }}
+            type=raw,value=main,enable=${{ steps.workflow-metadata.outputs.workflow-type == 'main' }}
             type=raw,value=latest,enable=${{ steps.workflow-metadata.outputs.workflow-type == 'release' }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             io.github.event.name=${{ github.event_name }}
             io.github.event.pull-request.number=${{ github.event.number }}
-            
+
       - name: Generate cache entries
         id: cache
         shell: bash
@@ -63,8 +65,8 @@ jobs:
 
           case '${{ steps.workflow-metadata.outputs.workflow-type }}' in
             PR)
-              PR_TAG="pr-${{ github.event.number }}-buildcache"
-              
+              PR_TAG="pr.${{ github.event.number }}-buildcache"
+
               FROM_TAGS=("${PR_TAG}" "${MAIN_TAG}")
               TO_TAGS=("${PR_TAG}")
               ;;
@@ -111,7 +113,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           build-args: |
-            VERSION=${{ steps.workflow-metadata.outputs.app-version-raw }}
+            VERSION=${{ fromJson(steps.workflow-metadata.outputs.app-version-json).version }}
           platforms: "linux/amd64,linux/arm64"
           tags: ${{ steps.image-metadata.outputs.tags }}
           labels: ${{ steps.image-metadata.outputs.labels }}

@@ -5,18 +5,15 @@ outputs:
   workflow-type:
     description: Workflow type. One of 'PR', 'main', or 'release'
     value: ${{ steps.workflow.outputs.workflow-type }}
-  app-version-raw:
-    description: Raw app version
-    value: ${{ steps.git.outputs.app-version-raw }}
-  app-version-latest:
-    description: Latest app version
-    value: ${{ steps.git.outputs.app-version-latest }}
-  chart-version-latest:
-    description: Latest chart version
-    value: ${{ steps.git.outputs.chart-version-latest }}
-  image-tag:
-    description: Unified docker image tag
-    value: ${{ steps.docker.outputs.image-tag }}
+  app-version-json:
+    description: App version info as JSON
+    value: ${{ steps.versions.outputs.app-version-json }}
+  chart-version-json:
+    description: Chart version info as JSON
+    value: ${{ steps.versions.outputs.chart-version-json }}
+  tags-json:
+    description: Tag selection as JSON (stable-tag + additional-tags)
+    value: ${{ steps.tags.outputs.tags-json }}
 
 runs:
   using: composite
@@ -51,7 +48,7 @@ runs:
         esac
 
         echo "workflow-type=${WORKFLOW_TYPE}" | tee --append "${GITHUB_OUTPUT}"
-        
+
     - name: Install uv and set the python version
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       with:
@@ -62,34 +59,45 @@ runs:
       working-directory: ./backend
       run: uv sync --link-mode copy --locked
 
-    - id: git
+    - id: versions
+      shell: bash
+      working-directory: ./backend
+      run: |
+        APP_VERSION_JSON=$(uv run python .github/actions/workflow-metadata/version_script.py --root . --pattern-prefix "")
+        echo "app-version-json=${APP_VERSION_JSON}" | tee --append "${GITHUB_OUTPUT}"
+
+        CHART_VERSION_JSON=$(uv run python .github/actions/workflow-metadata/version_script.py --root . --pattern-prefix "chart/")
+        echo "chart-version-json=${CHART_VERSION_JSON}" | tee --append "${GITHUB_OUTPUT}"
+
+    - id: tags
       shell: bash
       run: |
-        APP_VERSION_RAW=$(cd ./backend && uv run hatch version)
-        echo "app-version-raw=${APP_VERSION_RAW}" | tee --append "${GITHUB_OUTPUT}"
+        APP_BASE=$(echo '${{ steps.versions.outputs.app-version-json }}' | jq --raw-output '.base')
+        SHA=$(echo '${{ steps.versions.outputs.app-version-json }}' | jq --raw-output '.commit')
 
-        APP_VERSION_LATEST=$(git describe --tags --match "v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 | sed 's|^v||')
-        echo "app-version-latest=${APP_VERSION_LATEST}" | tee --append "${GITHUB_OUTPUT}"
-
-        CHART_VERSION_LATEST=$(git describe --tags --match "chart/v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 | sed 's|^chart/v||')
-        echo "chart-version-latest=${CHART_VERSION_LATEST}" | tee --append "${GITHUB_OUTPUT}"
-
-    - id: docker
-      shell: bash
-      run: |
         case '${{ steps.workflow.outputs.workflow-type }}' in
           PR)
-            IMAGE_TAG="pr-${{ github.event.number }}-$(echo '${{ steps.git.outputs.app-version-raw }}' | sed 's/+/-/g')"
+            PR_NUMBER='${{ github.event.number }}'
+            STABLE_TAG="${APP_BASE}-pr.${PR_NUMBER}.${SHA}"
+            ADDITIONAL_TAGS="[\"${APP_BASE}-pr.${PR_NUMBER}\"]"
             ;;
           main)
-            IMAGE_TAG='main'
+            STABLE_TAG="${APP_BASE}-main"
+            ADDITIONAL_TAGS="[]"
             ;;
           release)
-            IMAGE_TAG='${{ steps.git.outputs.app-version-raw }}'
+            STABLE_TAG="${APP_BASE}"
+            ADDITIONAL_TAGS="[]"
             ;;
           *)
-            echo "unknown workflow type '${{ steps.workflow.outputs.workflow-type  }}'" >&2
+            echo "unknown workflow type '${{ steps.workflow.outputs.workflow-type }}'" >&2
             exit 1
             ;;
         esac
-        echo "image-tag=${IMAGE_TAG}" | tee --append "${GITHUB_OUTPUT}"
+
+        TAGS_JSON=$(jq --null-input --compact-output \
+          --arg stable "${STABLE_TAG}" \
+          --argjson additional "${ADDITIONAL_TAGS}" \
+          '{"stable-tag": $stable, "additional-tags": $additional}' \
+        )
+        echo "tags-json=${TAGS_JSON}" | tee --append "${GITHUB_OUTPUT}"

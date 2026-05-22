@@ -1,0 +1,71 @@
+name: Tag cleanup
+
+on:
+  pull_request:
+    types:
+      - closed
+  push:
+    tags: 
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'chart/v[0-9]+.[0-9]+.[0-9]+'
+
+concurrency:
+  group: tag-cleanup-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: github.event_name == 'pull_request' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        image:
+          - quay.io/nebari/nebari-chat-backend
+          - quay.io/nebari/nebari-chat-frontend
+          - quay.io/nebari/charts/nebari-chat
+
+    steps:
+      - name: Install Skopeo and jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes skopeo jq
+
+      - name: Login to Quay.io
+        run: |
+          echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | skopeo login --username "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin quay.io
+
+      - name: List tags to delete
+        id: list-tags
+        run: |
+          if [[ '${{ github.event_name }}' == 'pull_request' ]]; then
+            PR_NUMBER=${{ github.event.number }}
+            TAGS=$(skopeo list-tags docker://${{ matrix.image }} | jq --raw-output --arg pr "pr.${PR_NUMBER}" ".Tags[] | select(contains(\$pr))" || true)
+          else
+            # Extract version from tag (strip 'v' or 'chart/v' prefix)
+            VERSION='${{ github.ref_name }}'
+            VERSION="${VERSION#chart/}"
+            VERSION="${VERSION#v}"
+
+            TAGS=$(skopeo list-tags docker://${{ matrix.image }} | jq --raw-output --arg ver "${VERSION}" '.Tags[] | select(startswith($ver) and endswith("-main"))' || true)
+          fi
+
+          if [[ -z "${TAGS}" ]]; then
+            echo "No tags to delete"
+            echo "found=false" | tee --append "${GITHUB_OUTPUT}"
+          else
+            echo "Tags to delete:"
+            echo "${TAGS}"
+            # Encode as JSON array for safe iteration
+            TAGS_JSON=$(echo "${TAGS}" | jq --raw-input --slurp --compact-output 'split("\n") | map(select(length > 0))')
+            echo "tags-json=${TAGS_JSON}" | tee --append "${GITHUB_OUTPUT}"
+            echo "found=true" | tee --append "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Delete tags
+        if: steps.list-tags.outputs.found == 'true'
+        run: |
+          echo '${{ steps.list-tags.outputs.tags-json }}' | jq --raw-output '.[]' | while read -r TAG; do
+            echo "Deleting tag: ${TAG}"
+            skopeo delete "docker://${{ matrix.image }}:${TAG}"
+          done
