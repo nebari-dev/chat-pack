@@ -7,10 +7,10 @@ outputs:
     value: ${{ steps.workflow.outputs.workflow-type }}
   app-version-json:
     description: App version info as JSON
-    value: ${{ steps.compute.outputs.app-version-json }}
+    value: ${{ steps.versions.outputs.app }}
   chart-version-json:
     description: Chart version info as JSON
-    value: ${{ steps.compute.outputs.chart-version-json }}
+    value: ${{ steps.versions.outputs.chart }}
 
 runs:
   using: composite
@@ -56,7 +56,7 @@ runs:
       working-directory: ./backend
       run: uv sync --link-mode copy --locked
 
-    - id: compute
+    - id: versions
       shell: bash
       working-directory: ./backend
       run: |
@@ -73,7 +73,7 @@ runs:
           LATEST=$(git describe --tags --match "${PATTERN_PREFIX}v[0-9]*.[0-9]*.[0-9]*" --abbrev=0 | sed "s|^${PATTERN_PREFIX}v||")
 
           # 2. Extract version data using the python script
-          VERSION_DATA=$(uv run python .github/actions/workflow-metadata/compute_version.py --root . --pattern-prefix "${PATTERN_PREFIX}")
+          VERSION_DATA=$(uv run python ../.github/actions/workflow-metadata/compute_version.py --root . --pattern-prefix "${PATTERN_PREFIX}")
           BASE=$(echo "${VERSION_DATA}" | jq --raw-output '.base')
           COMMIT=$(echo "${VERSION_DATA}" | jq --raw-output '.commit')
           VERSION=$(echo "${VERSION_DATA}" | jq --raw-output '.version')
@@ -121,5 +121,5 @@ runs:
             '{"latest": $latest, "version": $version, "base": $base, "stable-tag": $stable, "tags": $tags}' \
           )
 
-          echo "${TYPE}-version-json=${OUTPUT_JSON}" | tee --append "${GITHUB_OUTPUT}"
+          echo "${TYPE}=${OUTPUT_JSON}" | tee --append "${GITHUB_OUTPUT}"
         done
