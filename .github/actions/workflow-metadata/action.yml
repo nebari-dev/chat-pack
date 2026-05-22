@@ -83,15 +83,15 @@ runs:
             PR)
               PR_NUMBER='${{ github.event.number }}'
               STABLE_TAG="${BASE}-pr.${PR_NUMBER}"
-              ALL_TAGS=("${STABLE_TAG}" "${BASE}-pr.${PR_NUMBER}.${COMMIT}")
+              ADDITONAL_TAGS=("${BASE}-pr.${PR_NUMBER}.${COMMIT}")
               ;;
             main)
               STABLE_TAG="${BASE}-main"
-              ALL_TAGS=("${STABLE_TAG}")
+              ADDITONAL_TAGS=()
               ;;
             release)
               STABLE_TAG="${BASE}"
-              ALL_TAGS=("${BASE}")
+              ADDITONAL_TAGS=()
               ;;
             *)
               echo "unknown workflow type '${WORKFLOW_TYPE}'" >&2
@@ -100,7 +100,10 @@ runs:
           esac
 
           # 4. Convert bash array to JSON via jq
-          TAGS_JSON=$(printf '%s\n' "${ALL_TAGS[@]}" | jq --raw-input --slurp --compact-output '.')
+          TAGS_JSON=$(jq --null-input --compact-output \
+            '$ARGS.positional' \
+            --args "${STABLE_TAG}" "${ADDITIONAL_TAGS[@]}" \
+          )
 
           OUTPUT_JSON=$(jq --null-input --compact-output \
             --arg latest "${LATEST}" \
