@@ -18,7 +18,7 @@ import {
 import * as api from "@/api";
 
 import {
-  useChatConfig
+  useChatConfig, useHasPermissions
 } from '@/context';
 
 import {
@@ -48,6 +48,9 @@ function useOnSubmit() {
   // Extract the chat config.
   const { thread, agentId } = useChatConfig();
 
+  // Check file-related permissions.
+  const canAttachFiles = useHasPermissions(['files:read', 'files:write']);
+
   // Fetch the route navigator.
   const navigate = useNavigate();
 
@@ -70,8 +73,10 @@ function useOnSubmit() {
       throw new Error("`agentId` is `undefined`");
     }
 
-    // Upload any attached files to ravnar.
-    const ravnarFiles = await Promise.all((files ?? []).map(api.uploadFile));
+    // Upload any attached files to ravnar, if permissions allow.
+    const ravnarFiles = canAttachFiles
+      ? await Promise.all((files ?? []).map(api.uploadFile))
+      : [];
 
     // Determine the thread id for submission, creating one if needed.
     const tid = (
@@ -105,7 +110,7 @@ function useOnSubmit() {
       tools: [],  // TODO support client-side tools.
       context: [] // TODO support client-side context.
     });
-  }, [agentId, thread, createThread, createRun]);
+  }, [agentId, thread, createThread, createRun, canAttachFiles]);
 
   // Return the submit callback.
   return onSubmitPrompt;

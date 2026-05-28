@@ -44,11 +44,6 @@ const ThreadSchema = z.object({
    * The ISO UTC timestamp when the thread was created.
    */
   createdAt: z.string().datetime(),
-
-  /**
-   * The ISO UTC timestamp of the most recent update.
-   */
-  updatedAt: z.string().datetime().optional(),
 });
 
 
@@ -285,7 +280,7 @@ async function *createRun(options: createRun.Options): AsyncGenerator<agui.AGUIE
   const { threadId, ...rest } = options;
 
   // Fetch the resource.
-  const resp = await auth.fetch(`/api/threads/${threadId}/run`, {
+  const resp = await auth.fetch(`/api/threads/${threadId}/runs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(rest)

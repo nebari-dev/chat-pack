@@ -4,3 +4,4 @@
 export * from './app';
 export * from './files';
 export * from './threads';
+export * from './user';

@@ -244,22 +244,6 @@ namespace Private {
   });
 
   /**
-   * Create the column to display the updated timestamp.
-   */
-  const updatedAtColumn = columnHelper.accessor('updatedAt', {
-    header: 'Updated At',
-    cell: cellContext => {
-      const ts = cellContext.getValue();
-      const dateStr = ts ? (new Date(ts)).toLocaleString() : '';
-      return (
-        <span className='whitespace-nowrap text-xs text-muted-foreground'>
-          { dateStr }
-        </span>
-      );
-    },
-  });
-
-  /**
    * The column definitions for the table.
    */
   export
@@ -267,8 +251,7 @@ namespace Private {
     selectColumn,
     nameColumn,
     agentIdColumn,
-    createdAtColumn,
-    updatedAtColumn
+    createdAtColumn
   ];
 
   /**

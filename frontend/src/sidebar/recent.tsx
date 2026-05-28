@@ -36,7 +36,7 @@ function Recent(props: Recent.Props): ReactNode {
   const page = useQuery(threadPageQuery({
     pageSize: 5,
     pageNumber: 1,
-    sortBy: 'updatedAt'
+    sortBy: 'createdAt'
   }));
 
   // Bail early if the sidebar is not open.
