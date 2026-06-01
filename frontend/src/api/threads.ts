@@ -21,6 +21,40 @@ import {
 
 
 /**
+ * The schema for a run.
+ */
+export
+const RunSchema = z.object({
+  /**
+   * The unique id of the run.
+   */
+  id: z.string(),
+
+  /**
+   * The unique id of the thread this run belongs to.
+   */
+  threadId: z.string(),
+
+  /**
+   * The unique id of the parent run, if any.
+   */
+  parentRunId: z.string().nullish(),
+
+  /**
+   * The ISO UTC timestamp when the run was created.
+   */
+  createdAt: z.string().datetime(),
+});
+
+
+/**
+ * A type alias for a run.
+ */
+export
+type Run = z.infer<typeof RunSchema>;
+
+
+/**
  * The schema for a thread.
  */
 export
@@ -44,6 +78,11 @@ const ThreadSchema = z.object({
    * The ISO UTC timestamp when the thread was created.
    */
   createdAt: z.string().datetime(),
+
+  /**
+   * The runs associated with this thread.
+   */
+  runs: z.array(RunSchema).default([]),
 });
 
 
@@ -52,6 +91,28 @@ const ThreadSchema = z.object({
  */
 export
 type Thread = z.infer<typeof ThreadSchema>;
+
+
+/**
+ * Compute the effective "updated at" timestamp for a thread.
+ *
+ * This is derived from the latest run's `createdAt`, falling back
+ * to the thread's own `createdAt` when there are no runs.
+ */
+export
+function getThreadUpdatedAt(thread: Thread): string {
+  if (thread.runs.length === 0) {
+    return thread.createdAt;
+  }
+  // Find the run with the latest createdAt.
+  let latest = thread.runs[0].createdAt;
+  for (let i = 1; i < thread.runs.length; i++) {
+    if (thread.runs[i].createdAt > latest) {
+      latest = thread.runs[i].createdAt;
+    }
+  }
+  return latest;
+}
 
 
 /**

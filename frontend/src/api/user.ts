@@ -12,9 +12,17 @@ import * as auth from '@/auth';
 export
 const UserSchema = z.object({
   /**
+   * The user ID.
+   */
+  id: z.string(),
+  /**
    * The permissions granted to the user.
    */
-  permissions: z.array(z.string())
+  permissions: z.array(z.string()),
+  /**
+   * Additional user data.
+   */
+  data: z.record(z.any()),
 });
 
 

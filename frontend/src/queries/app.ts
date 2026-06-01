@@ -26,7 +26,7 @@ export
 const agentsQuery = queryOptions({
   queryKey: ['/api/agents'],
   queryFn: api.getAgents,
-  staleTime: 'static'
+  staleTime: 1000 * 60 // 1min
 });
 
 

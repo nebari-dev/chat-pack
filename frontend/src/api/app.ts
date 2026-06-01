@@ -84,7 +84,11 @@ const AppConfigSchema = z.object({
   /**
    * Whether storage is enabled for the application.
    */
-  storageEnabled: z.boolean()
+  storageEnabled: z.boolean(),
+  /**
+   * Whether dynamic agents are enabeld for the application.
+   */
+  dynamicAgentsEnabled: z.boolean(),
 });
 
 
