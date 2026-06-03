@@ -82,9 +82,13 @@ type AgentConfig = z.infer<typeof AgentConfigSchema>;
 export
 const AppConfigSchema = z.object({
   /**
-   * The agents available to the application.
+   * Whether storage is enabled for the application.
    */
-  agents: z.array(AgentConfigSchema)
+  storageEnabled: z.boolean(),
+  /**
+   * Whether dynamic agents are enabeld for the application.
+   */
+  dynamicAgentsEnabled: z.boolean(),
 });
 
 
@@ -107,4 +111,19 @@ async function getAppConfig(): Promise<AppConfig> {
 
   // Return the parsed result.
   return AppConfigSchema.parse(await resp.json());
+}
+
+
+/**
+ * Fetch the list of available agents.
+ *
+ * @returns The array of agent configs.
+ */
+export
+async function getAgents(): Promise<AgentConfig[]> {
+  // Fetch the resource.
+  const resp = await auth.fetch('/api/agents');
+
+  // Return the parsed result.
+  return z.array(AgentConfigSchema).parse(await resp.json());
 }

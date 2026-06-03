@@ -245,12 +245,17 @@ namespace Private {
 
   /**
    * Create the column to display the updated timestamp.
+   *
+   * This is computed from the latest run's createdAt, falling back
+   * to the thread's own createdAt when there are no runs.
    */
-  const updatedAtColumn = columnHelper.accessor('updatedAt', {
+  const updatedAtColumn = columnHelper.display({
+    id: 'updatedAt',
     header: 'Updated At',
     cell: cellContext => {
-      const ts = cellContext.getValue();
-      const dateStr = ts ? (new Date(ts)).toLocaleString() : '';
+      const thread = cellContext.row.original;
+      const ts = api.getThreadUpdatedAt(thread);
+      const dateStr = (new Date(ts)).toLocaleString();
       return (
         <span className='whitespace-nowrap text-xs text-muted-foreground'>
           { dateStr }

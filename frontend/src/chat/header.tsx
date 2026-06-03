@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 
 import {
-  useAppConfig, useChatConfig
+  useAgents, useChatConfig
 } from '@/context';
 
 import {
@@ -47,8 +47,8 @@ namespace Private {
    */
   export
   function AgentSelect(): ReactNode {
-    // Fetch the agents from the app config.
-    const { agents } = useAppConfig();
+    // Fetch the agents.
+    const agents = useAgents();
 
     // Fetch the thread id setter from the chat config.
     const { agentId } = useChatConfig();

@@ -24,6 +24,14 @@ import {
 } from '@/components/ui/button';
 
 import {
+  Tooltip, TooltipContent, TooltipTrigger
+} from '@/components/ui/tooltip';
+
+import {
+  useHasPermissions
+} from '@/context';
+
+import {
   cn
 } from '@/lib/utils';
 
@@ -45,6 +53,14 @@ function ChatInput(): ReactNode {
     // The actual file to upload.
     readonly file: File;
   };
+
+  // Check file-related permissions.
+  const canAttachFiles = useHasPermissions(['files:read', 'files:write']);
+
+  // Build the tooltip message for disabled file attachment.
+  const filePermissionTooltip = !canAttachFiles
+    ? 'Attaching files requires `files:read` and `files:write` permissions. Contact an administrator.'
+    : undefined;
 
   // Fetch the submit handler from the runtime.
   const onSubmit = useOnSubmit();
@@ -193,6 +209,21 @@ function ChatInput(): ReactNode {
     </Badge>
   ));
 
+  // Create the attach file button.
+  const attachButton = (
+    <Button
+      aria-label="Attach File"
+      disabled={ isSubmitting || !!filePermissionTooltip }
+      variant="ghost"
+      className={ cn(
+        'font-light',
+        filePermissionTooltip && 'opacity-50 cursor-not-allowed'
+      )}
+      onClick={ filePermissionTooltip ? undefined : triggerInput }>
+      <Paperclip />
+    </Button>
+  );
+
   // Return the rendered component.
   return (
     <div className={ cn(
@@ -210,12 +241,6 @@ function ChatInput(): ReactNode {
           placeholder='Send a message...'
           className='outline-none resize-none field-sizing-content w-full' />
         <div className='flex flex-row gap-2'>
-          <Button
-            aria-label='Attach File'
-            disabled={ isSubmitting }
-            variant="ghost"
-            className="font-light"
-            onClick={triggerInput}>
           <input
             ref={inputRef}
             onChange={handleInputChange}
@@ -223,8 +248,18 @@ function ChatInput(): ReactNode {
             type="file"
             multiple
             accept=".txt,.csv,.md" />
-            <Paperclip />
-          </Button>
+          {filePermissionTooltip ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{ attachButton }</span>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                { filePermissionTooltip }
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            attachButton
+          )}
           <div className="grow flex flex-row flex-wrap gap-2 items-center">
             {fileBadges}
           </div>

@@ -10,7 +10,7 @@ import type {
 } from 'react';
 
 import {
-  useAppConfig
+  useAgents
 } from '@/context';
 
 import {
@@ -23,8 +23,8 @@ import {
  */
 export
 function Agents(): ReactNode {
-  // Fetch the agents from the app config.
-  const { agents } = useAppConfig();
+  // Fetch the agents.
+  const agents = useAgents();
 
   // Bail early if there are no configured agents.
   if (agents.length === 0) {

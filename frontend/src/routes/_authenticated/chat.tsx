@@ -18,7 +18,7 @@ import {
 } from '@/context';
 
 import {
-  appConfigQuery, threadQuery
+  agentsQuery, threadQuery
 } from '@/queries';
 
 
@@ -45,7 +45,7 @@ const Route = createFileRoute('/_authenticated/chat')({
     const { agentId, threadId } = search;
 
     // Fetch the agents for the application.
-    const { agents } = await client.fetchQuery(appConfigQuery);
+    const agents = await client.fetchQuery(agentsQuery);
 
     // Fetch the thread for the query.
     //

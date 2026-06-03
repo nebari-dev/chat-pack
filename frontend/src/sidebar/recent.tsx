@@ -32,11 +32,15 @@ function Recent(props: Recent.Props): ReactNode {
   // Extract the props.
   const { isSidebarOpen } = props;
 
-  // Fetch the 5 most recent threads.
+  // Fetch the most recent threads.
+  //
+  // Note: Sorting is done client-side by computed updatedAt (latest run
+  // createdAt), since the server no longer provides updatedAt.
   const page = useQuery(threadPageQuery({
     pageSize: 5,
     pageNumber: 1,
-    sortBy: 'updatedAt'
+    sortBy: 'createdAt',
+    sortOrder: 'descending'
   }));
 
   // Bail early if the sidebar is not open.
@@ -44,8 +48,11 @@ function Recent(props: Recent.Props): ReactNode {
     return null;
   }
 
-  // Create the links for the threads.
-  const links = (page.data?.items || []).map(thread =>
+  // Sort threads by computed updatedAt (latest run's createdAt) and create links.
+  const threads = (page.data?.items || []).slice()
+    .sort((a, b) => api.getThreadUpdatedAt(b).localeCompare(api.getThreadUpdatedAt(a)));
+
+  const links = threads.map(thread =>
     <Private.ThreadLink key={ thread.id } thread={ thread } />
   );
 
