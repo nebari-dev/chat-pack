@@ -7,7 +7,13 @@
 		"root": ".."
 	},
 	"files": {
-		"includes": ["**", "!!**/dist", "!**/*.gen.ts", "!src/components/ui/*"]
+		"includes": [
+			"**",
+			"!!**/dist",
+			"!**/*.gen.ts",
+			"!src/components/ui/*",
+			"!src/routeTree.gen.ts"
+		]
 	},
 	"formatter": {
 		"enabled": true,

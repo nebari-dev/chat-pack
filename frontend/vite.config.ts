@@ -11,7 +11,11 @@ export default defineConfig(({ mode }) => {
     plugins: [
       tanstackRouter({
         target: 'react',
-        semicolons: true
+        semicolons: true,
+        routeTreeFileHeader: [
+          "// @ts-nocheck",
+          "// noinspection JSUnusedGlobalSymbols",
+        ],
       }),
       tailwindcss(),
       react()
