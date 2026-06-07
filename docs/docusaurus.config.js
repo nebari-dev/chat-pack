@@ -1,4 +1,4 @@
-// @ts-check
+﻿// @ts-check
 
 const {themes: prismThemes} = require('prism-react-renderer');
 const lightCodeTheme = prismThemes.github;
@@ -47,7 +47,7 @@ const config = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           sidebarCollapsible: true,
-          showLastUpdateTime: true,
+          showLastUpdateTime: false,
           editUrl:
             'https://github.com/nebari-dev/nebari-chat-pack/edit/main/docs/docs/',
         },
@@ -104,7 +104,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Nebari contributors.`,
+        copyright: `Copyright Â© ${new Date().getFullYear()} Nebari contributors.`,
       },
       prism: {
         theme: lightCodeTheme,
