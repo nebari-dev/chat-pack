@@ -47,7 +47,7 @@ const config = {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           sidebarCollapsible: true,
-          showLastUpdateTime: false,
+          showLastUpdateTime: true,
           editUrl:
             'https://github.com/nebari-dev/nebari-chat-pack/edit/main/docs/docs/',
         },
