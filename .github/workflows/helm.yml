@@ -71,7 +71,24 @@ jobs:
       - name: Package helm chart
         run: helm package ./helm/nebari-chat
 
+      - name: Determine registry publishing
+        id: registry
+        shell: bash
+        env:
+          DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+        run: |
+          PUBLISH=false
+          if [[ '${{ github.event_name }}' != 'pull_request' ]]; then
+            PUBLISH=true
+          elif [[ -n "${DOCKER_REGISTRY_USERNAME}" && -n "${DOCKER_REGISTRY_PASSWORD}" ]]; then
+            PUBLISH=true
+          fi
+
+          echo "publish=${PUBLISH}" | tee --append "${GITHUB_OUTPUT}"
+
       - name: Login to Quay.io
+        if: steps.registry.outputs.publish == 'true'
         uses: docker/login-action@v4
         with:
           registry: quay.io
@@ -79,4 +96,5 @@ jobs:
           password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
 
       - name: Push helm chart
+        if: steps.registry.outputs.publish == 'true'
         run: helm push nebari-chat-*.tgz oci://quay.io/nebari/charts
