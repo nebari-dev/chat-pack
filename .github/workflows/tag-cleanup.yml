@@ -27,16 +27,35 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: Determine registry cleanup
+        id: registry
+        shell: bash
+        env:
+          DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+        run: |
+          CLEANUP=false
+          if [[ '${{ github.event_name }}' != 'pull_request' ]]; then
+            CLEANUP=true
+          elif [[ -n "${DOCKER_REGISTRY_USERNAME}" && -n "${DOCKER_REGISTRY_PASSWORD}" ]]; then
+            CLEANUP=true
+          fi
+
+          echo "cleanup=${CLEANUP}" | tee --append "${GITHUB_OUTPUT}"
+
       - name: Install Skopeo and jq
+        if: steps.registry.outputs.cleanup == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install --yes skopeo jq
 
       - name: Login to Quay.io
+        if: steps.registry.outputs.cleanup == 'true'
         run: |
           echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" | skopeo login --username "${{ secrets.DOCKER_REGISTRY_USERNAME }}" --password-stdin quay.io
 
       - name: List tags to delete
+        if: steps.registry.outputs.cleanup == 'true'
         id: list-tags
         run: |
           TAGS_JSON_RAW=$(skopeo list-tags docker://${{ matrix.image }})
@@ -50,6 +69,7 @@ jobs:
           echo "tags-json=${TAGS_JSON}" | tee --append "${GITHUB_OUTPUT}"
 
       - name: Delete tags
+        if: steps.registry.outputs.cleanup == 'true'
         run: |
           TAGS=$(echo '${{ steps.list-tags.outputs.tags-json }}' | jq --raw-output '.[]')
           echo "${TAGS}" | xargs -t -I '{tag}' skopeo delete 'docker://${{ matrix.image }}:{tag}'

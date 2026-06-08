@@ -110,7 +110,24 @@ jobs:
           )
           echo "to-json=${TO_JSON}" | tee --append "${GITHUB_OUTPUT}"
 
+      - name: Determine registry publishing
+        id: registry
+        shell: bash
+        env:
+          DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+        run: |
+          PUBLISH=false
+          if [[ '${{ github.event_name }}' != 'pull_request' ]]; then
+            PUBLISH=true
+          elif [[ -n "${DOCKER_REGISTRY_USERNAME}" && -n "${DOCKER_REGISTRY_PASSWORD}" ]]; then
+            PUBLISH=true
+          fi
+
+          echo "publish=${PUBLISH}" | tee --append "${GITHUB_OUTPUT}"
+
       - name: Login to Quay.io
+        if: steps.registry.outputs.publish == 'true'
         uses: docker/login-action@v4
         with:
           registry: quay.io
@@ -126,6 +143,6 @@ jobs:
           platforms: "linux/amd64,linux/arm64"
           tags: ${{ steps.image-metadata.outputs.tags }}
           labels: ${{ steps.image-metadata.outputs.labels }}
-          push: true
-          cache-from: ${{ join(fromJson(steps.cache.outputs.from-json), '\n') }}
-          cache-to: ${{ join(fromJson(steps.cache.outputs.to-json), '\n') }}
+          push: ${{ steps.registry.outputs.publish == 'true' }}
+          cache-from: ${{ steps.registry.outputs.publish == 'true' && join(fromJson(steps.cache.outputs.from-json), '\n') || '' }}
+          cache-to: ${{ steps.registry.outputs.publish == 'true' && join(fromJson(steps.cache.outputs.to-json), '\n') || '' }}
