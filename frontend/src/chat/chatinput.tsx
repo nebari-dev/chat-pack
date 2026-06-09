@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { useHasPermissions } from '@/context';
-
+import { notifyError } from '@/lib/notifications';
 import { cn } from '@/lib/utils';
 
 import { useOnSubmit } from './hooks';
@@ -121,6 +121,11 @@ export function ChatInput(): ReactNode {
 
         // Submit the prompt for processing.
         await onSubmit({ prompt, files: fics });
+      } catch (error) {
+        // Surface the failure. Mutation errors are already toasted by the
+        // global handler; `notifyError` de-duplicates by category, so this
+        // covers non-mutation paths (e.g. file reads) without double toasts.
+        notifyError(error);
       } finally {
         // Clear the submitting flag.
         setIsSubmitting(false);

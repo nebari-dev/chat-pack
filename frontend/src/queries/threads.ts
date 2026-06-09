@@ -13,6 +13,10 @@ import { produce } from 'immer';
 
 import * as api from '@/api';
 
+import { classifyError, RunError } from '@/lib/errors';
+
+import { notifyError } from '@/lib/notifications';
+
 /**
  * A query for fetching a thread by id.
  */
@@ -60,6 +64,28 @@ export const threadMessagesQuery = (id: string | undefined) => {
 };
 
 /**
+ * A query for reading the inline error state for a thread.
+ *
+ * The value is the user-facing message of the most recent failed run, or
+ * `null` when there is no error. It is written by `createRunMutation` and
+ * rendered inline in the chat thread.
+ */
+export const threadErrorQuery = (id: string | undefined) => {
+  return queryOptions({
+    queryKey: ['thread', 'error', id],
+    queryFn: (): string | null => null,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+};
+
+/**
+ * Compute the inline-error query key for a thread.
+ */
+function threadErrorKey(threadId: string): readonly unknown[] {
+  return ['thread', 'error', threadId];
+}
+
+/**
  * A mutation for creating a new thread.
  */
 export const createThreadMutation = mutationOptions({
@@ -84,6 +110,9 @@ export const createRunMutation = mutationOptions({
     // Create the query key for the thread messages.
     const queryKey = ['thread', 'messages', options.threadId];
 
+    // Clear any stale inline error for this thread before submitting.
+    context.client.setQueryData(threadErrorKey(options.threadId), null);
+
     // Optimistically update the query cache with the new messages.
     context.client.setQueryData<api.ThreadMessages>(queryKey, (prev) => [
       ...(prev ?? []),
@@ -95,6 +124,19 @@ export const createRunMutation = mutationOptions({
 
     // Handle the events from the stream.
     for await (const evt of stream) {
+      // A backend run error arrives as a successful stream of a failure
+      // event. Surface it as a toast and as inline thread state, since the
+      // mutation itself does not reject in this case.
+      if (evt.type === agui.EventType.RUN_ERROR) {
+        const error = new RunError(evt.message);
+        notifyError(error);
+        context.client.setQueryData(
+          threadErrorKey(options.threadId),
+          classifyError(error).message,
+        );
+        continue;
+      }
+
       context.client.setQueryData<api.ThreadMessages>(
         queryKey,
         produce((draft) => {
@@ -103,7 +145,14 @@ export const createRunMutation = mutationOptions({
       );
     }
   },
-  onError: console.error.bind(console),
+  onError: (error, options, _onMutateResult, context) => {
+    // The mutation cache already surfaces the toast; record the failure as
+    // inline thread state so it is visible in the chat output as well.
+    context.client.setQueryData(
+      threadErrorKey(options.threadId),
+      classifyError(error).message,
+    );
+  },
 });
 
 /**
