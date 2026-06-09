@@ -11,6 +11,34 @@ import Keycloak from 'keycloak-js';
 //   2) It allows us to define our own `fetch` without name-clashing.
 const nativeFetch = window.fetch;
 
+/**
+ * An error thrown when a fetch request returns a non-ok response.
+ *
+ * This carries the HTTP status so callers can classify the failure
+ * (e.g. auth, rate limit, server error) without parsing a message string.
+ */
+export class FetchError extends Error {
+  /**
+   * The HTTP status code of the failed response.
+   */
+  readonly status: number;
+
+  /**
+   * The HTTP status text of the failed response.
+   */
+  readonly statusText: string;
+
+  /**
+   * Construct a new `FetchError`.
+   */
+  constructor(status: number, statusText: string) {
+    super(`Fetch failure: ${status} ${statusText}`);
+    this.name = 'FetchError';
+    this.status = status;
+    this.statusText = statusText;
+  }
+}
+
 // Whether auth is enabled for the application.
 const AUTH_ENABLED = import.meta.env.VITE_AUTH_ENABLED === 'true';
 
@@ -55,7 +83,7 @@ export async function fetch(
 
   // Guard against request failure.
   if (!resp.ok) {
-    throw new Error(`Fetch failure: ${resp.status} ${resp.statusText}`);
+    throw new FetchError(resp.status, resp.statusText);
   }
 
   // Return the response.
