@@ -106,6 +106,7 @@ export const createThreadMutation = mutationOptions({
  * A mutation for creating a run in an existing thread.
  */
 export const createRunMutation = mutationOptions({
+  mutationKey: ['thread', 'run'],
   mutationFn: async (options: api.createRun.Options, context) => {
     // Create the query key for the thread messages.
     const queryKey = ['thread', 'messages', options.threadId];
