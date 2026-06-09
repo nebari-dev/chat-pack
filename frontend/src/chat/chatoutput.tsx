@@ -44,11 +44,16 @@ export function ChatOutput(): ReactNode {
     <MessageRendererMemo key={msg.id} message={msg} />
   ));
 
-  // Show the waiting spinner from message submit until the first response
-  // output arrives. Once the model produces any message (assistant text,
-  // reasoning, or activity), the latest message is no longer the user's
-  // prompt and the spinner gives way to the real content.
-  const showSpinner = isRunning && messages?.at(-1)?.role === 'user';
+  // Show the waiting spinner whenever the run is in-flight and the model is
+  // not actively speaking. The only state that should replace the spinner is
+  // an assistant message with text content, which streams as its own
+  // indicator. Every other state — the user's prompt, a reasoning step, a
+  // running tool call, or an activity — means the model is still working
+  // toward its answer, so the spinner stays up to show progress.
+  const last = messages?.at(-1);
+  const assistantSpeaking =
+    last?.role === 'assistant' && !!last.content?.trim();
+  const showSpinner = isRunning && !assistantSpeaking;
   const spinner = showSpinner ? (
     <div className="mt-4">
       <WaitingSpinner />
