@@ -72,4 +72,16 @@ jobs:
         if: steps.registry.outputs.cleanup == 'true'
         run: |
           TAGS=$(echo '${{ steps.list-tags.outputs.tags-json }}' | jq --raw-output '.[]')
-          echo "${TAGS}" | xargs -t -I '{tag}' skopeo delete 'docker://${{ matrix.image }}:{tag}'
+
+          if [[ -z "${TAGS}" ]]; then
+            echo "No tags to delete."
+            exit 0
+          fi
+
+          while IFS= read -r tag; do
+            [[ -z "${tag}" ]] && continue
+            echo "Deleting docker://${{ matrix.image }}:${tag}"
+            if ! skopeo delete "docker://${{ matrix.image }}:${tag}"; then
+              echo "::warning::Failed to delete ${{ matrix.image }}:${tag} (image may not exist or is a cache manifest); continuing."
+            fi
+          done <<< "${TAGS}"
