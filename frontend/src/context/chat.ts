@@ -41,6 +41,17 @@ export type ChatConfig = {
    * Consumers should account for that possibility.
    */
   readonly detailId: string | undefined;
+
+  /**
+   * Whether the tools panel is open in the chat sidebar.
+   *
+   * When `true`, the chat renders the tools panel (available tools
+   * and capabilities) in place of the message detail sidebar.
+   *
+   * This can be changed by navigating to the `/chat` route with the
+   * desired `showTools` search param.
+   */
+  readonly showTools: boolean | undefined;
 };
 
 /**

@@ -44,6 +44,7 @@
     "keycloak-js": "^26.2.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.17.0",
+    "radix-ui": "^1.5.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",

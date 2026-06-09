@@ -50,6 +50,9 @@ export function ToolCountLink(props: ToolCountLink.Props): ReactNode {
         to="."
         search={(prev) => ({
           ...prev,
+          // Opening a message detail closes the tools panel so the
+          // two never compete for the right sidebar slot.
+          showTools: undefined,
           detailId: opened ? undefined : message.id,
         })}
         className={cn(
