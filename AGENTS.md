@@ -43,9 +43,15 @@ Data flows through clearly separated layers — keep new code in the matching la
 
 ### Conventions
 
-- Path alias `@/` → `src/`.
-- Single quotes, space indent (enforced by Biome).
-- Files prefixed with the OpenTeams copyright banner.
+- Path alias `@/` → `src/`. Use `@/module/thing` only to reach **outside** the current file's directory subtree; use relative paths (`./header`, `./hooks`) for same-directory or child imports. Never use parent-relative imports (`../`, `../../`) — the repo has none.
+- Single quotes, space indent (enforced by Biome). `organizeImports` is on, so Biome groups imports (external / `@/` / relative) — leave its layout alone.
+- `noNonNullAssertion` is off — `!` is permitted where the invariant is local and obvious (e.g. `document.getElementById('root')!`).
+- Files prefixed with the OpenTeams copyright banner (see any existing file).
+- Feature-folder files use lowercase single-word names (`assistantmessage.tsx`, `pagenav.tsx`); barrels (`index.ts`) exist per layer (`api/`, `queries/`, `context/`, `auth/`), not per component. Match the local folder's pattern rather than renaming.
+- **Tailwind v4** via `@tailwindcss/vite` — there is no `tailwind.config.*`; configuration lives in `src/main.css`.
+- **shadcn/ui** (new-york style) components in `src/components/ui/` are vendored — add new ones with `npx shadcn add <component>` and don't hand-edit them (Biome ignores `src/components/ui/*`).
+- **Zod** schemas describe payloads coming from the AG-UI/Ravnar backend; parse at the API boundary (`src/api/`) rather than re-validating downstream.
+- Components do one thing and stay small. Prefer hooks/queries for server data over prop-drilling, give each component its own file, hoist event handlers and non-trivial JSX (ternaries, `.map()`s) to named `const`s in the component body, and comment the *why* behind non-obvious choices.
 - Auth: `keycloak-js`, configured at **runtime** from `public/keycloak-config.json` (not build-time). Set `VITE_AUTH_ENABLED=false` in `.env` to bypass auth locally. Copy `.env.example` → `.env` and set `VITE_API_URL` to your Ravnar backend.
 
 ## Backend (`backend/`)
