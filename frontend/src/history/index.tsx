@@ -3,6 +3,8 @@
 |----------------------------------------------------------------------------*/
 import type { ReactNode } from 'react';
 
+import { PageNav } from './pagenav';
+
 import { ThreadsTable } from './threadstable';
 
 /**
@@ -15,6 +17,7 @@ export function History(): ReactNode {
         <h2 className="text-lg font-semibold">History</h2>
       </div>
       <ThreadsTable />
+      <PageNav />
     </main>
   );
 }

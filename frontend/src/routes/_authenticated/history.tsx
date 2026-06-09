@@ -7,6 +7,8 @@ import { createFileRoute, useRouter } from '@tanstack/react-router';
 
 import { useCallback } from 'react';
 
+import * as z from 'zod';
+
 import type { HistoryConfig } from '@/context';
 
 import { HistoryConfigContext } from '@/context';
@@ -15,13 +17,25 @@ import { History } from '@/history';
 
 import { deleteThreadsMutation, threadPageQuery } from '@/queries';
 
+// The schema for the `/history` route search params.
+//
+// These drive server-side pagination and sorting. They are validated by the
+// router and default to showing the most recent threads first.
+const searchSchema = z.object({
+  pageSize: z.number().int().positive().default(10),
+  pageNumber: z.number().int().positive().default(1),
+  sortBy: z.enum(['createdAt', 'name', 'agentId']).default('createdAt'),
+  sortOrder: z.enum(['ascending', 'descending']).default('descending'),
+});
+
 /**
  * The route for the `/history` endpoint.
  */
 export const Route = createFileRoute('/_authenticated/history')({
-  loader: ({ context }) => {
-    // TODO - support pagination query params
-    const query = threadPageQuery({});
+  validateSearch: searchSchema,
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) => {
+    const query = threadPageQuery(deps);
     return context.client.fetchQuery(query);
   },
   component: RouteComponent,
