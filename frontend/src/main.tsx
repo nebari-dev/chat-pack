@@ -2,10 +2,19 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+
+import { ErrorBoundary, ErrorFallback } from '@/components/error-boundary';
+import { Toaster } from '@/components/ui/sonner';
+import { notifyError } from '@/lib/notifications';
 
 import { routeTree } from './routeTree.gen';
 
@@ -14,13 +23,20 @@ import 'katex/dist/katex.min.css';
 import './main.css';
 
 // Create the singleton query client.
-const client = new QueryClient();
+//
+// All query and mutation failures are funneled through `notifyError`, so
+// every async data path surfaces a user-facing toast without per-call wiring.
+const client = new QueryClient({
+  queryCache: new QueryCache({ onError: (error) => notifyError(error) }),
+  mutationCache: new MutationCache({ onError: (error) => notifyError(error) }),
+});
 
 // Create the main router object.
 const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
+  defaultErrorComponent: ErrorFallback,
   context: { client },
 });
 
@@ -35,9 +51,12 @@ declare module '@tanstack/react-router' {
 function App() {
   return (
     <StrictMode>
-      <QueryClientProvider client={client}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={client}>
+          <RouterProvider router={router} />
+          <Toaster />
+        </QueryClientProvider>
+      </ErrorBoundary>
     </StrictMode>
   );
 }

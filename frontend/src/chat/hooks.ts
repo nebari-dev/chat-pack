@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import type * as agui from '@ag-ui/core';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useMutationState } from '@tanstack/react-query';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -105,6 +105,32 @@ export function useOnSubmit() {
 
   // Return the submit callback.
   return onSubmitPrompt;
+}
+
+/**
+ * A hook for determining whether a thread has an in-flight run.
+ *
+ * A run is in-flight while the `createRunMutation` is pending, which spans
+ * from message submit until the response stream completes.
+ *
+ * @param threadId - The id of the thread to check, if any.
+ *
+ * @returns `true` if the given thread currently has a pending run.
+ */
+export function useIsRunning(threadId: string | undefined): boolean {
+  // Collect the thread ids of all currently pending runs.
+  const pendingThreadIds = useMutationState({
+    filters: { mutationKey: ['thread', 'run'], status: 'pending' },
+    select: (mutation) => {
+      const variables = mutation.state.variables as
+        | api.createRun.Options
+        | undefined;
+      return variables?.threadId;
+    },
+  });
+
+  // The thread is running if its id is among the pending runs.
+  return threadId !== undefined && pendingThreadIds.includes(threadId);
 }
 
 /**
