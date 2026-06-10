@@ -10,7 +10,7 @@ import { disabledToolsAtom } from '@/store';
 import { getCurrentLocationTool } from './getcurrentlocation';
 import { requestApprovalTool } from './requestapproval';
 
-import type { FrontendTool } from './types';
+import type { FrontendTool, FrontendToolContext } from './types';
 
 /**
  * The registry of client-executed frontend tools.
@@ -47,6 +47,8 @@ export function isFrontendTool(name: string): boolean {
  *
  * @param argsJson - The raw JSON string of the tool arguments.
  *
+ * @param context - The ambient run context passed to the handler.
+ *
  * @returns The result serialized as a string, suitable for the `content` of
  *   a `tool` result message. Errors are captured and serialized rather than
  *   thrown, so a single failing tool never aborts the run.
@@ -54,6 +56,7 @@ export function isFrontendTool(name: string): boolean {
 export async function runFrontendTool(
   name: string,
   argsJson: string,
+  context: FrontendToolContext,
 ): Promise<string> {
   // Look up the registered tool.
   const tool = TOOLS_BY_NAME.get(name);
@@ -68,7 +71,7 @@ export async function runFrontendTool(
     const args = argsJson ? JSON.parse(argsJson) : {};
 
     // Execute the handler and serialize the result.
-    const result = await tool.handler(args);
+    const result = await tool.handler(args, context);
     return JSON.stringify(result);
   } catch (error) {
     // Capture any failure as a structured result for the agent.

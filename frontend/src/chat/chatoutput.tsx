@@ -43,8 +43,9 @@ export function ChatOutput(): ReactNode {
   // Determine whether the thread is waiting on an LLM response.
   const isRunning = useIsRunning(thread?.id);
 
-  // Fetch any human-in-the-loop approval requests awaiting a decision.
-  const approvals = usePendingApprovals();
+  // Fetch any human-in-the-loop approval requests for this thread awaiting a
+  // decision.
+  const approvals = usePendingApprovals(thread?.id);
 
   // Create the content for the thread.
   const content = (messages ?? []).map((msg) => (
@@ -92,7 +93,7 @@ export function ChatOutput(): ReactNode {
     <div className="grow mx-auto w-full min-w-3xs max-w-3xl">
       {content}
       {spinner}
-      <ApprovalPrompts />
+      <ApprovalPrompts threadId={thread?.id} />
       {inlineError}
     </div>
   );

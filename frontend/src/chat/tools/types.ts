@@ -6,6 +6,21 @@ import type * as agui from '@ag-ui/core';
 import type { JSONValue } from '@/lib/json';
 
 /**
+ * The execution context passed to a frontend tool handler.
+ *
+ * #### Notes
+ * This carries the ambient run information a handler may need to scope its
+ * side effects — most importantly the thread the call belongs to, so a
+ * handler that surfaces UI (e.g. an approval card) can tie it to its thread.
+ */
+export type FrontendToolContext = {
+  /**
+   * The id of the thread the tool call was made in.
+   */
+  readonly threadId: string;
+};
+
+/**
  * A client-executed ("frontend") tool that adheres to the ag-ui protocol.
  *
  * #### Notes
@@ -30,11 +45,14 @@ export type FrontendTool = {
    *
    * @param args - The parsed arguments provided by the agent.
    *
+   * @param context - The ambient run context, including the thread id.
+   *
    * @returns The JSON-serializable result returned to the agent. It is
    *   serialized into the `content` of the `tool` result message.
    */
   readonly handler: (
     args: Record<string, unknown>,
+    context: FrontendToolContext,
   ) => JSONValue | Promise<JSONValue>;
 
   /**

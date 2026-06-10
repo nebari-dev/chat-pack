@@ -160,7 +160,9 @@ export const createRunMutation = mutationOptions({
           role: 'tool' as const,
           id: crypto.randomUUID(),
           toolCallId: tc.id,
-          content: await runFrontendTool(tc.name, tc.arguments),
+          content: await runFrontendTool(tc.name, tc.arguments, {
+            threadId: options.threadId,
+          }),
         })),
       );
 

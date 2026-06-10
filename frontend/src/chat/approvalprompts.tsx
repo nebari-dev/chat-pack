@@ -22,9 +22,9 @@ import {
  * such request inline in the chat as an approval card. It renders nothing
  * when there is nothing awaiting a decision.
  */
-export function ApprovalPrompts(): ReactNode {
-  // Fetch the requests currently awaiting a decision.
-  const pending = usePendingApprovals();
+export function ApprovalPrompts(props: ApprovalPrompts.Props): ReactNode {
+  // Fetch the requests for this thread currently awaiting a decision.
+  const pending = usePendingApprovals(props.threadId);
 
   // Render nothing when no request is outstanding.
   if (pending.length === 0) {
@@ -39,6 +39,21 @@ export function ApprovalPrompts(): ReactNode {
       ))}
     </div>
   );
+}
+
+/**
+ * The namespace for the `ApprovalPrompts` statics.
+ */
+export namespace ApprovalPrompts {
+  /**
+   * A type alias for the `ApprovalPrompts` props.
+   */
+  export type Props = {
+    /**
+     * The id of the thread whose pending approvals to render, if any.
+     */
+    readonly threadId: string | undefined;
+  };
 }
 
 /**
