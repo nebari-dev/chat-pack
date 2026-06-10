@@ -11,9 +11,13 @@ import { useChatConfig } from '@/context';
 
 import { threadErrorQuery, threadMessagesQuery } from '@/queries';
 
+import { ApprovalPrompts } from './approvalprompts';
+
 import { useIsRunning } from './hooks';
 
 import { MessageRendererMemo } from './messagerenderer';
+
+import { usePendingApprovals } from './tools';
 
 import { WaitingSpinner } from './waitingspinner';
 
@@ -39,6 +43,9 @@ export function ChatOutput(): ReactNode {
   // Determine whether the thread is waiting on an LLM response.
   const isRunning = useIsRunning(thread?.id);
 
+  // Fetch any human-in-the-loop approval requests awaiting a decision.
+  const approvals = usePendingApprovals();
+
   // Create the content for the thread.
   const content = (messages ?? []).map((msg) => (
     <MessageRendererMemo key={msg.id} message={msg} />
@@ -53,7 +60,9 @@ export function ChatOutput(): ReactNode {
   const last = messages?.at(-1);
   const assistantSpeaking =
     last?.role === 'assistant' && !!last.content?.trim();
-  const showSpinner = isRunning && !assistantSpeaking;
+  // A pending approval means the run is paused on the user, not the model, so
+  // the approval card stands in for the spinner.
+  const showSpinner = isRunning && !assistantSpeaking && approvals.length === 0;
   const spinner = showSpinner ? (
     <div className="mt-4">
       <WaitingSpinner />
@@ -83,6 +92,7 @@ export function ChatOutput(): ReactNode {
     <div className="grow mx-auto w-full min-w-3xs max-w-3xl">
       {content}
       {spinner}
+      <ApprovalPrompts />
       {inlineError}
     </div>
   );

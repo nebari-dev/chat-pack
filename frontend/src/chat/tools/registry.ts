@@ -2,6 +2,7 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 import { getCurrentLocationTool } from './getcurrentlocation';
+import { requestApprovalTool } from './requestapproval';
 
 import type { FrontendTool } from './types';
 
@@ -10,7 +11,10 @@ import type { FrontendTool } from './types';
  *
  * To add a new tool, implement a `FrontendTool` and append it here.
  */
-export const FRONTEND_TOOLS: readonly FrontendTool[] = [getCurrentLocationTool];
+export const FRONTEND_TOOLS: readonly FrontendTool[] = [
+  getCurrentLocationTool,
+  requestApprovalTool,
+];
 
 /**
  * A lookup of frontend tools by their advertised name.

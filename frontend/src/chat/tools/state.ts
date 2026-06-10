@@ -13,12 +13,16 @@ import type { FrontendTool } from './types';
  * The set of disabled frontend tool names.
  *
  * A tool is enabled unless its name appears in this set, so a freshly
- * registered tool defaults to enabled. The reference is replaced (never
- * mutated) on every change so it can serve as a stable
- * `useSyncExternalStore` snapshot. This state is in-memory only and resets
- * on reload.
+ * registered tool defaults to enabled unless it declares
+ * `defaultEnabled: false`. The reference is replaced (never mutated) on every
+ * change so it can serve as a stable `useSyncExternalStore` snapshot. This
+ * state is in-memory only and resets on reload.
  */
-let disabled: ReadonlySet<string> = new Set();
+let disabled: ReadonlySet<string> = new Set(
+  FRONTEND_TOOLS.filter((tool) => tool.defaultEnabled === false).map(
+    (tool) => tool.definition.name,
+  ),
+);
 
 /**
  * The set of subscribers notified whenever the disabled set changes.

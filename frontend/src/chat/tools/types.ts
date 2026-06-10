@@ -36,4 +36,12 @@ export type FrontendTool = {
   readonly handler: (
     args: Record<string, unknown>,
   ) => JSONValue | Promise<JSONValue>;
+
+  /**
+   * Whether the tool is advertised to the agent by default.
+   *
+   * Defaults to `true`. Set to `false` for tools that should start disabled
+   * and only be offered after the user opts in via the tools panel.
+   */
+  readonly defaultEnabled?: boolean;
 };
