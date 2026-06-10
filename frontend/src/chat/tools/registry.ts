@@ -1,6 +1,12 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import type * as agui from '@ag-ui/core';
+
+import { getDefaultStore, useAtomValue } from 'jotai';
+
+import { disabledToolsAtom } from '@/store';
+
 import { getCurrentLocationTool } from './getcurrentlocation';
 import { requestApprovalTool } from './requestapproval';
 
@@ -69,4 +75,89 @@ export async function runFrontendTool(
     const message = error instanceof Error ? error.message : String(error);
     return JSON.stringify({ error: message });
   }
+}
+
+/**
+ * The default Jotai store, used to read and write the atom outside React.
+ */
+const store = getDefaultStore();
+
+// Seed the disabled set with the tools that opt out of being enabled by
+// default. This runs once when the registry module is first evaluated.
+store.set(
+  disabledToolsAtom,
+  new Set(
+    FRONTEND_TOOLS.filter((tool) => tool.defaultEnabled === false).map(
+      (tool) => tool.definition.name,
+    ),
+  ),
+);
+
+/**
+ * Enable or disable a frontend tool, broadcasting the change to subscribers.
+ *
+ * @param name - The advertised name of the tool.
+ *
+ * @param enabled - `true` to enable the tool, `false` to disable it.
+ */
+export function setToolEnabled(name: string, enabled: boolean): void {
+  const disabled = store.get(disabledToolsAtom);
+
+  // Bail if the tool is already in the requested state.
+  if (enabled === !disabled.has(name)) {
+    return;
+  }
+
+  const next = new Set(disabled);
+  if (enabled) {
+    next.delete(name);
+  } else {
+    next.add(name);
+  }
+  store.set(disabledToolsAtom, next);
+}
+
+/**
+ * Get the ag-ui tool definitions for the currently enabled frontend tools.
+ *
+ * This is what should be advertised to the agent in a run, so disabled tools
+ * are never offered.
+ *
+ * @returns The list of enabled tool definitions for the `RunAgentInput`.
+ */
+export function enabledFrontendToolDefinitions(): agui.Tool[] {
+  const disabled = store.get(disabledToolsAtom);
+  return FRONTEND_TOOLS.filter(
+    (tool) => !disabled.has(tool.definition.name),
+  ).map((tool) => tool.definition);
+}
+
+/**
+ * The enablement state of a single frontend tool.
+ */
+export type FrontendToolState = {
+  /**
+   * The frontend tool.
+   */
+  readonly tool: FrontendTool;
+
+  /**
+   * Whether the tool is currently enabled.
+   */
+  readonly enabled: boolean;
+};
+
+/**
+ * A hook returning every registered frontend tool with its enabled state.
+ *
+ * The component re-renders whenever any tool is toggled.
+ *
+ * @returns The frontend tools paired with their current enablement.
+ */
+export function useFrontendToolStates(): FrontendToolState[] {
+  const disabled = useAtomValue(disabledToolsAtom);
+  return FRONTEND_TOOLS.map((tool) => ({
+    tool,
+    enabled: !disabled.has(tool.definition.name),
+  }));
 }
