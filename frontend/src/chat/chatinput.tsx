@@ -1,7 +1,9 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import { ArrowUp, Paperclip, X } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+
+import { ArrowUp, Hammer, Paperclip, X } from 'lucide-react';
 
 import type { FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
@@ -19,7 +21,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { useHasPermissions } from '@/context';
+import { useAgents, useChatConfig, useHasPermissions } from '@/context';
 import { notifyError } from '@/lib/notifications';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +39,14 @@ export function ChatInput(): ReactNode {
     // The actual file to upload.
     readonly file: File;
   };
+
+  // Fetch the agents and the current tools panel state from the chat config.
+  const agents = useAgents();
+  const { showTools, agentId } = useChatConfig();
+
+  // Resolve the current agent and determine whether it provides any tools.
+  const agent = agents.find((a) => a.id === agentId);
+  const hasTools = (agent?.capabilities?.tools?.items?.length ?? 0) > 0;
 
   // Check file-related permissions.
   const canAttachFiles = useHasPermissions(['files:read', 'files:write']);
@@ -217,6 +227,51 @@ export function ChatInput(): ReactNode {
     </Button>
   );
 
+  // Create the tools toggle button.
+  //
+  // The toggle flips the `showTools` search param, which opens or closes the
+  // tools panel (the agent identity and its tools) in the chat sidebar.
+  // When the agent provides no tools, the toggle is disabled.
+  const toolsButton = (
+    <Button
+      asChild={hasTools}
+      aria-label="Toggle tools panel"
+      title={hasTools ? 'Tools' : undefined}
+      variant="ghost"
+      disabled={!hasTools}
+      className={cn(
+        'font-light',
+        hasTools && showTools && 'bg-bg-neutral-dark',
+        !hasTools && 'opacity-50 cursor-not-allowed',
+      )}
+    >
+      {hasTools ? (
+        <Link
+          to="."
+          search={(prev) => ({
+            ...prev,
+            // Opening the tools panel closes any open message detail so
+            // the two never compete for the right sidebar slot.
+            detailId: undefined,
+            showTools: showTools ? undefined : true,
+          })}
+        >
+          <Hammer />
+        </Link>
+      ) : (
+        <Hammer />
+      )}
+    </Button>
+  );
+
+  const toolsToggle = hasTools ? (
+    toolsButton
+  ) : (
+    // A disabled button suppresses pointer events, so the `title` tooltip
+    // only shows when it is set on a wrapping element.
+    <span title="This agent does not provide any tools.">{toolsButton}</span>
+  );
+
   // Return the rendered component.
   return (
     <div
@@ -260,6 +315,7 @@ export function ChatInput(): ReactNode {
           ) : (
             attachButton
           )}
+          {toolsToggle}
           <div className="grow flex flex-row flex-wrap gap-2 items-center">
             {fileBadges}
           </div>

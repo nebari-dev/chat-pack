@@ -18,6 +18,7 @@ const searchSchema = z.object({
   agentId: z.string().optional(),
   threadId: z.string().optional(),
   detailId: z.string().optional(),
+  showTools: z.boolean().optional(),
 });
 
 /**
@@ -81,14 +82,14 @@ export const Route = createFileRoute('/_authenticated/chat')({
     const { client } = context;
 
     // Extract the search params.
-    const { agentId, threadId, detailId } = deps;
+    const { agentId, threadId, detailId, showTools } = deps;
 
     // Fetch the thread.
     const thread = await client.fetchQuery(threadQuery(threadId));
 
     // Return the loaded data. The `beforeLoad` handler ensures
     // that the `agentId` is valid and is synced with the thread.
-    return { thread, agentId: agentId!, detailId };
+    return { thread, agentId: agentId!, detailId, showTools };
   },
   component: RouteComponent,
 });
