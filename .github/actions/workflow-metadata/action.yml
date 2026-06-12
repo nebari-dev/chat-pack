@@ -90,7 +90,7 @@ runs:
               ADDITIONAL_TAGS=()
               ;;
             release)
-              STABLE_TAG="${BASE}"
+              STABLE_TAG="${LATEST}"
               ADDITIONAL_TAGS=()
               ;;
             *)
