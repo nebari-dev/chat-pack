@@ -22,7 +22,8 @@ dependencies = [
     "pyjwt>=2.12.1,<3",
     "sqlalchemy[asyncio]>=2.0,<3",
     "psycopg[binary,pool]>=3.2.9,<4",
-    "ravnar[serve,pydantic-ai]==0.0.12",
+    "ravnar[serve,pydantic-ai]==0.0.13",
+    "opentelemetry-exporter-otlp>=1.39.0",
 ]
 dynamic = ["version"]
 
