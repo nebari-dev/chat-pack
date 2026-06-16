@@ -12,6 +12,10 @@ concurrency:
   group: docker-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -146,3 +150,55 @@ jobs:
           push: ${{ steps.registry.outputs.publish == 'true' }}
           cache-from: ${{ steps.registry.outputs.publish == 'true' && join(fromJson(steps.cache.outputs.from-json), '\n') || '' }}
           cache-to: ${{ steps.registry.outputs.publish == 'true' && join(fromJson(steps.cache.outputs.to-json), '\n') || '' }}
+
+  comment:
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Compute workflow metadata
+        id: workflow-metadata
+        uses: ./.github/actions/workflow-metadata
+
+      - name: Build comment
+        id: comment
+        shell: bash
+        env:
+          APP_JSON: ${{ steps.workflow-metadata.outputs.app-version-json }}
+        run: |
+          STABLE_TAG=$(echo "${APP_JSON}" | jq --raw-output '."stable-tag"')
+          TAG_LIST=$(echo "${APP_JSON}" | jq --raw-output \
+            --arg pr "pr.${{ github.event.number }}" \
+            '(.tags + [$pr]) | map("`" + . + "`") | join(", ")')
+
+          BACKEND=quay.io/nebari/nebari-chat-backend
+          FRONTEND=quay.io/nebari/nebari-chat-frontend
+
+          {
+            echo "## Docker images"
+            echo
+            echo "Built from ${{ github.event.pull_request.head.sha }}."
+            echo
+            echo "| Image | Tags |"
+            echo "| --- | --- |"
+            echo "| \`${BACKEND}\` | ${TAG_LIST} |"
+            echo "| \`${FRONTEND}\` | ${TAG_LIST} |"
+            echo
+            echo '```sh'
+            echo "docker pull ${BACKEND}:${STABLE_TAG}"
+            echo "docker pull ${FRONTEND}:${STABLE_TAG}"
+            echo '```'
+          } > comment.md
+
+      - name: Post comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: docker-tags
+          path: comment.md
