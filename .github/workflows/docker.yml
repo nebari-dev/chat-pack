@@ -153,7 +153,8 @@ jobs:
 
   comment:
     needs: build
-    if: github.event_name == 'pull_request'
+    # Comments require a write token, which fork PRs don't get, so skip them there.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
 
     steps:
