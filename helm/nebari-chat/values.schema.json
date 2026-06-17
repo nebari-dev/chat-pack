@@ -86,6 +86,12 @@
           "type": "integer",
           "minimum": 0
         },
+        "podAnnotations": {
+          "type": "object"
+        },
+        "podLabels": {
+          "type": "object"
+        },
         "image": {
           "type": "object",
           "properties": {
