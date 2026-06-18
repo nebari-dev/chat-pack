@@ -10,7 +10,7 @@ import type {
 } from 'react';
 
 import {
-  useCallback, useRef, useState
+  useCallback, useMemo, useRef, useState
 } from 'react';
 
 import * as api from "@/api";
@@ -24,12 +24,21 @@ import {
 } from '@/components/ui/button';
 
 import {
+  useAppConfig, useChatConfig
+} from '@/context';
+
+import {
   cn
 } from '@/lib/utils';
 
 import {
   useOnSubmit
 } from './hooks';
+
+
+// The `accept` value used for agents that accept generic document uploads,
+// and for agents that don't advertise any multimodal input capabilities.
+const DOCUMENT_ACCEPT = ".txt,.csv,.md";
 
 
 /**
@@ -48,6 +57,34 @@ function ChatInput(): ReactNode {
 
   // Fetch the submit handler from the runtime.
   const onSubmit = useOnSubmit();
+
+  // Fetch the app and chat config to resolve the selected agent.
+  const { agents } = useAppConfig();
+  const { agentId } = useChatConfig();
+
+  // Resolve the file-upload behavior from the selected agent's advertised
+  // AG-UI multimodal input capabilities (`@ag-ui/core` AgentCapabilities).
+  const { uploadsAllowed, accept } = useMemo(() => {
+    // Look up the selected agent's multimodal input capabilities.
+    const input = agents.find((agent) => agent.id === agentId)
+      ?.capabilities?.multimodal?.input;
+
+    // If the agent didn't advertise any input modalities, preserve the
+    // historical behavior: allow document uploads.
+    if (input === undefined) {
+      return { uploadsAllowed: true, accept: DOCUMENT_ACCEPT };
+    }
+
+    // Otherwise build the `accept` value from the enabled modalities.
+    const accepts: string[] = [];
+    if (input.image) { accepts.push("image/*"); }
+    if (input.audio) { accepts.push("audio/*"); }
+    if (input.video) { accepts.push("video/*"); }
+    if (input.file) { accepts.push(DOCUMENT_ACCEPT); }
+
+    // Uploads are allowed only if at least one modality is enabled.
+    return { uploadsAllowed: accepts.length > 0, accept: accepts.join(",") };
+  }, [agents, agentId]);
 
   // Create the ref for the form element.
   const formRef = useRef<HTMLFormElement>(null);
@@ -220,21 +257,23 @@ function ChatInput(): ReactNode {
           placeholder='Send a message...'
           className='outline-none resize-none field-sizing-content w-full' />
         <div className='flex flex-row gap-2'>
-          <Button
-            aria-label='Attach File'
-            disabled={ isSubmitting }
-            variant="ghost"
-            className="font-light"
-            onClick={triggerInput}>
-          <input
-            ref={inputRef}
-            onChange={handleInputChange}
-            className="hidden"
-            type="file"
-            multiple
-            accept=".txt,.csv,.md" />
-            <Paperclip />
-          </Button>
+          {uploadsAllowed && (
+            <Button
+              aria-label='Attach File'
+              disabled={ isSubmitting }
+              variant="ghost"
+              className="font-light"
+              onClick={triggerInput}>
+            <input
+              ref={inputRef}
+              onChange={handleInputChange}
+              className="hidden"
+              type="file"
+              multiple
+              accept={accept} />
+              <Paperclip />
+            </Button>
+          )}
           <div className="grow flex flex-row flex-wrap gap-2 items-center">
             {fileBadges}
           </div>
