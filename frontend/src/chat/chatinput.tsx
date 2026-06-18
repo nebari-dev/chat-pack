@@ -106,8 +106,18 @@ function ChatInput(): ReactNode {
       // well-factored. Could be better...
       const fics: readonly api.FileInputContent[] = await Promise.all(
         inputFiles.map(async ({ file }) => {
+          // Derive the content discriminator from the file's MIME type so
+          // images, audio, and video are labeled as the correct modality,
+          // falling back to "document" for everything else.
+          const type = file.type.startsWith("image/")
+            ? "image"
+            : file.type.startsWith("audio/")
+              ? "audio"
+              : file.type.startsWith("video/")
+                ? "video"
+                : "document";
           return {
-            type: "document",
+            type,
             source: {
               type: "data",
               mimeType: file.type,
