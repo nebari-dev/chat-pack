@@ -7,7 +7,7 @@ import { ArrowUp, Hammer, Paperclip, X } from 'lucide-react';
 
 import type { FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type * as api from '@/api';
 
@@ -26,6 +26,10 @@ import { notifyError } from '@/lib/notifications';
 import { cn } from '@/lib/utils';
 
 import { useOnSubmit } from './hooks';
+
+// The `accept` value used for agents that accept generic document uploads,
+// and for agents that don't advertise any multimodal input capabilities.
+const DOCUMENT_ACCEPT = '.txt,.csv,.md';
 
 /**
  * A react component that renders the chat input box.
@@ -47,6 +51,37 @@ export function ChatInput(): ReactNode {
   // Resolve the current agent and determine whether it provides any tools.
   const agent = agents.find((a) => a.id === agentId);
   const hasTools = (agent?.capabilities?.tools?.items?.length ?? 0) > 0;
+
+  // Resolve the file-upload behavior from the agent's advertised AG-UI
+  // multimodal input capabilities: build the picker's `accept` value and
+  // decide whether to offer uploads at all.
+  const { uploadsAllowed, accept } = useMemo(() => {
+    const input = agent?.capabilities?.multimodal?.input;
+
+    // If the agent didn't advertise any input modalities, preserve the
+    // historical behavior: allow document uploads.
+    if (input === undefined) {
+      return { uploadsAllowed: true, accept: DOCUMENT_ACCEPT };
+    }
+
+    // Otherwise build the `accept` value from the enabled modalities.
+    const accepts: string[] = [];
+    if (input.image) {
+      accepts.push('image/*');
+    }
+    if (input.audio) {
+      accepts.push('audio/*');
+    }
+    if (input.video) {
+      accepts.push('video/*');
+    }
+    if (input.file) {
+      accepts.push(DOCUMENT_ACCEPT);
+    }
+
+    // Uploads are allowed only if at least one modality is enabled.
+    return { uploadsAllowed: accepts.length > 0, accept: accepts.join(',') };
+  }, [agent]);
 
   // Check file-related permissions.
   const canAttachFiles = useHasPermissions(['files:read', 'files:write']);
@@ -117,8 +152,18 @@ export function ChatInput(): ReactNode {
         // well-factored. Could be better...
         const fics: readonly api.FileInputContent[] = await Promise.all(
           inputFiles.map(async ({ file }) => {
+            // Derive the content discriminator from the file's MIME type so
+            // images, audio, and video are labeled as the correct modality,
+            // falling back to "document" for everything else.
+            const type = file.type.startsWith('image/')
+              ? 'image'
+              : file.type.startsWith('audio/')
+                ? 'audio'
+                : file.type.startsWith('video/')
+                  ? 'video'
+                  : 'document';
             return {
-              type: 'document',
+              type,
               source: {
                 type: 'data',
                 mimeType: file.type,
@@ -295,25 +340,29 @@ export function ChatInput(): ReactNode {
           className="outline-none resize-none field-sizing-content w-full"
         />
         <div className="flex flex-row gap-2">
-          <input
-            ref={inputRef}
-            onChange={handleInputChange}
-            className="hidden"
-            type="file"
-            multiple
-            accept=".txt,.csv,.md"
-          />
-          {filePermissionTooltip ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span>{attachButton}</span>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {filePermissionTooltip}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            attachButton
+          {uploadsAllowed && (
+            <>
+              <input
+                ref={inputRef}
+                onChange={handleInputChange}
+                className="hidden"
+                type="file"
+                multiple
+                accept={accept}
+              />
+              {filePermissionTooltip ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>{attachButton}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {filePermissionTooltip}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                attachButton
+              )}
+            </>
           )}
           {toolsToggle}
           <div className="grow flex flex-row flex-wrap gap-2 items-center">
