@@ -3,22 +3,16 @@
 |----------------------------------------------------------------------------*/
 import * as L from 'leaflet';
 
-import type {
-  ReactNode
-} from 'react';
+import type { ReactNode } from 'react';
 
-import {
-  useEffect, useRef
-} from 'react';
+import { useEffect, useRef } from 'react';
 
 import 'leaflet/dist/leaflet.css';
-
 
 /**
  * A react component that renders a **simple** Leaflet map.
  */
-export
-function LeafletRenderer(props: LeafletRenderer.Props): ReactNode {
+export function LeafletRenderer(props: LeafletRenderer.Props): ReactNode {
   // Extract the props.
   const { center, features, className } = props;
 
@@ -44,31 +38,31 @@ function LeafletRenderer(props: LeafletRenderer.Props): ReactNode {
 
     // Add the tile layer.
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      attribution:
+        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
     // Add the GeoJSON features.
     L.geoJSON(features, { onEachFeature }).addTo(map);
 
     // Return the cleanup function.
-    return () => { map.remove(); };
-  }, [center, features]);  // FIXME: more efficient updates on prop changes.
+    return () => {
+      map.remove();
+    };
+  }, [center, features]); // FIXME: more efficient updates on prop changes.
 
   // Return the rendered component.
-  return <div ref={ ref } className={ className } />;
+  return <div ref={ref} className={className} />;
 }
-
 
 /**
  * The namespace for the `LeafletRenderer` statics.
  */
-export
-namespace LeafletRenderer {
+export namespace LeafletRenderer {
   /**
    * A type alias for the `LeafletRenderer` props.
    */
-  export
-  type Props = {
+  export type Props = {
     // The [lat, long] center of the map.
     readonly center: [number, number];
 

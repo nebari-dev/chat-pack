@@ -1,9 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import type {
-  ReactNode
-} from 'react';
+import type { ReactNode } from 'react';
 
 import Markdown from 'react-markdown';
 
@@ -13,16 +11,12 @@ import remarkGfm from 'remark-gfm';
 
 import remarkMath from 'remark-math';
 
-import {
-  cn
-} from '@/lib/utils';
-
+import { cn } from '@/lib/utils';
 
 /**
  * A react component that renders markdown configured for Nebari Chat.
  */
-export
-function MarkdownRenderer(props: MarkdownRenderer.Props): ReactNode {
+export function MarkdownRenderer(props: MarkdownRenderer.Props): ReactNode {
   // Extract the props.
   const { content, className } = props;
 
@@ -31,28 +25,26 @@ function MarkdownRenderer(props: MarkdownRenderer.Props): ReactNode {
   // The markdown elements are formatted in `main.css` based on the
   // `ot-NebariChat-markdown` class name. Do not remove it.
   return (
-    <div className={ cn('ot-NebariChat-markdown', className) }>
+    <div className={cn('ot-NebariChat-markdown', className)}>
       <Markdown
-        remarkPlugins={ [remarkGfm, remarkMath] }
-        rehypePlugins={ [rehypeKatex] }
-        components={ Private.markdownComponents }>
-        { content }
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+        components={Private.markdownComponents}
+      >
+        {content}
       </Markdown>
     </div>
   );
 }
 
-
 /**
  * The namespace for the `MarkdownRenderer` statics.
  */
-export
-namespace MarkdownRenderer {
+export namespace MarkdownRenderer {
   /**
    * A type alias for the `MarkdownRenderer` props.
    */
-  export
-  type Props = {
+  export type Props = {
     /**
      * The markdown content string to be rendered.
      */
@@ -65,7 +57,6 @@ namespace MarkdownRenderer {
   };
 }
 
-
 /**
  * The namespace for the module implementation details.
  */
@@ -75,12 +66,11 @@ namespace Private {
    *
    * These handle the tags that can't be handled solely in `main.css`.
    */
-  export
-  const markdownComponents = {
+  export const markdownComponents = {
     table: ({ ...props }) => (
-      <div className='my-6 w-full border rounded-md overflow-x-auto'>
-        <table { ...props } />
+      <div className="my-6 w-full border rounded-md overflow-x-auto">
+        <table {...props} />
       </div>
-    )
+    ),
   } as const;
 }

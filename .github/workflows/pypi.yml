@@ -1,0 +1,43 @@
+name: PyPI build
+
+on:
+  pull_request:
+  push:
+    tags: 
+      - 'v[0-9]+\.[0-9]+\.[0-9]+'
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          working-directory: ./backend
+          enable-cache: true
+
+      - name: Build binary and source distribution
+        working-directory: ./backend
+        run: uv build
+
+      - name: Publish to PyPI
+        # OIDC tokens are unavailable to pull requests from forks, so the
+        # dry-run publish can only run for same-repo branches and tag pushes.
+        if: github.ref_type == 'tag' || github.event.pull_request.head.repo.fork == false
+        working-directory: ./backend
+        run: |
+          uv publish --no-progress \
+          ${{ github.ref_type != 'tag' && '--dry-run' || '' }} \
+          --trusted-publishing=always \
+          dist/*

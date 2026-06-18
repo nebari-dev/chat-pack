@@ -1,40 +1,30 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import {
-  createFileRoute, redirect
-} from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 import * as z from 'zod';
 
-import * as api from '@/api';
+import type * as api from '@/api';
 
-import {
-  Chat
-} from '@/chat';
+import { Chat } from '@/chat';
 
-import {
-  ChatConfigContext
-} from '@/context';
+import { ChatConfigContext } from '@/context';
 
-import {
-  appConfigQuery, threadQuery
-} from '@/queries';
-
+import { agentsQuery, threadQuery } from '@/queries';
 
 // The schema for the `/chat` route search params
 const searchSchema = z.object({
   agentId: z.string().optional(),
   threadId: z.string().optional(),
-  detailId: z.string().optional()
+  detailId: z.string().optional(),
+  showTools: z.boolean().optional(),
 });
-
 
 /**
  * The route for the `/chat` endpoint.
  */
-export
-const Route = createFileRoute('/_authenticated/chat')({
+export const Route = createFileRoute('/_authenticated/chat')({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   beforeLoad: async ({ context, search }) => {
@@ -45,7 +35,7 @@ const Route = createFileRoute('/_authenticated/chat')({
     const { agentId, threadId } = search;
 
     // Fetch the agents for the application.
-    const { agents } = await client.fetchQuery(appConfigQuery);
+    const agents = await client.fetchQuery(agentsQuery);
 
     // Fetch the thread for the query.
     //
@@ -58,7 +48,7 @@ const Route = createFileRoute('/_authenticated/chat')({
     } catch {
       throw redirect({
         replace: true,
-        search: { agentId }
+        search: { agentId },
       });
     }
 
@@ -72,18 +62,18 @@ const Route = createFileRoute('/_authenticated/chat')({
       // Otherwise, redirect to sync the `agentId` with the thread.
       throw redirect({
         replace: true,
-        search: { agentId: thread.agentId, threadId: thread.id }
+        search: { agentId: thread.agentId, threadId: thread.id },
       });
     } else {
       // If the `agentId` is valid, we are done.
-      if (agents.some(a => a.id === agentId)) {
+      if (agents.some((a) => a.id === agentId)) {
         return;
       }
 
       // Otherwise, redirect to the first available agent.
       throw redirect({
         replace: true,
-        search: { agentId: agents[0].id }
+        search: { agentId: agents[0].id },
       });
     }
   },
@@ -92,18 +82,17 @@ const Route = createFileRoute('/_authenticated/chat')({
     const { client } = context;
 
     // Extract the search params.
-    const { agentId, threadId, detailId } = deps;
+    const { agentId, threadId, detailId, showTools } = deps;
 
     // Fetch the thread.
     const thread = await client.fetchQuery(threadQuery(threadId));
 
     // Return the loaded data. The `beforeLoad` handler ensures
     // that the `agentId` is valid and is synced with the thread.
-    return { thread, agentId: agentId!, detailId };
+    return { thread, agentId: agentId!, detailId, showTools };
   },
-  component: RouteComponent
+  component: RouteComponent,
 });
-
 
 /**
  * The component that renders the `/chat` route.
@@ -114,7 +103,7 @@ function RouteComponent() {
 
   // Return the rendered component.
   return (
-    <ChatConfigContext value={ config }>
+    <ChatConfigContext value={config}>
       <Chat />
     </ChatConfigContext>
   );

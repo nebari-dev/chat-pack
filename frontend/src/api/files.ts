@@ -1,9 +1,9 @@
 /*------------------------------------------------------------------------------
 | Copyright (c) 2026-present, OpenTeams Inc.
 |-----------------------------------------------------------------------------*/
-import * as agui from "@ag-ui/core";
-import * as z from "zod";
-import * as auth from "@/auth";
+import * as agui from '@ag-ui/core';
+import * as z from 'zod';
+import * as auth from '@/auth';
 
 /**
  * The schema for the supported file input content types.
@@ -12,7 +12,7 @@ import * as auth from "@/auth";
  * the deprecated binary input content type. This makes the types simpler
  * on both the frontend and backend.
  */
-export const FileInputContentSchema = z.discriminatedUnion("type", [
+export const FileInputContentSchema = z.discriminatedUnion('type', [
   agui.ImageInputContentSchema,
   agui.AudioInputContentSchema,
   agui.VideoInputContentSchema,
@@ -31,7 +31,7 @@ export type FileInputContent = z.infer<typeof FileInputContentSchema>;
  * type-compatible with ag-ui, but has slightly different semantics.
  */
 export const RAVNAR_FILE_CONTENT_SOURCE_MIME_TYPE =
-  "application/vnd.ravnar.json-b64";
+  'application/vnd.ravnar.json-b64';
 
 /**
  * The schema for ravnar file content handles.
@@ -40,9 +40,9 @@ export const RAVNAR_FILE_CONTENT_SOURCE_MIME_TYPE =
  * by it's custom mime-type and allows us to handle it appropriately.
  */
 export const RavnarFileContentSchema = z.object({
-  type: z.enum(["image", "audio", "video", "document"]),
+  type: z.enum(['image', 'audio', 'video', 'document']),
   source: z.object({
-    type: z.literal("data"),
+    type: z.literal('data'),
     value: z.string(),
     mimeType: z.literal(RAVNAR_FILE_CONTENT_SOURCE_MIME_TYPE),
   }),
@@ -118,9 +118,9 @@ export async function uploadFile(
   content: FileInputContent,
 ): Promise<RavnarFileContent> {
   // Fetch the resource.
-  const resp = await auth.fetch("/api/files", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  const resp = await auth.fetch('/api/files', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(content),
   });
 

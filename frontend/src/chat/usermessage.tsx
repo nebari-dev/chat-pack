@@ -1,23 +1,18 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import * as agui from '@ag-ui/core';
+import type * as agui from '@ag-ui/core';
 
-import type {
-  ReactNode
-} from 'react';
+import type { ReactNode } from 'react';
 
-import * as api from "@/api";
+import * as api from '@/api';
 
-import {
-  Badge
-} from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 
 /**
  * A react component that renders an ag-ui `UserMessage`.
  */
-export
-function UserMessage(props: UserMessage.Props): ReactNode {
+export function UserMessage(props: UserMessage.Props): ReactNode {
   // Extract the props.
   const { message } = props;
 
@@ -50,24 +45,20 @@ function UserMessage(props: UserMessage.Props): ReactNode {
   );
 }
 
-
 /**
  * The namespace for the `UserMessage` statics.
  */
-export
-namespace UserMessage {
+export namespace UserMessage {
   /**
    * A type alias for the `UserMessage` props.
    */
-  export
-  type Props = {
+  export type Props = {
     /**
      * The ag-ui user message.
      */
     readonly message: agui.UserMessage;
   };
 }
-
 
 /**
  * The namespace for the module implementation details.
@@ -108,24 +99,24 @@ namespace Private {
    */
   export function collectInfo(message: agui.UserMessage): Info {
     // Quick exit if the content is a string.
-    if (typeof message.content === "string") {
+    if (typeof message.content === 'string') {
       return { text: message.content, files: [] };
     }
 
     // Create the variables to hold the info parts.
-    let text: string = "";
+    let text: string = '';
     const files: FileInfo[] = [];
 
     // Extract the info from the parts.
     for (const part of message.content) {
       switch (part.type) {
-        case "text":
+        case 'text':
           text += part.text;
           break;
-        case "audio":
-        case "image":
-        case "video":
-        case "document": {
+        case 'audio':
+        case 'image':
+        case 'video':
+        case 'document': {
           // Ignore files that are not ravnar content.
           if (!api.isRavnarFileContent(part)) {
             continue;
@@ -142,7 +133,7 @@ namespace Private {
           break;
         }
         default:
-          console.error("unhandled message part", part);
+          console.error('unhandled message part', part);
       }
     }
 

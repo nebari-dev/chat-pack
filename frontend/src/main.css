@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-@import 'tailwindcss';
+@import "tailwindcss";
 @import "tw-animate-css";
 /*---break---*/
 @custom-variant dark (&:is(.dark *));
@@ -13,7 +13,7 @@ html {
 body {
   font-family: Inter;
   font-weight: 400;
-  color: #1E1E1E;
+  color: #1e1e1e;
   height: 100%;
   font-size: 14px;
 }
@@ -139,7 +139,6 @@ body {
   }
 }
 
-
 /**
  * This rule aligns the keys to the top of the row in the JSON tool
  * renderers when using the `json-edit-react` library.
@@ -153,25 +152,24 @@ body {
   }
 }
 
-
 @theme {
   /* Background Colors */
-  --color-bg-neutral-dark: #EDEDED;
-  --color-bg-neutral-xdark: #D5D5D5;
-  --color-bg-neutral-default: #F5F5F5;
-  --color-bg-neutral-white: #FBFBFB;
-  --color-bg-brand-default: #9B3DCC;
-  --color-bg-brand-secondary: #E8D7FB;
-  --color-bg-white: #FFFFFF;
+  --color-bg-neutral-dark: #ededed;
+  --color-bg-neutral-xdark: #d5d5d5;
+  --color-bg-neutral-default: #f5f5f5;
+  --color-bg-neutral-white: #fbfbfb;
+  --color-bg-brand-default: #9b3dcc;
+  --color-bg-brand-secondary: #e8d7fb;
+  --color-bg-white: #ffffff;
 
   /* Border Colors */
-  --color-bd-neutral-default: #D9D9D9;
-  --color-bd-neutral-secondary: #B3B3B3;
+  --color-bd-neutral-default: #d9d9d9;
+  --color-bd-neutral-secondary: #b3b3b3;
   --color-bd-brand-default: #682888;
 
   /* Text Colors */
-  --color-text-brand-on-brand: #FBFBFB;
-  --color-text-neutral-default: #1E1E1E;
+  --color-text-brand-on-brand: #fbfbfb;
+  --color-text-neutral-default: #1e1e1e;
   --color-text-neutral-secondary: #757575;
 
   --thread-max-width: 44rem;
@@ -243,7 +241,7 @@ body {
   --chart-2: oklch(0.741 0.112 201.39);
   --chart-3: oklch(0.807 0.167 84.29);
   --chart-4: oklch(0.68 0.19 27);
-  --chart-5: oklch(0.63 0.16 265); 
+  --chart-5: oklch(0.63 0.16 265);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);

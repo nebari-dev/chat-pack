@@ -2,12 +2,10 @@
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
 
-
 /**
  * A type alias for a server sent event in an `SSEParserStream`.
  */
-export
-type ServerSentEvent = {
+export type ServerSentEvent = {
   /**
    * The type of the event.
    */
@@ -23,7 +21,6 @@ type ServerSentEvent = {
    */
   readonly id: string;
 };
-
 
 /**
  * A stream which transforms a text stream to `ServerSentEvent`s.
@@ -45,14 +42,14 @@ type ServerSentEvent = {
  * }
  * ```
  */
-export
-class SSEParserStream extends TransformStream<string, ServerSentEvent> {
+export class SSEParserStream extends TransformStream<string, ServerSentEvent> {
   /**
    * Construct a new `SSEParserStream`.
    */
-  constructor() { super(Private.createTransformer()); }
+  constructor() {
+    super(Private.createTransformer());
+  }
 }
-
 
 /**
  * The namespace for the module implementation details.
@@ -61,8 +58,7 @@ namespace Private {
   /**
    * Create the transformer for the `SSEParserStream`.
    */
-  export
-  function createTransformer(): Transformer<string, ServerSentEvent> {
+  export function createTransformer(): Transformer<string, ServerSentEvent> {
     // Setup the mutable variables for the transformer.
     let eventType = '';
     let dataBuffer = '';
@@ -146,26 +142,26 @@ namespace Private {
      */
     function processField(name: string, value: string): void {
       switch (name) {
-      case 'event':
-        eventType = value;
-        break;
-      case 'data':
-        dataBuffer += value + '\n';
-        break;
-      case 'id':
-        lastEventId = value.includes('\0') ? lastEventId : value;
-        break;
-      case 'retry':
-        // TODO: Intentially ignored for now until I better understand how
-        // or if this value could be useful in the context of a stream.
-        console.log(`Ignoring SSE retry | ${name}:${value}`);
-        break;
-      default:
-        // TODO: Any reason to formally report a malformed field? The spec
-        // seems to suggest just simply ingoring it and recovering on the
-        // next event.
-        console.log(`Ignoring malformed SSE field | ${name}:${value}`);
-        break;
+        case 'event':
+          eventType = value;
+          break;
+        case 'data':
+          dataBuffer += value + '\n';
+          break;
+        case 'id':
+          lastEventId = value.includes('\0') ? lastEventId : value;
+          break;
+        case 'retry':
+          // TODO: Intentially ignored for now until I better understand how
+          // or if this value could be useful in the context of a stream.
+          console.log(`Ignoring SSE retry | ${name}:${value}`);
+          break;
+        default:
+          // TODO: Any reason to formally report a malformed field? The spec
+          // seems to suggest just simply ingoring it and recovering on the
+          // next event.
+          console.log(`Ignoring malformed SSE field | ${name}:${value}`);
+          break;
       }
     }
 

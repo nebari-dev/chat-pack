@@ -1,48 +1,45 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import {
-  createFileRoute, useRouter
-} from '@tanstack/react-router';
 
-import {
-  useMutation
-} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { createFileRoute, useRouter } from '@tanstack/react-router';
 
-import {
-  useCallback
-} from 'react';
+import { useCallback } from 'react';
 
-import type {
-  HistoryConfig
-} from '@/context';
+import * as z from 'zod';
 
-import {
-  HistoryConfigContext
-} from '@/context';
+import type { HistoryConfig } from '@/context';
 
-import {
-  History
-} from '@/history';
+import { HistoryConfigContext } from '@/context';
 
-import {
-  deleteThreadsMutation, threadPageQuery
-} from '@/queries';
+import { History } from '@/history';
 
+import { deleteThreadsMutation, threadPageQuery } from '@/queries';
+
+// The schema for the `/history` route search params.
+//
+// These drive server-side pagination and sorting. They are validated by the
+// router and default to showing the most recent threads first.
+const searchSchema = z.object({
+  pageSize: z.number().int().positive().default(10),
+  pageNumber: z.number().int().positive().default(1),
+  sortBy: z.enum(['createdAt', 'name', 'agentId']).default('createdAt'),
+  sortOrder: z.enum(['ascending', 'descending']).default('descending'),
+});
 
 /**
  * The route for the `/history` endpoint.
  */
-export
-const Route = createFileRoute('/_authenticated/history')({
-  loader: ({ context }) => {
-    // TODO - support pagination query params
-    const query = threadPageQuery({});
+export const Route = createFileRoute('/_authenticated/history')({
+  validateSearch: searchSchema,
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) => {
+    const query = threadPageQuery(deps);
     return context.client.fetchQuery(query);
   },
-  component: RouteComponent
+  component: RouteComponent,
 });
-
 
 /**
  * The component that renders the `/sessions` route.
@@ -58,20 +55,23 @@ function RouteComponent() {
   const { mutateAsync } = useMutation(deleteThreadsMutation);
 
   // Create the handler for deleting threads.
-  const deleteThreads = useCallback(async (ids: readonly string[]) => {
-    // Run the mutation to delete the threads.
-    await mutateAsync(ids);
+  const deleteThreads = useCallback(
+    async (ids: readonly string[]) => {
+      // Run the mutation to delete the threads.
+      await mutateAsync(ids);
 
-    // Force the router to reload.
-    await router.invalidate();
-  }, [mutateAsync, router]);
+      // Force the router to reload.
+      await router.invalidate();
+    },
+    [mutateAsync, router],
+  );
 
   // Create the history config.
   const config: HistoryConfig = { page, deleteThreads };
 
   // Return the rendered component.
   return (
-    <HistoryConfigContext value={ config }>
+    <HistoryConfigContext value={config}>
       <History />
     </HistoryConfigContext>
   );

@@ -1,18 +1,14 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import {
-  createContext, useContext
-} from 'react';
+import { createContext, useContext } from 'react';
 
-import * as api from '@/api';
-
+import type * as api from '@/api';
 
 /**
  * The configuration for the chat page.
  */
-export
-type ChatConfig = {
+export type ChatConfig = {
   /**
    * The loaded thread object for the `/chat` `threadId` search param.
    *
@@ -45,24 +41,35 @@ type ChatConfig = {
    * Consumers should account for that possibility.
    */
   readonly detailId: string | undefined;
-};
 
+  /**
+   * Whether the tools panel is open in the chat sidebar.
+   *
+   * When `true`, the chat renders the tools panel (available tools
+   * and capabilities) in place of the message detail sidebar.
+   *
+   * This can be changed by navigating to the `/chat` route with the
+   * desired `showTools` search param.
+   */
+  readonly showTools: boolean | undefined;
+};
 
 /**
  * The chat config context.
  */
-export
-const ChatConfigContext = createContext<ChatConfig | undefined>(undefined);
-
+export const ChatConfigContext = createContext<ChatConfig | undefined>(
+  undefined,
+);
 
 /**
  * A hook which returns the chat config.
  */
-export
-function useChatConfig(): ChatConfig {
+export function useChatConfig(): ChatConfig {
   const config = useContext(ChatConfigContext);
   if (config === undefined) {
-    throw new Error('`useChatConfig` must be called within a `ChatConfigContext`');
+    throw new Error(
+      '`useChatConfig` must be called within a `ChatConfigContext`',
+    );
   }
   return config;
 }

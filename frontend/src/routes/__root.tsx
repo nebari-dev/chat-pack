@@ -1,18 +1,11 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import {
-  Outlet, createRootRouteWithContext
-} from '@tanstack/react-router';
 
-import type {
-  QueryClient
-} from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 
-import type {
-  ReactNode
-} from 'react';
-
+import type { ReactNode } from 'react';
 
 /**
  * The root route context.
@@ -21,15 +14,12 @@ type RouteContext = {
   client: QueryClient;
 };
 
-
 /**
  * The root route.
  */
-export
-const Route = createRootRouteWithContext<RouteContext>()({
+export const Route = createRootRouteWithContext<RouteContext>()({
   component: RouteComponent,
 });
-
 
 /**
  * The component that renders the root route.
