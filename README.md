@@ -56,7 +56,7 @@ Docker images for the frontend and backend are published by pushing a `v$SEMVER`
 
 ## Available tags
 
-Every build publishes a set of tags that depends on what triggered it. `<base>` is the next version computed from the most recent tag (e.g. `1.2.4`); `<semver>` is the version of the release tag (e.g. `1.2.3`); `<n>` is the PR number; `<commit>` is the short commit SHA.
+Every build publishes a set of tags that depends on what triggered it. `<base>` is the next version computed from the most recent tag (e.g. `v1.2.4`); `<semver>` is the version of the release tag (e.g. `v1.2.3`); `<pr>` is the PR number; `<commit>` is the short commit SHA.
 
 Docker images (`quay.io/nebari/nebari-chat-backend` and `quay.io/nebari/nebari-chat-frontend`):
 
@@ -64,7 +64,7 @@ Docker images (`quay.io/nebari/nebari-chat-backend` and `quay.io/nebari/nebari-c
 | --- | --- |
 | Release (`v$SEMVER`) | `<semver>`, `latest` |
 | Push to `main` | `<base>-main`, `main` |
-| Pull request | `<base>-pr.<n>.<commit>`, `<base>-pr.<n>`, `pr.<n>` |
+| Pull request | `<base>-pr.<pr>.<commit>`, `<base>-pr.<pr>`, `pr.<pr>` |
 
 Helm chart (`oci://quay.io/nebari/charts/nebari-chat`):
 
@@ -72,9 +72,7 @@ Helm chart (`oci://quay.io/nebari/charts/nebari-chat`):
 | --- | --- |
 | Release (`chart/v$SEMVER`) | `<semver>` |
 | Push to `main` | `<base>-main` |
-| Pull request | `<base>-pr.<n>.<commit>`, `<base>-pr.<n>` |
-
-The exact docker and helm tags for the latest commit on a pull request are also posted as comments on that PR.
+| Pull request | `<base>-pr.<pr>.<commit>`, `<base>-pr.<pr>` |
 
 ## License
 
