@@ -17,11 +17,14 @@ import { useAgents, useChatConfig } from '@/context';
 
 import { cn } from '@/lib/utils';
 
+import { setToolEnabled, useFrontendToolStates } from './tools';
+
 /**
  * A react component that renders the tools panel for the chat sidebar.
  *
- * The panel shows the tools the current agent can use. Tools are provided
- * by the agent and always active.
+ * The panel shows two groups of tools: the tools provided by the current
+ * agent (always active), and the client-executed frontend tools, which can
+ * be toggled on and off per browser.
  */
 export function ToolsPanel(): ReactNode {
   // Fetch the agents and the current agent id from the chat config.
@@ -45,7 +48,12 @@ export function ToolsPanel(): ReactNode {
       </h1>
       <Separator />
       <div className="p-2 grow overflow-auto flex flex-col gap-4">
-        <Private.ToolList tools={items} />
+        <Private.Group label="Agent" className="pb-2">
+          <Private.AgentToolList tools={items} />
+        </Private.Group>
+        <Private.Group label="Client">
+          <Private.FrontendToolList />
+        </Private.Group>
       </div>
     </section>
   );
@@ -56,12 +64,66 @@ export function ToolsPanel(): ReactNode {
  */
 namespace Private {
   /**
+   * A react component that renders a labeled group of tools.
+   */
+  export function Group(props: {
+    label: string;
+    children: ReactNode;
+    className?: string;
+  }): ReactNode {
+    return (
+      <div className={cn('flex flex-col gap-2', props.className)}>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {props.label}
+        </span>
+        {props.children}
+      </div>
+    );
+  }
+
+  /**
+   * A react component that renders a single tool as a uniform card.
+   *
+   * The trailing `control` slot holds the tool's switch, which the caller
+   * wires up as active or always-on depending on the kind of tool.
+   */
+  export function ToolCard(props: {
+    name: string;
+    description?: string;
+    control: ReactNode;
+  }): ReactNode {
+    const { name, description, control } = props;
+    return (
+      <li
+        className={cn(
+          'h-12 overflow-hidden rounded-sm px-2',
+          'border border-bd-neutral-default',
+          'flex flex-row items-center justify-between gap-2',
+        )}
+      >
+        <div className="min-w-0 flex flex-col">
+          <div className="min-w-0 flex flex-row items-center gap-1.5">
+            <Hammer size={12} className="shrink-0" />
+            <span className="font-mono text-xs truncate">{name}</span>
+          </div>
+          {description ? (
+            <p className="text-xs text-muted-foreground truncate">
+              {description}
+            </p>
+          ) : null}
+        </div>
+        {control}
+      </li>
+    );
+  }
+
+  /**
    * A react component that renders the agent tools as uniform cards.
    *
-   * Every card is the same size. Tools are always active, so each switch is
-   * shown on and disabled.
+   * Agent tools are provided by the server and always active, so each switch
+   * is shown on and disabled.
    */
-  export function ToolList(props: { tools: agui.Tool[] }): ReactNode {
+  export function AgentToolList(props: { tools: agui.Tool[] }): ReactNode {
     // Extract the props.
     const { tools } = props;
 
@@ -78,34 +140,66 @@ namespace Private {
     return (
       <ul className="flex flex-col gap-2">
         {tools.map((tool) => (
-          <li
+          <ToolCard
             key={tool.name}
-            className={cn(
-              'h-12 overflow-hidden rounded-sm px-2',
-              'border border-bd-neutral-default',
-              'flex flex-row items-center justify-between gap-2',
-            )}
-          >
-            <div className="min-w-0 flex flex-col">
-              <div className="min-w-0 flex flex-row items-center gap-1.5">
-                <Hammer size={12} className="shrink-0" />
-                <span className="font-mono text-xs truncate">{tool.name}</span>
-              </div>
-              {tool.description ? (
-                <p className="text-xs text-muted-foreground truncate">
-                  {tool.description}
-                </p>
-              ) : null}
-            </div>
-            <Switch
-              aria-label={`Toggle ${tool.name}`}
-              size="sm"
-              checked
-              disabled
-              className="shrink-0"
-            />
-          </li>
+            name={tool.name}
+            description={tool.description}
+            control={
+              <Switch
+                aria-label={`Toggle ${tool.name}`}
+                size="sm"
+                checked
+                disabled
+                className="shrink-0"
+              />
+            }
+          />
         ))}
+      </ul>
+    );
+  }
+
+  /**
+   * A react component that renders the client-executed frontend tools.
+   *
+   * Each tool has a live switch that enables or disables whether the tool is
+   * advertised to the agent on the next run.
+   */
+  export function FrontendToolList(): ReactNode {
+    // Fetch the frontend tools paired with their enablement state.
+    const states = useFrontendToolStates();
+
+    // Render an empty state when no frontend tools are registered.
+    if (states.length === 0) {
+      return (
+        <p className="text-sm text-muted-foreground">
+          No client tools are available.
+        </p>
+      );
+    }
+
+    // Return the rendered component.
+    return (
+      <ul className="flex flex-col gap-2">
+        {states.map(({ tool, enabled }) => {
+          const { name, description } = tool.definition;
+          return (
+            <ToolCard
+              key={name}
+              name={name}
+              description={description}
+              control={
+                <Switch
+                  aria-label={`Toggle ${name}`}
+                  size="sm"
+                  checked={enabled}
+                  onCheckedChange={(value) => setToolEnabled(name, value)}
+                  className="shrink-0"
+                />
+              }
+            />
+          );
+        })}
       </ul>
     );
   }

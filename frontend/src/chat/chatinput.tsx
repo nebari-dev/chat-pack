@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 
 import { useOnSubmit } from './hooks';
 
+import { FRONTEND_TOOLS } from './tools';
+
 /**
  * A react component that renders the chat input box.
  */
@@ -44,9 +46,14 @@ export function ChatInput(): ReactNode {
   const agents = useAgents();
   const { showTools, agentId } = useChatConfig();
 
-  // Resolve the current agent and determine whether it provides any tools.
+  // Resolve the current agent and determine whether any tools are available.
+  //
+  // The tools panel is available when either the agent provides backend tools
+  // or there are client-executed frontend tools to toggle, so an agent with no
+  // backend tools still exposes the available frontend tools.
   const agent = agents.find((a) => a.id === agentId);
-  const hasTools = (agent?.capabilities?.tools?.items?.length ?? 0) > 0;
+  const hasAgentTools = (agent?.capabilities?.tools?.items?.length ?? 0) > 0;
+  const hasTools = hasAgentTools || FRONTEND_TOOLS.length > 0;
 
   // Check file-related permissions.
   const canAttachFiles = useHasPermissions(['files:read', 'files:write']);

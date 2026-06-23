@@ -3,6 +3,8 @@
 |----------------------------------------------------------------------------*/
 import * as agui from '@ag-ui/core';
 
+import type { QueryClient } from '@tanstack/react-query';
+
 import { mutationOptions, queryOptions } from '@tanstack/react-query';
 
 import { applyPatch } from 'fast-json-patch';
@@ -13,9 +15,17 @@ import { produce } from 'immer';
 
 import * as api from '@/api';
 
+import { isFrontendTool, runFrontendTool } from '@/chat/tools';
+
 import { classifyError, RunError } from '@/lib/errors';
 
 import { notifyError } from '@/lib/notifications';
+
+/**
+ * The maximum number of frontend-tool round-trips allowed for a single
+ * submission, after which the loop stops to avoid runaway tool calling.
+ */
+const MAX_FRONTEND_TOOL_ROUNDS = 5;
 
 /**
  * A query for fetching a thread by id.
@@ -114,36 +124,56 @@ export const createRunMutation = mutationOptions({
     // Clear any stale inline error for this thread before submitting.
     context.client.setQueryData(threadErrorKey(options.threadId), null);
 
-    // Optimistically update the query cache with the new messages.
-    context.client.setQueryData<api.ThreadMessages>(queryKey, (prev) => [
-      ...(prev ?? []),
-      ...options.messages,
-    ]);
+    // The options for the run currently being submitted. This is replaced
+    // with a follow-up run whenever the agent calls a frontend tool.
+    let runOptions = options;
 
-    // Create the event stream for the run.
-    const stream = api.createRun(options);
+    // Drive the run, resolving any frontend tool calls and resubmitting,
+    // until the agent finishes without an outstanding frontend tool call.
+    for (let round = 0; ; round++) {
+      // Execute the run and process its event stream.
+      await Private.runOnce(runOptions, queryKey, context.client);
 
-    // Handle the events from the stream.
-    for await (const evt of stream) {
-      // A backend run error arrives as a successful stream of a failure
-      // event. Surface it as a toast and as inline thread state, since the
-      // mutation itself does not reject in this case.
-      if (evt.type === agui.EventType.RUN_ERROR) {
-        const error = new RunError(evt.message);
-        notifyError(error);
-        context.client.setQueryData(
-          threadErrorKey(options.threadId),
-          classifyError(error).message,
-        );
-        continue;
+      // Find any frontend tool calls the agent made that are still missing
+      // a result.
+      const messages =
+        context.client.getQueryData<api.ThreadMessages>(queryKey) ?? [];
+      const pending = Private.findPendingFrontendToolCalls(messages);
+
+      // The agent is done once there are no outstanding frontend tool calls.
+      if (pending.length === 0) {
+        break;
       }
 
-      context.client.setQueryData<api.ThreadMessages>(
-        queryKey,
-        produce((draft) => {
-          Private.processEvent(evt, draft!);
-        }),
+      // Stop rather than loop forever if the agent keeps calling tools.
+      if (round >= MAX_FRONTEND_TOOL_ROUNDS) {
+        console.warn(
+          `Reached max frontend tool rounds (${MAX_FRONTEND_TOOL_ROUNDS}); stopping.`,
+        );
+        break;
+      }
+
+      // Execute the pending tools in the browser and build the result
+      // messages for the follow-up run.
+      const toolMessages: api.ThreadMessages = await Promise.all(
+        pending.map(async (tc) => ({
+          role: 'tool' as const,
+          id: crypto.randomUUID(),
+          toolCallId: tc.id,
+          content: await runFrontendTool(tc.name, tc.arguments, {
+            threadId: options.threadId,
+          }),
+        })),
       );
+
+      // Submit the tool results as a follow-up run, re-advertising the
+      // tools so the agent may call them again.
+      runOptions = {
+        threadId: options.threadId,
+        messages: toolMessages,
+        tools: options.tools,
+        context: options.context,
+      };
     }
   },
   onError: (error, options, _onMutateResult, context) => {
@@ -164,6 +194,116 @@ namespace Private {
    * A type alias for a writable draft of thread messages.
    */
   export type Draft = WritableDraft<api.ThreadMessages>;
+
+  /**
+   * A type alias for an outstanding frontend tool call.
+   */
+  export type PendingToolCall = {
+    /**
+     * The unique id of the tool call.
+     */
+    readonly id: string;
+
+    /**
+     * The name of the tool being called.
+     */
+    readonly name: string;
+
+    /**
+     * The raw JSON string of the tool call arguments.
+     */
+    readonly arguments: string;
+  };
+
+  /**
+   * Execute a single run and process its event stream into the cache.
+   *
+   * This optimistically appends the run's input messages, then folds each
+   * streamed ag-ui event into the cached thread messages. Backend run errors
+   * are surfaced as a toast and as inline thread error state.
+   *
+   * @param runOptions - The options for the run to execute.
+   *
+   * @param queryKey - The query key for the thread messages.
+   *
+   * @param client - The query client used to read and write the cache.
+   */
+  export async function runOnce(
+    runOptions: api.createRun.Options,
+    queryKey: readonly unknown[],
+    client: QueryClient,
+  ): Promise<void> {
+    // Optimistically update the query cache with the new messages.
+    client.setQueryData<api.ThreadMessages>(queryKey, (prev) => [
+      ...(prev ?? []),
+      ...runOptions.messages,
+    ]);
+
+    // Create the event stream for the run.
+    const stream = api.createRun(runOptions);
+
+    // Handle the events from the stream.
+    for await (const evt of stream) {
+      // A backend run error arrives as a successful stream of a failure
+      // event. Surface it as a toast and as inline thread state, since the
+      // mutation itself does not reject in this case.
+      if (evt.type === agui.EventType.RUN_ERROR) {
+        const error = new RunError(evt.message);
+        notifyError(error);
+        client.setQueryData(
+          threadErrorKey(runOptions.threadId),
+          classifyError(error).message,
+        );
+        continue;
+      }
+
+      client.setQueryData<api.ThreadMessages>(
+        queryKey,
+        produce((draft) => {
+          processEvent(evt, draft!);
+        }),
+      );
+    }
+  }
+
+  /**
+   * Find frontend tool calls in the messages that lack a result.
+   *
+   * A frontend tool call is one made by the agent whose name matches a
+   * registered frontend tool. Backend tool calls (which receive their result
+   * over the same stream) are ignored, as are calls that already have a
+   * corresponding `tool` result message.
+   *
+   * @param messages - The current thread messages.
+   *
+   * @returns The outstanding frontend tool calls, in order.
+   */
+  export function findPendingFrontendToolCalls(
+    messages: api.ThreadMessages,
+  ): PendingToolCall[] {
+    // Collect the ids of tool calls that already have a result.
+    const resolved = new Set<string>();
+    for (const msg of messages) {
+      if (msg.role === 'tool') {
+        resolved.add(msg.toolCallId);
+      }
+    }
+
+    // Collect frontend tool calls that are still missing a result.
+    const pending: PendingToolCall[] = [];
+    for (const msg of messages) {
+      if (msg.role !== 'assistant' || !msg.toolCalls) {
+        continue;
+      }
+      for (const tc of msg.toolCalls) {
+        const name = tc.function.name;
+        if (isFrontendTool(name) && !resolved.has(tc.id)) {
+          pending.push({ id: tc.id, name, arguments: tc.function.arguments });
+        }
+      }
+    }
+    return pending;
+  }
 
   /**
    * Dispatch an ag-ui event to the appropriate event handler.
