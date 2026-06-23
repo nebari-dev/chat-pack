@@ -46,6 +46,11 @@ frontend:
   # -- Number of replicas for the frontend
   replicaCount: 1
 
+  # -- Annotations to add to the frontend pod metadata
+  podAnnotations: {}
+  # -- Extra labels to add to the frontend pod metadata
+  podLabels: {}
+
   image:
     # -- The repository of the main application image
     repository: quay.io/nebari/nebari-chat-frontend

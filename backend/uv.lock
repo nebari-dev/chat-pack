@@ -1584,7 +1584,7 @@ wheels = [
 
 [[package]]
 name = "ravnar"
-version = "0.0.11"
+version = "0.0.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ag-ui-protocol" },
@@ -1595,7 +1595,6 @@ dependencies = [
     { name = "jsonpatch" },
     { name = "l2sl" },
     { name = "opentelemetry-api" },
-    { name = "opentelemetry-exporter-otlp" },
     { name = "opentelemetry-instrumentation-fastapi" },
     { name = "opentelemetry-instrumentation-sqlalchemy" },
     { name = "opentelemetry-sdk" },
@@ -1608,9 +1607,9 @@ dependencies = [
     { name = "typer" },
     { name = "universal-pathlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b8/f2/bc096948ba6ed609eb6cbf52d90132f302e99098729c2b6260ff296709f6/ravnar-0.0.11.tar.gz", hash = "sha256:3b98a6a57d6426f8f146e29da1905c6cca23d53ff98ff80935b018742ebf1ad3", size = 38666, upload-time = "2026-05-29T11:36:40.426Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a6/45/20dcd7e51cf871443b7b4b2caff5a3e26d9da93725cfbb46333f3a0558c2/ravnar-0.0.14.tar.gz", hash = "sha256:d95669d225bc7d8156237bcc9d3a616896db07ef853de8bd135beccb86bd30ff", size = 41211, upload-time = "2026-06-16T13:52:02.699Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/6f/7b93abfd44e13ce2a1d23076cb9bc736264fa07693143a2485469a82c899/ravnar-0.0.11-py3-none-any.whl", hash = "sha256:9b329c057ff50826a8c563e3a902aaeee2f3cef5350d6c932d47c256b880cc47", size = 47155, upload-time = "2026-05-29T11:36:39.287Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/36/c5617533039a5149c4d186e7c5d8a56c406bad1d4049436a543d0f4d46be/ravnar-0.0.14-py3-none-any.whl", hash = "sha256:8493a2ee0cbc750bf816e74a5fca5c5572f6e4dd20a4ab8d50262a0c48f4db35", size = 50810, upload-time = "2026-06-16T13:52:03.506Z" },
 ]
 
 [package.optional-dependencies]
@@ -1630,6 +1629,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "httpx" },
     { name = "openai" },
+    { name = "opentelemetry-exporter-otlp" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pyjwt" },
     { name = "ravnar", extra = ["pydantic-ai", "serve"] },
@@ -1655,9 +1655,10 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.7" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "openai", specifier = ">=2.35.1,<3" },
+    { name = "opentelemetry-exporter-otlp", specifier = ">=1.39.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9,<4" },
     { name = "pyjwt", specifier = ">=2.12.1,<3" },
-    { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.11" },
+    { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.14" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
 ]
 
