@@ -15,10 +15,10 @@ const config: Config = {
   },
 
   url: 'https://nebari-dev.github.io',
-  baseUrl: '/nebari-chat-pack/',
+  baseUrl: '/chat-pack/',
 
   organizationName: 'nebari-dev',
-  projectName: 'nebari-chat-pack',
+  projectName: 'chat-pack',
 
   onBrokenLinks: 'throw',
 
@@ -53,7 +53,7 @@ const config: Config = {
           sidebarCollapsible: true,
           showLastUpdateTime: true,
           editUrl:
-            'https://github.com/nebari-dev/nebari-chat-pack/edit/main/docs/docs/',
+            'https://github.com/nebari-dev/chat-pack/edit/main/docs/docs/',
         },
         blog: false,
         theme: {
@@ -83,7 +83,7 @@ const config: Config = {
       },
       items: [
         {
-          href: 'https://github.com/nebari-dev/nebari-chat-pack',
+          href: 'https://github.com/nebari-dev/chat-pack',
           label: 'GitHub',
           position: 'right',
         },
@@ -97,7 +97,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/nebari-dev/nebari-chat-pack',
+              href: 'https://github.com/nebari-dev/chat-pack',
             },
             {
               label: 'Nebari',
