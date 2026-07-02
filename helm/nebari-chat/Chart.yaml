@@ -2,8 +2,8 @@ apiVersion: v2
 name: nebari-chat
 type: application
 description: chat pack for nebari
-version: "set-by-cd"
-appVersion: "set-by-cd"
+version: "0.0.0"
+appVersion: "0.0.0"
 keywords:
   - nebari
 home: https://github.com/nebari-dev/nebari-chat-pack
@@ -17,3 +17,7 @@ dependencies:
   - name: ravnar
     repository: oci://quay.io/nebari/charts
     version: "0.0.10"
+  - name: nebari-app
+    repository: file://../../../nebari-operator/charts/nebari-app
+    # repository: oci://quay.io/nebari/charts
+    version: "0.1.0"

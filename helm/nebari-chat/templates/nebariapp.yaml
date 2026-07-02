@@ -1,0 +1,34 @@
+{{- $component := "nebariapp" }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    nebari.dev/managed: "true"
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+---
+{{- $component := "backend" }}
+{{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
+{{- include "nebari-chat.nebariApp" (dict
+    "top" $
+    "component" $component
+    "spec" (mergeOverwrite (dict
+      "service" (dict
+        "name" (include "ravnar.fullname" .)
+        "port" .Values.service.port
+      )
+    ) $.Values.backend.nebariApp)
+) }}
+{{- end }}
+---
+{{- $component := "frontend" }}
+{{- include "nebari-chat.nebariApp" (dict
+    "top" $
+    "component" $component
+    "spec" (mergeOverwrite (dict
+      "service" (dict
+        "name" (include "ravnar.component-name" (dict "top" . "component" $component))
+        "port" .Values.frontend.service.port
+      )
+    ) .Values.frontend.nebariApp)
+) }}

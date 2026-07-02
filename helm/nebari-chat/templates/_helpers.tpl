@@ -2,119 +2,17 @@
 NebariApp helper template.
 Expects a dict with keys: top, component, service, nebariapp
 */}}
-{{- define "nebari-chat.nebariapp" -}}
+{{- define "nebari-chat.nebariApp" -}}
 {{- $top := .top -}}
 {{- $component := .component -}}
-{{- $service := .service -}}
-{{- $nebariapp := .nebariapp -}}
-apiVersion: reconcilers.nebari.dev/v1
-kind: NebariApp
-metadata:
-  name: {{ include "ravnar.component-name" (dict "top" $top "component" $component) }}
-  namespace: {{ $top.Release.Namespace }}
-  labels:
-    {{- include "ravnar.labels" (dict "top" $top "component" $component) | nindent 4 }}
-spec:
-  hostname: {{ required (printf "%s.nebariapp.hostname is required" $component) $nebariapp.hostname }}
-  service:
-    name: {{ $service.name }}
-    port: {{ $service.port }}
-    {{- with $service.namespace }}
-    namespace: {{ . }}
-    {{- end }}
-  {{- with $nebariapp.serviceAccountName }}
-  serviceAccountName: {{ . }}
-  {{- end }}
-  {{- with $nebariapp.routing }}
-  routing:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- with $nebariapp.auth }}
-  auth:
-    enabled: {{ .enabled }}
-    provider: {{ .provider }}
-    provisionClient: {{ .provisionClient }}
-    enforceAtGateway: {{ .enforceAtGateway }}
-    redirectURI: {{ .redirectURI }}
-    {{- with .clientSecretRef }}
-    clientSecretRef: {{ . }}
-    {{- end }}
-    {{- with .scopes }}
-    scopes:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- with .groups }}
-    groups:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- with .forwardAccessToken }}
-    forwardAccessToken: {{ . }}
-    {{- end }}
-    {{- with .denyRedirect }}
-    denyRedirect:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- with .issuerURL }}
-    issuerURL: {{ . }}
-    {{- end }}
-    {{- with .spaClient }}
-    spaClient:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- with .deviceFlowClient }}
-    deviceFlowClient:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- with .keycloakConfig }}
-    keycloakConfig:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- with .tokenExchange }}
-    tokenExchange:
-      {{- toYaml . | nindent 6 }}
-    {{- end }}
-  {{- end }}
-  {{- with $nebariapp.gateway }}
-  gateway: {{ . }}
-  {{- end }}
-  {{- with .nebariapp.landingPage }}
-  landingPage:
-    enabled: {{ .enabled | default false }}
-    {{- with .displayName }}
-    displayName: {{ . | quote }}
-    {{- end }}
-    {{- with .description }}
-    description: {{ . | quote }}
-    {{- end }}
-    {{- with .icon }}
-    icon: {{ . | quote }}
-    {{- end }}
-    {{- with .category }}
-    category: {{ . | quote }}
-    {{- end }}
-    {{- if kindIs "float64" .priority }}
-    priority: {{ .priority }}
-    {{- end }}
-    {{- with .externalUrl }}
-    externalUrl: {{ . | quote }}
-    {{- end }}
-    {{- with .healthCheck }}
-    healthCheck:
-      enabled: {{ .enabled | default false }}
-      {{- with .path }}
-      path: {{ . | quote }}
-      {{- end }}
-      {{- if .intervalSeconds }}
-      intervalSeconds: {{ .intervalSeconds }}
-      {{- end }}
-      {{- if .timeoutSeconds }}
-      timeoutSeconds: {{ .timeoutSeconds }}
-      {{- end }}
-      {{- if .port }}
-      port: {{ .port }}
-      {{- end }}
-    {{- end }}
-  {{- end }}
+{{- include "nebari-app.nebariApp" (dict
+    "metadata" (dict
+      "name"      (include "ravnar.component-name" (dict "top" $top "component" $component))
+      "namespace" $top.Release.Namespace
+      "labels"    (include "ravnar.labels" (dict "top" $top "component" $component) | fromYaml)
+    )
+    "spec" .spec
+) -}}
 {{- end -}}
 
 {{/*

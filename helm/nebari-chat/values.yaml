@@ -30,7 +30,7 @@ ravnar:
     enabled: false
 
 backend:
-  nebariapp:
+  nebariApp:
     # -- The hostname for the backend NebariApp
     hostname: ""
     # -- Routing configuration for the backend NebariApp
@@ -107,7 +107,7 @@ frontend:
     # -- The URL of the backend API. Auto-detected if not set
     url: ""
 
-  nebariapp:
+  nebariApp:
     # -- The hostname for the frontend NebariApp
     hostname: ""
     # -- Authentication configuration for the frontend NebariApp

@@ -1,8 +1,0 @@
-{{- $component := "nebariapp" }}
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: {{ .Release.Namespace }}
-  labels:
-    nebari.dev/managed: "true"
-    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
