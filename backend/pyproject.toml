@@ -23,6 +23,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0,<3",
     "psycopg[binary,pool]>=3.2.9,<4",
     "ravnar[serve,pydantic-ai]==0.0.14",
+    "mcp>=1.0",
     "opentelemetry-exporter-otlp>=1.39.0",
 ]
 dynamic = ["version"]
