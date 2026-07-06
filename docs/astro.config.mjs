@@ -24,8 +24,7 @@ export default defineConfig({
       customCss: [
         '@fontsource-variable/geist',
         '@fontsource/ibm-plex-mono',
-        './src/styles/nebari-tokens.css',
-        './src/styles/starlight-theme.css',
+        './src/styles/tailwind.css',
       ],
       components: {
         SocialIcons: './src/components/SocialIcons.astro',
