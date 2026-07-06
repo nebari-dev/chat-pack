@@ -4,3 +4,14 @@ security:
     params:
       keycloak_url: '{{ required "keycloak.url is required" .Values.keycloak.url }}'
       realm: "{{ .Values.keycloak.realm }}"
+
+observability:
+  tracing:
+    span_processors:
+      - cls_or_fn: opentelemetry.sdk.trace.export.BatchSpanProcessor
+        params:
+          span_exporter:
+            cls_or_fn: opentelemetry.exporter.otlp.proto.grpc.trace_exporter.OTLPSpanExporter
+            params:
+              endpoint: opentelemetry-collector.monitoring.svc.cluster.local:4317
+              insecure: true
