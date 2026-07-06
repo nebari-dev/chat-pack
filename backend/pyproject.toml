@@ -24,6 +24,7 @@ dependencies = [
     "psycopg[binary,pool]>=3.2.9,<4",
     "ravnar[serve,pydantic-ai]==0.0.14",
     "opentelemetry-exporter-otlp>=1.39.0",
+    "pydantic-ai-slim[mcp]",
 ]
 dynamic = ["version"]
 
