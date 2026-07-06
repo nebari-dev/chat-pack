@@ -4,10 +4,10 @@ backend/config.yml
 backend/config.yaml
 .ravnar_local
 
-# Docs (Docusaurus)
+# Docs (Astro)
 docs/node_modules/
-docs/build/
-docs/.docusaurus/
+docs/dist/
+docs/.astro/
 docs/.cache-loader/
 
 # Local agent / contributor playbook (not for the public repo)
