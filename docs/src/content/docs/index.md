@@ -1,10 +1,6 @@
 ﻿---
 title: Introduction
 description: Documentation for the Nebari Chat pack — deploy a chat interface on Nebari.
-slug: /
-sidebar_position: 1
-last_update:
-  date: 2026-06-04
 ---
 
 # Nebari Chat Pack
