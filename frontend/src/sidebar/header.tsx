@@ -28,6 +28,7 @@ export function Header(props: Header.Props): ReactNode {
         to="/"
         className={cn(
           'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)] bg-[auto_100px]',
+          'dark:bg-[url(/assets/Nebari-Logo-Horizontal-Lockup-Dark.svg)]',
           'bg-center bg-no-repeat w-[100px] cursor-pointer ml-2',
           isSidebarOpen ? '' : 'hidden',
         )}

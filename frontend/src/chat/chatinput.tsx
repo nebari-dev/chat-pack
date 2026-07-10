@@ -283,7 +283,7 @@ export function ChatInput(): ReactNode {
   return (
     <div
       className={cn(
-        'pb-6 bg-white mx-auto w-full min-w-3xs max-w-3xl sticky bottom-0',
+        'pb-6 bg-background mx-auto w-full min-w-3xs max-w-3xl sticky bottom-0',
       )}
     >
       <form
