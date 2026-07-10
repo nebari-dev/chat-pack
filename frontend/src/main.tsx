@@ -14,6 +14,7 @@ import { createRoot } from 'react-dom/client';
 
 import { ErrorBoundary, ErrorFallback } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from '@/hooks/themecontext';
 import { notifyError } from '@/lib/notifications';
 
 import { routeTree } from './routeTree.gen';
@@ -52,10 +53,12 @@ function App() {
   return (
     <StrictMode>
       <ErrorBoundary>
-        <QueryClientProvider client={client}>
-          <RouterProvider router={router} />
-          <Toaster />
-        </QueryClientProvider>
+        <ThemeProvider>
+          <QueryClientProvider client={client}>
+            <RouterProvider router={router} />
+            <Toaster />
+          </QueryClientProvider>
+        </ThemeProvider>
       </ErrorBoundary>
     </StrictMode>
   );

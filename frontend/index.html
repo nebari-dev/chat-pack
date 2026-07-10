@@ -8,6 +8,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <title>Nebari Chat</title>
+    <script>
+      // Apply the persisted (or OS-preferred) theme before first paint to
+      // avoid a flash of the wrong theme. Kept in sync with useThemePreference.
+      (function () {
+        try {
+          var mode = localStorage.getItem('nebari-chat:themeMode');
+          var prefersDark = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+          ).matches;
+          var isDark = mode === 'dark' || (mode !== 'light' && prefersDark);
+          document.documentElement.classList.toggle('dark', isDark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <script type="module" src="/src/main.tsx"></script>
