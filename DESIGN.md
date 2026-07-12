@@ -2,28 +2,28 @@
 
 ## Summary
 
-Replace the hardcoded `keycloak-js` dependency in the frontend with `oidc-spa`, a library that implements the same OIDC flow abstracted over any OpenID Connect provider. The runtime config file changes from a Keycloak-specific schema (`auth-server-url` + `realm`) to a provider-agnostic schema (`issuer` + `client_id`). The public API surface of `src/auth/index.ts` stays the same. The backend already works with any OIDC issuer via Ravnar's `OIDCTokenValidator` and is untouched by this design.
+Replace the hardcoded `keycloak-js` dependency in the frontend with `oidc-spa`, a library that implements the same OIDC flow abstracted over any OpenID Connect provider. The runtime config file changes from a Keycloak-specific schema (`auth-server-url` + `realm`) to a provider-agnostic schema (`issuer` + `client_id`). The public API surface of `src/auth/index.ts` stays the same. On the backend, delete `_authenticators.py` — the `BearerTokenAuthenticator` + `OIDCTokenValidator` stack can be declared inline in `config.yaml` via Ravnar's `ImportStringWithParams` resolution. A single `oidc` values block replaces the old `keycloak` block.
 
 ## Goals
 
 - Frontend authenticates against **any OIDC-compliant identity provider** (Keycloak, Auth0, Okta, Azure AD, Google, etc.).
 - All existing callers of `@/auth` — `fetch()`, `login()`, `logout()`, `getUserProfile()` — continue to work without changes.
 - The `VITE_AUTH_ENABLED=false` dev bypass continues to work.
-- The Helm chart generates generic `auth-config.json` from the existing `keycloak.*` values.
-- **No backend changes** — the backend's `keycloak_authenticator` helper stays as-is; it already works with any OIDC issuer.
-- **No new Helm values** — the existing `keycloak` block is reused; the dead `frontend.keycloak` block is cleaned up.
+- Delete `src/ravnar_nebari_chat/_authenticators.py` — the backend auth is declared inline in `config.yaml` using Ravnar's dynamic import system.
+- Single `oidc` values block in Helm for both frontend and backend config.
+- Remove the dead `frontend.keycloak` block from values.
 
 ## Non-Goals
 
-- **Backend changes.** The backend's `keycloak_authenticator` is already OIDC-generic underneath (`OIDCTokenValidator` accepts any issuer URL). It stays completely untouched — it's just a convenience helper that concatenates `keycloak_url` + `realm` into an issuer URL. No backend source, config, deployment, or Helm template changes in this design.
-- Gateway-level auth. The NebariApp operator still handles ingress authentication and OIDC client provisioning; this design only touches the SPA-side auth.
-- Runtime multi-provider switching. The config file declares one issuer per deployment.
+- Gateway-level auth. The NebariApp operator still handles ingress authentication and OIDC client provisioning; this design only touches the SPA-side auth and the backend's token validation config.
+- Runtime multi-provider switching. The config declares one issuer per deployment.
+- Changes to Ravnar itself.
 
 ## Background / Motivation
 
-The Nebari Chat Pack frontend uses `keycloak-js` directly, which ties it to Keycloak as the identity provider. The runtime config (`public/keycloak-config.json`) uses Keycloak-specific fields (`auth-server-url`, `realm`, `resource`). The backend is already generic — `ravnar_nebari_chat.keycloak_authenticator` is just a convenience wrapper that feeds `keycloak_url` + `realm` into Ravnar's `OIDCTokenValidator`, which accepts any OIDC issuer URL. Any deployment already points the backend at the correct issuer by overriding the Keycloak URL.
+The Nebari Chat Pack frontend uses `keycloak-js` directly, which ties it to Keycloak as the identity provider. The runtime config (`public/keycloak-config.json`) uses Keycloak-specific fields (`auth-server-url`, `realm`, `resource`).
 
-The Nebari default deployment uses Keycloak, and the gateway-level auth (NebariApp operator) will continue to reference Keycloak. This design only decouples the frontend SPA authentication from the Keycloak SDK, so deployments using a different IdP can swap it out by changing a config file.
+The backend currently has a thin factory `ravnar_nebari_chat.keycloak_authenticator` that concatenates `keycloak_url` + `realm` into an issuer URL and wraps `OIDCTokenValidator` in `BearerTokenAuthenticator`. The `OIDCTokenValidator` is already fully generic — this factory is entirely wiring. With Ravnar's `ImportStringWithParams` (which recursively resolves nested `cls_or_fn` in `params`), the same wiring can be expressed declaratively in YAML, eliminating the custom Python module.
 
 ## Design
 
@@ -122,32 +122,63 @@ Zero changes to callers. All four consumption sites reference `@/auth` purely th
 
 The `FetchError` class is also unchanged.
 
-### 5. Helm Chart Changes (frontend only)
+### 5. Backend: Delete `_authenticators.py`, Inline Auth Config
 
-**`values.yaml` — no change to top-level keys. The existing `keycloak` block is reused for both frontend and backend. Only the ConfigMap template changes.**
+**Delete** `src/ravnar_nebari_chat/_authenticators.py`. The factory function is no longer needed — Ravnar's `ImportStringWithParams` resolves nested `cls_or_fn` blocks in YAML, so the `BearerTokenAuthenticator` + `OIDCTokenValidator` wiring moves into `config.yaml`.
+
+The backend `config.yaml` becomes:
 
 ```yaml
-# Existing (unchanged — backend references .Values.keycloak.url, frontend generates config from same values)
+security:
+  authenticator:
+    cls_or_fn: _ravnar.authenticators.BearerTokenAuthenticator
+    params:
+      token_validator:
+        cls_or_fn: _ravnar.authenticators.OIDCTokenValidator
+        params:
+          issuer: '{{ required "oidc.issuer is required" .Values.oidc.issuer }}'
+          default_permissions:
+            - threads:read
+            - threads:write
+            - threads:delete
+            - agents:read
+```
+
+Ravnar's `ImportStringWithParams._validate_nested` recursively processes `cls_or_fn` keys inside `params`, constructing the inner `OIDCTokenValidator` first and passing it as the `token_validator` argument to `BearerTokenAuthenticator`.
+
+### 6. Helm Chart Changes
+
+**`values.yaml` — replace `keycloak` block with `oidc` block:**
+
+```yaml
+# Removed
 keycloak:
-  # The URL of the Keycloak server (used by backend authenticator)
   url: ""
-  # The Keycloak realm to use (used by backend authenticator)
   realm: "nebari"
-  # The SPA client ID. If not set, defaults to a generated value matching the current scheme.
+  clientId: ""
+
+# Removed (dead key — never referenced in templates)
+frontend:
+  ...
+  keycloak: ...
+
+# Added
+oidc:
+  # Full OIDC issuer URL, e.g. https://keycloak.example.com/realms/nebari
+  issuer: ""
+  # SPA client ID. If not set, defaults to a generated value matching the current scheme.
   clientId: ""
 ```
 
-The frontend config is derived from the same `keycloak` values — the old `frontend.keycloak` block (which was unused) is removed.
-
-**`templates/frontend-configmap.yaml` — generate `auth-config.json` instead of `keycloak-config.json`:**
+**`templates/frontend-configmap.yaml` — generate `auth-config.json`:**
 
 ```yaml
 data:
   auth-config.json: |
     {{
       dict
-        "issuer" (required "auth.issuer is required" .Values.auth.issuer)
-        "client_id" (.Values.auth.clientId | default (printf "%s-%s-spa" .Release.Namespace ...))
+        "issuer" (required "oidc.issuer is required" .Values.oidc.issuer)
+        "client_id" (.Values.oidc.clientId | default (printf "%s-%s-spa" .Release.Namespace ...))
       | toPrettyJson | nindent 4
     }}
 ```
@@ -159,9 +190,35 @@ mountPath: /usr/share/nginx/html/auth-config.json
 subPath: auth-config.json
 ```
 
-The mount uses `subPath` so only the single file is mounted into the nginx static directory.
+**`config.yaml` — backend auth config uses the same `oidc` values:**
 
-### 6. `.env` / Dev Experience
+```yaml
+security:
+  authenticator:
+    cls_or_fn: _ravnar.authenticators.BearerTokenAuthenticator
+    params:
+      token_validator:
+        cls_or_fn: _ravnar.authenticators.OIDCTokenValidator
+        params:
+          issuer: '{{ required "oidc.issuer is required" .Values.oidc.issuer }}'
+          default_permissions:
+            - threads:read
+            - threads:write
+            - threads:delete
+            - agents:read
+```
+
+A Keycloak default can be provided in the chart's `values.yaml`:
+
+```yaml
+oidc:
+  issuer: ""
+  clientId: ""
+```
+
+The deployer sets `oidc.issuer` to the full issuer URL (e.g., `https://keycloak.example.com/realms/nebari`). For the default Nebari Keycloak deployment, this is the same URL the old `keycloak.url` + `keycloak.realm` concatenated to.
+
+### 7. `.env` / Dev Experience
 
 No changes. `VITE_AUTH_ENABLED=false` continues to bypass auth entirely. When developing against a real IdP, the developer creates a local `public/auth-config.json` (added to `.gitignore` like `.env`).
 
@@ -170,9 +227,10 @@ No changes. `VITE_AUTH_ENABLED=false` continues to bypass auth entirely. When de
 | Risk | Mitigation |
 |------|------------|
 | **oidc-spa is newer** than `oidc-client-ts`. While actively maintained (Keycloakify team), it has a smaller userbase. | The surface area we use is narrow (init, login, logout, get token, parse ID token). If oidc-spa has issues, switching to `oidc-client-ts` is a confined change within `src/auth/index.ts`. |
-| **Breaking config format change.** The frontend ConfigMap now generates `auth-config.json` with `{issuer, client_id}` instead of `keycloak-config.json`. Values stay at `keycloak.*` — no migration needed for the values file itself. | The frontend image must be updated to load `auth-config.json`. Old `keycloak-config.json` file is no longer served. No backward-compat shim — the user confirmed BC can break. |
-| **`window.location.origin` as `redirect_uri`** may not cover all deployment topologies (e.g., app behind a reverse proxy with a different external origin). | The NebariApp operator already handles this via the `hostname` field. The SPA always runs at `window.location.origin`. If a future deployment needs a different redirect URI, it can be added to the config file. |
-| **Scope hardcoded to `openid email name`.** If a deployment needs extra scopes (e.g., for group claims), the config file would need a `scope` field. | Add when needed — changing the hardcoded default to a configurable value is a one-line change. |
+| **Breaking change — `keycloak` values block removed.** Existing deployments must migrate to `oidc.issuer` + `oidc.clientId`. The old `keycloak_config`+`realm` two-value scheme is replaced by a single issuer URL. | Acceptable per user. The `required` directive in the ConfigMap template makes the fix obvious. |
+| **Breaking change — `keycloak-config.json` file no longer served.** The frontend now loads `auth-config.json`. | The frontend image must be updated to load the new filename. No backward-compat shim. |
+| **Removing `_authenticators.py`** — if any external deployment imports `ravnar_nebari_chat.keycloak_authenticator`, it breaks. | This is an internal module used only by the chart's `config.yaml`. No external consumers known. |
+| **Backend `config.yaml` uses Ravnar-internal dotted paths** (`_ravnar.authenticators.*`). These are not a public Ravnar API and could change between versions. | The `BearerTokenAuthenticator` and `OIDCTokenValidator` classes are core to Ravnar's auth model and unlikely to change incompatibly. If they do, the factory function would have broken too — the difference is just where the import path lives. |
 
 ## Testing Strategy
 
@@ -186,7 +244,7 @@ No changes. `VITE_AUTH_ENABLED=false` continues to bypass auth entirely. When de
 
 ### Manual smoke test (Keycloak)
 
-1. Deploy with `keycloak.url`, `keycloak.realm`, and `keycloak.clientId` set (as before — values unchanged).
+1. Deploy with `oidc.issuer` and `oidc.clientId` set (e.g. `oidc.issuer: https://keycloak.example.com/realms/nebari`).
 2. Visit the app — should redirect to Keycloak login.
 3. Log in — should return to the app with user profile shown in sidebar.
 4. Log out — should redirect to Keycloak logout and return to the app's login page.
@@ -194,7 +252,7 @@ No changes. `VITE_AUTH_ENABLED=false` continues to bypass auth entirely. When de
 
 ### Manual smoke test (alternative OIDC provider)
 
-1. Deploy with `keycloak.url` and `keycloak.clientId` pointed at a non-Keycloak OIDC provider (e.g., Auth0 or Okta dev tenant). The backend's `keycloak_authenticator` validates tokens from the same issuer.
+1. Deploy with `oidc.issuer` pointed at a non-Keycloak OIDC provider (e.g., Auth0 or Okta dev tenant).
 2. Repeat steps 2–5 above.
 
 ### Browser storage
