@@ -8,12 +8,11 @@ metadata:
   labels:
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
 data:
-  keycloak-config.json: |
+  auth-config.json: |
     {{-
     dict
-      "auth-server-url" (required "keycloak.url is required" .Values.keycloak.url)
-      "realm" (required "keycloak.realm is required" .Values.keycloak.realm)
-      "resource" (.Values.keycloak.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" $component))))
+      "issuer" (required "oidc.issuer is required" .Values.oidc.issuer)
+      "client_id" (.Values.oidc.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" $component))))
     | toPrettyJson | nindent 4
     }}
   {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}

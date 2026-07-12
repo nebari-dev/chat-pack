@@ -43,7 +43,7 @@
     "jotai": "^2.20.1",
     "json-edit-react": "^1.30.2",
     "katex": "^0.17.0",
-    "keycloak-js": "^26.2.4",
+    "oidc-spa": "^10.2.6",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.22.0",
     "react": "^19.1.1",

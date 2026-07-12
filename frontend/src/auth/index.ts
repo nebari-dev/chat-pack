@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import Keycloak from 'keycloak-js';
+import { createOidc } from 'oidc-spa/core';
 
 // Save a reference to the native fetch before it can be overridden.
 //
@@ -42,15 +42,22 @@ export class FetchError extends Error {
 // Whether auth is enabled for the application.
 const AUTH_ENABLED = import.meta.env.VITE_AUTH_ENABLED === 'true';
 
-// The singleton `Keycloak` instance for handling authentication.
-const keycloak = new Keycloak('/keycloak-config.json');
+// The singleton `oidc` instance for handling authentication.
+let oidc: Awaited<ReturnType<typeof createOidc>> | null = null;
 
-// If auth is enabled, init keycloak before anything else is loaded.
+// If auth is enabled, init oidc before anything else is loaded.
 //
 // This allows redirects to happen cleanly after a login and prevents
 // redirect loops if it were to be performed lazily in `login()`.
 if (AUTH_ENABLED) {
-  await keycloak.init({ checkLoginIframe: false });
+  const configResp = await fetch('/auth-config.json');
+  const config = await configResp.json();
+
+  oidc = await createOidc({
+    issuerUri: config.issuer,
+    clientId: config.client_id,
+    BASE_URL: window.location.origin,
+  });
 }
 
 /**
@@ -66,13 +73,15 @@ export async function fetch(
   init: RequestInit = {},
 ): Promise<Response> {
   // Ensure we have an unexpired token.
-  if (AUTH_ENABLED) {
-    await keycloak.updateToken();
+  if (AUTH_ENABLED && oidc?.isUserLoggedIn) {
+    await oidc.renewTokens();
   }
 
   // Create the extra headers if needed.
   const headers = (
-    AUTH_ENABLED ? { Authorization: `Bearer ${keycloak.token ?? ''}` } : {}
+    AUTH_ENABLED && oidc?.isUserLoggedIn
+      ? { Authorization: `Bearer ${(await oidc.getTokens()).accessToken}` }
+      : {}
   ) as HeadersInit;
 
   // Clone the init object and headers to prevent snooping by the caller.
@@ -91,38 +100,36 @@ export async function fetch(
 }
 
 /**
- * A function which handles the user login via Keycloak.
+ * A function which handles the user login via OIDC.
  *
  * If the user is already logged-in this is a no-op.
  */
 export async function login(): Promise<void> {
   // Bail early if login is not needed.
-  if (!AUTH_ENABLED || keycloak.authenticated) {
+  if (!AUTH_ENABLED || !oidc || oidc.isUserLoggedIn) {
     return;
   }
 
   // Authenticate the user.
-  await keycloak.login({ redirectUri: window.location.origin });
+  await oidc.login({ redirectUrl: window.location.origin });
 }
 
 /**
- * A function which handles user logout via Keycloack.
+ * A function which handles user logout via OIDC.
  *
  * If the user is already logged-out this is just a redirect to origin.
  */
 export async function logout(): Promise<void> {
   // Redirect if auth is not enabled.
-  //
-  // On execution, `keycloak.authenticated` might be `false` if the user
-  // is authed but the `keycloak.init()` promise has not yet resolved,
-  // which would yield a false negative, so don't check for it.
   if (!AUTH_ENABLED) {
     window.location.replace(window.location.origin);
     return;
   }
 
   // Log out the user.
-  await keycloak.logout({ redirectUri: window.location.origin });
+  if (oidc?.isUserLoggedIn) {
+    await oidc.logout({ redirectTo: 'home' });
+  }
 }
 
 /**
@@ -145,13 +152,19 @@ export type UserProfile = {
  */
 export function getUserProfile(): UserProfile | null {
   // Bail early if auth is not enabled.
-  if (!AUTH_ENABLED || !keycloak.authenticated) {
+  if (!AUTH_ENABLED || !oidc || !oidc.isUserLoggedIn) {
     return null;
   }
 
-  // Return the user profile from the parsed token data.
+  // Return the user profile from the decoded ID token.
+  const decoded = oidc.getDecodedIdToken();
+  // ponytail: oidc-spa returns a generic DecodedIdToken type that extends
+  // the OIDC core spec with optional name/email claims. We know these are
+  // present if the user is logged in (they're required by the OIDC spec
+  // for the ID token), but the type doesn't reflect that. Cast to any
+  // to avoid the TS error, since the runtime invariant is sound.
   return {
-    name: keycloak.tokenParsed?.name ?? '',
-    email: keycloak.tokenParsed?.email ?? '',
+    name: (decoded as any).name ?? '',
+    email: (decoded as any).email ?? '',
   };
 }
