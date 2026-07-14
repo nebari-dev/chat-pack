@@ -1,34 +1,20 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import react from '@astrojs/react';
-import tailwindcss from '@tailwindcss/vite';
+import { nebari } from '@nebari/starlight';
 import rehypeMermaid from 'rehype-mermaid';
-import { fileURLToPath } from 'url';
-import path from 'path';
 import remarkBaseLinks from './src/plugins/remark-base-links';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: process.env.BASE || '/',
   site: process.env.SITE,
   integrations: [
-    react(),
     starlight({
       title: 'Nebari Chat Pack',
       description: 'Deploy a chat interface on Nebari.',
-      logo: {
-        src: './src/assets/logo.svg',
-        replacesTitle: false,
-      },
-      customCss: [
-        '@fontsource-variable/geist',
-        '@fontsource/ibm-plex-mono',
-        './src/styles/tailwind.css',
-      ],
-      components: {
-        SocialIcons: './src/components/SocialIcons.astro',
-      },
+      // Shared Nebari identity (brand colors, fonts, logo, favicon, footer, and
+      // GitHub social link) comes from the @nebari/starlight theme plugin. On the
+      // portal the header logo returns users to the pack catalog.
+      plugins: [nebari({ logoHref: 'https://packs.nebari.dev/' })],
       sidebar: [
         { label: 'Introduction', slug: 'index' },
       ],
@@ -38,13 +24,5 @@ export default defineConfig({
     syntaxHighlight: { type: 'shiki', excludeLangs: ['mermaid'] },
     remarkPlugins: [[remarkBaseLinks, { base: process.env.BASE || '/' }]],
     rehypePlugins: [[rehypeMermaid, { strategy: 'inline-svg' }]],
-  },
-  vite: {
-    plugins: [tailwindcss()],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-      },
-    },
   },
 });

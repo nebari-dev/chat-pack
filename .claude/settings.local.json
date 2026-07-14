@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s https://raw.githubusercontent.com/nebari-dev/starlight/main/package.json)",
+      "Bash(curl -s https://api.github.com/repos/nebari-dev/starlight/contents/packages)",
+      "Bash(curl -s https://api.github.com/repos/nebari-dev/starlight/contents/docs)",
+      "Bash(awk '/^diff --git a\\\\/docs\\\\/package.json/,/^diff --git a\\\\/docs\\\\/src\\\\/assets\\\\/logo-dark.svg/' pr127.diff)",
+      "Bash(curl -s https://api.github.com/repos/nebari-dev/starlight/contents/packages/starlight)",
+      "Bash(curl -s https://raw.githubusercontent.com/nebari-dev/starlight/main/packages/starlight/package.json)",
+      "Bash(curl -s https://raw.githubusercontent.com/nebari-dev/starlight/main/docs/package.json)",
+      "Bash(curl -s https://raw.githubusercontent.com/nebari-dev/starlight/main/docs/astro.config.mjs)",
+      "Bash(awk '/^diff --git a\\\\/docs\\\\/tsconfig.json/,0' pr127.diff)",
+      "Bash(nix-shell --run \"which npm; which node; node --version; npm --version\")"
+    ]
+  }
+}
