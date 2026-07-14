@@ -1696,7 +1696,7 @@ wheels = [
 
 [[package]]
 name = "ravnar"
-version = "0.0.15"
+version = "0.0.16"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ag-ui-protocol" },
@@ -1719,9 +1719,9 @@ dependencies = [
     { name = "typer" },
     { name = "universal-pathlib" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4d/52/dd2224bf7e2a985f372644e9f24463ea9e0d247661052f4ca1bdeea66ec3/ravnar-0.0.15.tar.gz", hash = "sha256:38033bfe97e4d5fa08bf92b6606bc092e5345761659137a9378c10006bb3aa3d", size = 42165, upload-time = "2026-07-14T19:11:26.148Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/19/d9a04875795ddf313c8540e9fe9935a40b254d9220db352204a5f52d9441/ravnar-0.0.16.tar.gz", hash = "sha256:b781fefb7a790c5ab345fef8831927076b7b9addcd8ed1305a0241e15400e849", size = 42377, upload-time = "2026-07-14T21:50:51.806Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bc/93/f760c0c7a880570fb871643f20243426585e336d9e1058064247673a1643/ravnar-0.0.15-py3-none-any.whl", hash = "sha256:a0244f2c8f77220d1945fa30f248ec3d33534632886f1b2714c266f0881fcf80", size = 51785, upload-time = "2026-07-14T19:11:24.69Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/66/30e8aac4316b292ca520dee2690ce6a0303a96f1da8e0409997cf533401d/ravnar-0.0.16-py3-none-any.whl", hash = "sha256:93c2b41faeba342ba34adedf5eac0196c44d6b66f687b61a344bd5a5e2dcfeb3", size = 51987, upload-time = "2026-07-14T21:50:50.681Z" },
 ]
 
 [package.optional-dependencies]
@@ -1772,7 +1772,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9,<4" },
     { name = "pydantic-ai-slim", extras = ["mcp"] },
     { name = "pyjwt", specifier = ">=2.12.1,<3" },
-    { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.15" },
+    { name = "ravnar", extras = ["pydantic-ai", "serve"], specifier = "==0.0.16" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0,<3" },
 ]
 
