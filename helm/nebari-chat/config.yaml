@@ -1,6 +1,13 @@
 security:
   authenticator:
-    cls_or_fn: ravnar_nebari_chat.keycloak_authenticator
+    cls_or_fn: _ravnar.authenticators.BearerTokenAuthenticator
     params:
-      keycloak_url: '{{ required "keycloak.url is required" .Values.keycloak.url }}'
-      realm: "{{ .Values.keycloak.realm }}"
+      token_validator:
+        cls_or_fn: _ravnar.authenticators.OIDCTokenValidator
+        params:
+          issuer: '{{ required "oidc.issuer is required" .Values.oidc.issuer }}'
+          default_permissions:
+            - threads:read
+            - threads:write
+            - threads:delete
+            - agents:read

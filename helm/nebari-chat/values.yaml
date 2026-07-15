@@ -7,12 +7,10 @@ config:
   # -- Inline configuration for the application. Merged with the default config.yaml
   inline: {}
 
-keycloak:
-  # -- The URL of the Keycloak server
-  url: ""
-  # -- The Keycloak realm to use
-  realm: "nebari"
-  # -- The Keycloak client ID. If not set, a default is generated based on the release name
+oidc:
+  # -- The OIDC issuer URL (e.g. https://keycloak.example.com/realms/nebari)
+  issuer: ""
+  # -- The OIDC client ID for the SPA
   clientId: ""
 
 ravnar:
@@ -94,14 +92,6 @@ frontend:
     port: 80
     # -- The target port on the container
     targetPort: 8080
-
-  keycloak:
-    # -- The URL of the Keycloak auth server
-    authServerUrl: ""
-    # -- The Keycloak realm for frontend authentication
-    realm: "nebari"
-    # -- The Keycloak resource/client ID for the frontend
-    resource: ""
 
   api:
     # -- The URL of the backend API. Auto-detected if not set
