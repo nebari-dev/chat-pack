@@ -1,6 +1,7 @@
 import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import { oidcSpa } from 'oidc-spa/vite-plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 
@@ -16,6 +17,7 @@ export default defineConfig(({ mode }) => {
           '// noinspection JSUnusedGlobalSymbols',
         ],
       }),
+      oidcSpa(),
       tailwindcss(),
       react(),
     ],
