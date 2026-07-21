@@ -46,3 +46,60 @@ export function runningToolName(
 
   return undefined;
 }
+
+/**
+ * Describe the progress of the activity currently being built, if any.
+ *
+ * Activities (charts, maps) stream in while a run is in flight and can take a
+ * while for large payloads. When the most recent message is such an activity,
+ * this returns a human-readable progress label (e.g. the number of map points
+ * plotted so far) so the wait reads as concrete progress rather than a freeze.
+ *
+ * Only the last message is considered, so a finished activity the agent has
+ * already moved past does not produce a stale label.
+ *
+ * @param messages - The current thread messages.
+ *
+ * @returns A progress label, or `undefined` when no activity is building.
+ */
+export function activityProgressLabel(
+  messages: api.ThreadMessages | null | undefined,
+): string | undefined {
+  const last = messages?.at(-1);
+  if (last?.role !== 'activity') {
+    return undefined;
+  }
+
+  switch (last.activityType) {
+    case 'application/json+leaflet': {
+      // Leaflet content holds a GeoJSON feature collection. Report how many
+      // features have streamed in so far.
+      const count = geoJsonFeatureCount(last.content?.features);
+      return count > 0
+        ? `Plotting ${count.toLocaleString()} map ${count === 1 ? 'point' : 'points'}…`
+        : 'Building map…';
+    }
+    case 'application/json+echart':
+      return 'Building chart…';
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Count the features in a value that may be a GeoJSON feature collection.
+ *
+ * Returns `0` for anything that is not a feature collection with a features
+ * array, so a partially-streamed or malformed payload never throws.
+ */
+function geoJsonFeatureCount(features: unknown): number {
+  if (
+    features &&
+    typeof features === 'object' &&
+    'features' in features &&
+    Array.isArray((features as { features: unknown }).features)
+  ) {
+    return (features as { features: readonly unknown[] }).features.length;
+  }
+  return 0;
+}

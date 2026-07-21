@@ -104,7 +104,7 @@ function threadErrorKey(threadId: string): readonly unknown[] {
  * state with a cancel affordance. The flag clears as soon as the next event
  * arrives.
  */
-const STALL_TIMEOUT_MS = 20_000;
+const STALL_TIMEOUT_MS = 30_000;
 
 /**
  * A query for reading the stalled state of a thread's in-flight run.

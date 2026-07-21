@@ -33,15 +33,19 @@ export function WaitingSpinner({ label }: WaitingSpinner.Props): ReactNode {
   // Create the state to hold the current random message.
   const [message, setMessage] = useState(randomMessage);
 
-  // Rotate the message every 3s while the spinner is mounted.
+  // Rotate the message every 3s while the spinner is mounted. A fixed label
+  // (e.g. a running tool) takes precedence, so only rotate when unlabeled.
   useEffect(() => {
+    if (label !== undefined) {
+      return;
+    }
     const intervalId = setInterval(() => {
       setMessage(randomMessage());
     }, 3000);
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [label]);
 
   // Return the rendered component.
   return (

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import type * as api from '@/api';
 
-import { runningToolName } from './progress';
+import { activityProgressLabel, runningToolName } from './progress';
 
 /**
  * Build an assistant message with the given tool calls.
@@ -83,5 +83,73 @@ describe('runningToolName', () => {
       ]),
     ];
     expect(runningToolName(messages)).toBe('second');
+  });
+});
+
+/**
+ * Build a leaflet activity message with the given number of point features.
+ */
+function leafletActivity(pointCount: number): api.ThreadMessages[number] {
+  return {
+    role: 'activity',
+    id: 'act1',
+    activityType: 'application/json+leaflet',
+    content: {
+      center: [0, 0],
+      features: {
+        type: 'FeatureCollection',
+        features: Array.from({ length: pointCount }, (_, i) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [i, i] },
+          properties: {},
+        })),
+      },
+    },
+  };
+}
+
+describe('activityProgressLabel', () => {
+  it('returns undefined when there is no activity in progress', () => {
+    expect(activityProgressLabel(undefined)).toBeUndefined();
+    expect(activityProgressLabel([])).toBeUndefined();
+    expect(
+      activityProgressLabel([{ role: 'assistant', id: 'a1', content: 'hi' }]),
+    ).toBeUndefined();
+  });
+
+  it('reports the plotted point count for a leaflet activity', () => {
+    expect(activityProgressLabel([leafletActivity(3200)])).toBe(
+      'Plotting 3,200 map points…',
+    );
+  });
+
+  it('singularizes a single point', () => {
+    expect(activityProgressLabel([leafletActivity(1)])).toBe(
+      'Plotting 1 map point…',
+    );
+  });
+
+  it('falls back to a generic label before any points arrive', () => {
+    expect(activityProgressLabel([leafletActivity(0)])).toBe('Building map…');
+  });
+
+  it('reports a generic label for an echart activity', () => {
+    const messages: api.ThreadMessages = [
+      {
+        role: 'activity',
+        id: 'act1',
+        activityType: 'application/json+echart',
+        content: {},
+      },
+    ];
+    expect(activityProgressLabel(messages)).toBe('Building chart…');
+  });
+
+  it('only considers the last message, ignoring a finished activity', () => {
+    const messages: api.ThreadMessages = [
+      leafletActivity(5000),
+      { role: 'assistant', id: 'a1', content: 'Here is your map.' },
+    ];
+    expect(activityProgressLabel(messages)).toBeUndefined();
   });
 });
