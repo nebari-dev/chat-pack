@@ -24,8 +24,12 @@ function randomMessage(): string {
  *
  * This is shown in the assistant message position while the model is
  * reasoning, from message submit until the first response output arrives.
+ *
+ * When a `label` is provided (e.g. the name of a running tool), it is shown
+ * verbatim in place of the rotating humorous messages, so a slow step reads
+ * as concrete progress rather than an idle wait.
  */
-export function WaitingSpinner(): ReactNode {
+export function WaitingSpinner({ label }: WaitingSpinner.Props): ReactNode {
   // Create the state to hold the current random message.
   const [message, setMessage] = useState(randomMessage);
 
@@ -43,11 +47,26 @@ export function WaitingSpinner(): ReactNode {
   return (
     <div
       role="status"
-      aria-label="Model is thinking…"
+      aria-label={label ?? 'Model is thinking…'}
       className="flex flex-row items-center gap-3 text-muted-foreground"
     >
       <Spinner aria-hidden />
-      <span className="text-sm">{message}</span>
+      <span className="text-sm">{label ?? message}</span>
     </div>
   );
+}
+
+/**
+ * The namespace for the `WaitingSpinner` statics.
+ */
+export namespace WaitingSpinner {
+  /**
+   * A type alias for the `WaitingSpinner` props.
+   */
+  export type Props = {
+    /**
+     * An optional progress label to show in place of the rotating messages.
+     */
+    readonly label?: string;
+  };
 }

@@ -7,15 +7,24 @@ import { AlertCircle, X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+
 import { useChatConfig } from '@/context';
 
-import { threadErrorQuery, threadMessagesQuery } from '@/queries';
+import {
+  abortRun,
+  threadErrorQuery,
+  threadMessagesQuery,
+  threadStalledQuery,
+} from '@/queries';
 
 import { ApprovalPrompts } from './approvalprompts';
 
 import { useIsRunning } from './hooks';
 
 import { MessageRendererMemo } from './messagerenderer';
+
+import { runningToolName } from './progress';
 
 import { usePendingApprovals } from './tools';
 
@@ -39,6 +48,9 @@ export function ChatOutput(): ReactNode {
 
   // Fetch the inline error state for the thread, if any.
   const { data: error } = useQuery(threadErrorQuery(thread?.id));
+
+  // Fetch the stalled state for the thread's in-flight run, if any.
+  const { data: stalled } = useQuery(threadStalledQuery(thread?.id));
 
   // Determine whether the thread is waiting on an LLM response.
   const isRunning = useIsRunning(thread?.id);
@@ -64,11 +76,38 @@ export function ChatOutput(): ReactNode {
   // A pending approval means the run is paused on the user, not the model, so
   // the approval card stands in for the spinner.
   const showSpinner = isRunning && !assistantSpeaking && approvals.length === 0;
+  // Surface the currently-running tool (if any) as concrete progress, so a
+  // slow tool call reads as work-in-progress rather than a freeze.
+  const runningTool = runningToolName(messages);
+  const spinnerLabel = runningTool ? `Running ${runningTool}…` : undefined;
   const spinner = showSpinner ? (
     <div className="mt-4">
-      <WaitingSpinner />
+      <WaitingSpinner label={spinnerLabel} />
     </div>
   ) : null;
+
+  // Render a non-fatal notice when the run's event stream has stalled. The
+  // run is not cancelled automatically; the user can keep waiting or stop it.
+  const stalledNotice =
+    isRunning && stalled && thread ? (
+      <div className="mt-4 flex flex-row items-start gap-2 text-muted-foreground">
+        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+        <span className="grow text-sm">
+          This is taking longer than expected — the connection may have stalled.
+          You can keep waiting or stop the run.
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => {
+            abortRun(thread.id);
+          }}
+        >
+          Stop
+        </Button>
+      </div>
+    ) : null;
 
   // Render the inline error when the latest run failed to send.
   const inlineError =
@@ -93,6 +132,7 @@ export function ChatOutput(): ReactNode {
     <div className="grow mx-auto w-full min-w-3xs max-w-3xl">
       {content}
       {spinner}
+      {stalledNotice}
       <ApprovalPrompts threadId={thread?.id} />
       {inlineError}
     </div>

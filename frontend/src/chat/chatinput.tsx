@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import { Link } from '@tanstack/react-router';
 
-import { ArrowUp, Hammer, Paperclip, X } from 'lucide-react';
+import { ArrowUp, Hammer, Paperclip, Square, X } from 'lucide-react';
 
 import type { FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
@@ -24,6 +24,7 @@ import {
 import { useAgents, useChatConfig, useHasPermissions } from '@/context';
 import { notifyError } from '@/lib/notifications';
 import { cn } from '@/lib/utils';
+import { abortRun } from '@/queries';
 
 import { useOnSubmit } from './hooks';
 
@@ -44,7 +45,7 @@ export function ChatInput(): ReactNode {
 
   // Fetch the agents and the current tools panel state from the chat config.
   const agents = useAgents();
-  const { showTools, agentId } = useChatConfig();
+  const { showTools, agentId, thread } = useChatConfig();
 
   // Resolve the current agent and determine whether any tools are available.
   //
@@ -172,6 +173,24 @@ export function ChatInput(): ReactNode {
     // Emit the `submit` event for the form.
     formRef.current!.requestSubmit();
   }, []);
+
+  // Create the click handler for the stop button.
+  //
+  // Cancelling aborts the in-flight run's event stream. The submit pipeline's
+  // `finally` then clears `isSubmitting`, re-enabling the composer.
+  const handleStop = useCallback(
+    (event: MouseEvent) => {
+      // Do not let the click submit the form.
+      event.stopPropagation();
+      event.preventDefault();
+
+      // Abort the in-flight run for the current thread, if any.
+      if (thread) {
+        abortRun(thread.id);
+      }
+    },
+    [thread],
+  );
 
   // Create the callback for triggering the hidden input element.
   const triggerInput = useCallback(() => {
@@ -326,17 +345,31 @@ export function ChatInput(): ReactNode {
           <div className="grow flex flex-row flex-wrap gap-2 items-center">
             {fileBadges}
           </div>
-          <Button
-            aria-label="Submit"
-            disabled={isSubmitting}
-            onClick={handleClick}
-            className={cn(
-              'rounded-full size-8 bg-bd-brand-default',
-              'hover:bg-bd-brand-default/90 hover:cursor-pointer',
-            )}
-          >
-            <ArrowUp />
-          </Button>
+          {isSubmitting ? (
+            <Button
+              type="button"
+              aria-label="Stop"
+              title="Stop"
+              onClick={handleStop}
+              className={cn(
+                'rounded-full size-8 bg-bd-brand-default',
+                'hover:bg-bd-brand-default/90 hover:cursor-pointer',
+              )}
+            >
+              <Square fill="currentColor" />
+            </Button>
+          ) : (
+            <Button
+              aria-label="Submit"
+              onClick={handleClick}
+              className={cn(
+                'rounded-full size-8 bg-bd-brand-default',
+                'hover:bg-bd-brand-default/90 hover:cursor-pointer',
+              )}
+            >
+              <ArrowUp />
+            </Button>
+          )}
         </div>
       </form>
     </div>

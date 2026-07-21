@@ -96,6 +96,60 @@ function threadErrorKey(threadId: string): readonly unknown[] {
 }
 
 /**
+ * The number of milliseconds without any stream event after which an
+ * in-flight run is considered stalled.
+ *
+ * When this elapses the run is not cancelled — it is only flagged as stalled
+ * so the UI can surface a non-fatal "still working / connection stalled"
+ * state with a cancel affordance. The flag clears as soon as the next event
+ * arrives.
+ */
+const STALL_TIMEOUT_MS = 20_000;
+
+/**
+ * A query for reading the stalled state of a thread's in-flight run.
+ *
+ * The value is `true` when the current run has gone {@link STALL_TIMEOUT_MS}
+ * without a stream event, and `false` otherwise. It is written by
+ * `createRunMutation` and rendered inline in the chat thread.
+ */
+export const threadStalledQuery = (id: string | undefined) => {
+  return queryOptions({
+    queryKey: ['thread', 'stalled', id],
+    queryFn: (): boolean => false,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+};
+
+/**
+ * Compute the stalled-state query key for a thread.
+ */
+function threadStalledKey(threadId: string): readonly unknown[] {
+  return ['thread', 'stalled', threadId];
+}
+
+/**
+ * The registry of abort controllers for in-flight runs, keyed by thread id.
+ *
+ * A controller is registered while its run's `createRunMutation` is pending
+ * and removed when the run settles. This lets UI affordances (e.g. a Stop
+ * button) cancel a run without threading a controller through React state.
+ */
+const runControllers = new Map<string, AbortController>();
+
+/**
+ * Cancel the in-flight run for a thread, if one is running.
+ *
+ * Aborting tears down the run's event stream; the mutation then settles
+ * without surfacing an error, since the cancellation was user-initiated.
+ *
+ * @param threadId - The id of the thread whose run should be cancelled.
+ */
+export function abortRun(threadId: string): void {
+  runControllers.get(threadId)?.abort();
+}
+
+/**
  * A mutation for creating a new thread.
  */
 export const createThreadMutation = mutationOptions({
@@ -124,56 +178,85 @@ export const createRunMutation = mutationOptions({
     // Clear any stale inline error for this thread before submitting.
     context.client.setQueryData(threadErrorKey(options.threadId), null);
 
+    // Create and register an abort controller for this run so it can be
+    // cancelled (e.g. via a Stop button) while its stream is consumed. The
+    // controller spans every frontend-tool round of the run.
+    const controller = new AbortController();
+    runControllers.set(options.threadId, controller);
+
     // The options for the run currently being submitted. This is replaced
     // with a follow-up run whenever the agent calls a frontend tool.
     let runOptions = options;
 
-    // Drive the run, resolving any frontend tool calls and resubmitting,
-    // until the agent finishes without an outstanding frontend tool call.
-    for (let round = 0; ; round++) {
-      // Execute the run and process its event stream.
-      await Private.runOnce(runOptions, queryKey, context.client);
-
-      // Find any frontend tool calls the agent made that are still missing
-      // a result.
-      const messages =
-        context.client.getQueryData<api.ThreadMessages>(queryKey) ?? [];
-      const pending = Private.findPendingFrontendToolCalls(messages);
-
-      // The agent is done once there are no outstanding frontend tool calls.
-      if (pending.length === 0) {
-        break;
-      }
-
-      // Stop rather than loop forever if the agent keeps calling tools.
-      if (round >= MAX_FRONTEND_TOOL_ROUNDS) {
-        console.warn(
-          `Reached max frontend tool rounds (${MAX_FRONTEND_TOOL_ROUNDS}); stopping.`,
+    try {
+      // Drive the run, resolving any frontend tool calls and resubmitting,
+      // until the agent finishes without an outstanding frontend tool call.
+      for (let round = 0; ; round++) {
+        // Execute the run and process its event stream.
+        await Private.runOnce(
+          runOptions,
+          queryKey,
+          context.client,
+          controller.signal,
         );
-        break;
+
+        // Find any frontend tool calls the agent made that are still missing
+        // a result.
+        const messages =
+          context.client.getQueryData<api.ThreadMessages>(queryKey) ?? [];
+        const pending = Private.findPendingFrontendToolCalls(messages);
+
+        // The agent is done once there are no outstanding frontend tool calls.
+        if (pending.length === 0) {
+          break;
+        }
+
+        // Stop rather than loop forever if the agent keeps calling tools.
+        if (round >= MAX_FRONTEND_TOOL_ROUNDS) {
+          console.warn(
+            `Reached max frontend tool rounds (${MAX_FRONTEND_TOOL_ROUNDS}); stopping.`,
+          );
+          break;
+        }
+
+        // Execute the pending tools in the browser and build the result
+        // messages for the follow-up run.
+        const toolMessages: api.ThreadMessages = await Promise.all(
+          pending.map(async (tc) => ({
+            role: 'tool' as const,
+            id: crypto.randomUUID(),
+            toolCallId: tc.id,
+            content: await runFrontendTool(tc.name, tc.arguments, {
+              threadId: options.threadId,
+            }),
+          })),
+        );
+
+        // Submit the tool results as a follow-up run, re-advertising the
+        // tools so the agent may call them again.
+        runOptions = {
+          threadId: options.threadId,
+          messages: toolMessages,
+          tools: options.tools,
+          context: options.context,
+        };
       }
-
-      // Execute the pending tools in the browser and build the result
-      // messages for the follow-up run.
-      const toolMessages: api.ThreadMessages = await Promise.all(
-        pending.map(async (tc) => ({
-          role: 'tool' as const,
-          id: crypto.randomUUID(),
-          toolCallId: tc.id,
-          content: await runFrontendTool(tc.name, tc.arguments, {
-            threadId: options.threadId,
-          }),
-        })),
-      );
-
-      // Submit the tool results as a follow-up run, re-advertising the
-      // tools so the agent may call them again.
-      runOptions = {
-        threadId: options.threadId,
-        messages: toolMessages,
-        tools: options.tools,
-        context: options.context,
-      };
+    } catch (error) {
+      // A user-initiated cancel aborts the fetch, which surfaces here as an
+      // abort error. Swallow it so it is not reported as a failure — the
+      // partial turn already in the cache stays visible. Any other error
+      // propagates to `onError`.
+      if (controller.signal.aborted) {
+        return;
+      }
+      throw error;
+    } finally {
+      // Deregister the controller (only if it is still the active one) and
+      // clear any stalled state for the thread now that the run has settled.
+      if (runControllers.get(options.threadId) === controller) {
+        runControllers.delete(options.threadId);
+      }
+      context.client.setQueryData(threadStalledKey(options.threadId), false);
     }
   },
   onError: (error, options, _onMutateResult, context) => {
@@ -227,11 +310,14 @@ namespace Private {
    * @param queryKey - The query key for the thread messages.
    *
    * @param client - The query client used to read and write the cache.
+   *
+   * @param signal - The abort signal used to cancel the run.
    */
   export async function runOnce(
     runOptions: api.createRun.Options,
     queryKey: readonly unknown[],
     client: QueryClient,
+    signal?: AbortSignal,
   ): Promise<void> {
     // Optimistically update the query cache with the new messages.
     client.setQueryData<api.ThreadMessages>(queryKey, (prev) => [
@@ -239,30 +325,55 @@ namespace Private {
       ...runOptions.messages,
     ]);
 
+    // Set up the idle watchdog. If no event arrives within the stall timeout,
+    // flag the thread as stalled so the UI can surface a non-fatal "still
+    // working" state. The timer is (re)armed after each event and cleared
+    // when the stream ends.
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    const armStallTimer = (): void => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        client.setQueryData(threadStalledKey(runOptions.threadId), true);
+      }, STALL_TIMEOUT_MS);
+    };
+
     // Create the event stream for the run.
-    const stream = api.createRun(runOptions);
+    const stream = api.createRun(runOptions, signal);
 
-    // Handle the events from the stream.
-    for await (const evt of stream) {
-      // A backend run error arrives as a successful stream of a failure
-      // event. Surface it as a toast and as inline thread state, since the
-      // mutation itself does not reject in this case.
-      if (evt.type === agui.EventType.RUN_ERROR) {
-        const error = new RunError(evt.message);
-        notifyError(error);
-        client.setQueryData(
-          threadErrorKey(runOptions.threadId),
-          classifyError(error).message,
+    try {
+      // Arm the watchdog before the first event arrives.
+      armStallTimer();
+
+      // Handle the events from the stream.
+      for await (const evt of stream) {
+        // An event arrived, so the stream is live: clear any stalled state
+        // and re-arm the idle watchdog for the next gap.
+        client.setQueryData(threadStalledKey(runOptions.threadId), false);
+        armStallTimer();
+
+        // A backend run error arrives as a successful stream of a failure
+        // event. Surface it as a toast and as inline thread state, since the
+        // mutation itself does not reject in this case.
+        if (evt.type === agui.EventType.RUN_ERROR) {
+          const error = new RunError(evt.message);
+          notifyError(error);
+          client.setQueryData(
+            threadErrorKey(runOptions.threadId),
+            classifyError(error).message,
+          );
+          continue;
+        }
+
+        client.setQueryData<api.ThreadMessages>(
+          queryKey,
+          produce((draft) => {
+            processEvent(evt, draft!);
+          }),
         );
-        continue;
       }
-
-      client.setQueryData<api.ThreadMessages>(
-        queryKey,
-        produce((draft) => {
-          processEvent(evt, draft!);
-        }),
-      );
+    } finally {
+      // Disarm the watchdog once the stream has ended (or thrown).
+      clearTimeout(stallTimer);
     }
   }
 
