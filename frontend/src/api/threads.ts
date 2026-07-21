@@ -301,19 +301,30 @@ export async function deleteThreads(
  *
  * @param options - The options for the run.
  *
+ * @param signal - An optional abort signal used to cancel the in-flight run.
+ *   Aborting tears down the underlying fetch, ending the stream.
+ *
  * @returns An async generator that streams the ag-ui events.
+ *
+ * #### Notes
+ * - Event parsing is resilient to a single malformed event: an event whose
+ *   data fails to parse or validate is skipped and logged rather than
+ *   aborting the whole stream, so one bad event never tears down the run.
  */
 export async function* createRun(
   options: createRun.Options,
+  signal?: AbortSignal,
 ): AsyncGenerator<agui.AGUIEvent> {
   // Extract the options.
   const { threadId, ...rest } = options;
 
-  // Fetch the resource.
+  // Fetch the resource, forwarding the abort signal so the run can be
+  // cancelled while its event stream is being consumed.
   const resp = await auth.fetch(`/api/threads/${threadId}/runs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(rest),
+    signal,
   });
 
   // Setup the SSE stream parser.
@@ -323,11 +334,27 @@ export async function* createRun(
 
   // Yield the parsed events.
   for await (const evt of stream) {
-    // Parse the event data to json.
-    const json = JSON.parse(evt.data);
+    // Parse the event data to json, skipping any event whose payload is not
+    // valid json rather than tearing down the entire stream.
+    let json: unknown;
+    try {
+      json = JSON.parse(evt.data);
+    } catch (error) {
+      console.warn('Skipping SSE event with unparseable data:', error, evt);
+      continue;
+    }
+
+    // Validate the event against the ag-ui schemas. A single event that
+    // fails validation is skipped and logged, not thrown, so one malformed
+    // event does not kill the run.
+    const result = agui.EventSchemas.safeParse(json);
+    if (!result.success) {
+      console.warn('Skipping invalid ag-ui event:', result.error, json);
+      continue;
+    }
 
     // Yield the parsed/validated event.
-    yield agui.EventSchemas.parse(json);
+    yield result.data;
   }
 }
 
