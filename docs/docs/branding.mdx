@@ -1,0 +1,123 @@
+---
+title: Branding & Configuration
+description: Customize the Nebari Chat title, logo, favicon, and theme — in Kubernetes and standalone.
+sidebar_position: 2
+last_update:
+  date: 2026-07-20
+---
+
+# Branding & Configuration
+
+Nebari Chat reads its runtime configuration — Keycloak connection settings and branding — from a
+single `/config.json` that the frontend fetches at startup, **before React mounts**. This decouples
+branding from the build: operators can re-brand without rebuilding the image.
+
+Every branding field is optional. When nothing is configured, the app renders the built-in Nebari
+defaults and looks identical to an unbranded deployment.
+
+## Config shape
+
+```json
+{
+  "keycloak": {
+    "url": "https://keycloak.example.com",
+    "realm": "nebari",
+    "clientId": "nebari-chat"
+  },
+  "branding": {
+    "title": "",
+    "logoUrl": "",
+    "logoUrlDark": "",
+    "faviconUrl": "",
+    "theme": { "light": {}, "dark": {} }
+  }
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `title` | Browser tab title. Empty keeps the default (`Nebari Chat`). |
+| `logoUrl` | Sidebar header logo. Empty uses the built-in Nebari logo. |
+| `logoUrlDark` | Dark-mode logo. Empty falls back to `logoUrl`, then the built-in dark logo. |
+| `faviconUrl` | Favicon. Empty uses the built-in Nebari favicon. |
+| `theme.light` / `theme.dark` | CSS variable overrides applied per color scheme. |
+
+### Theme tokens
+
+Theme tokens are the camelCase form of the app's brand CSS variables; each is converted to a
+`--kebab-case` custom property at runtime and applied over the defaults. Common tokens:
+
+`bgBrandDefault`, `bgBrandSecondary`, `bgNeutralDefault`, `bgWhite`, `bdBrandDefault`,
+`bdNeutralDefault`, `textBrandOnBrand`, `textNeutralDefault`, `textNeutralSecondary`, `radius`.
+
+Values are validated at runtime for security: any value containing `;`, `{`, `}`, quotes, `url(`,
+`expression(`, or `javascript:` is rejected, and logo/favicon URLs must be root-relative paths or
+`http(s)` URLs.
+
+## Configuration precedence
+
+`/config.json` is resolved at runtime in this order (highest wins):
+
+1. **Chart-rendered ConfigMap** (Kubernetes) — mounted read-only over `/config.json`.
+2. **Local config file** — a file mounted read-only over `/config.json`.
+3. **Environment variables** — used to generate `/config.json` when no file is mounted.
+4. **Built-in defaults** — empty fields fall back to the app's title, favicon, logo, and theme.
+
+## Kubernetes (Helm)
+
+Set branding under `frontend.branding` in your Helm values. The chart renders it — together with the
+`keycloak.*` values — into a ConfigMap mounted over `/config.json`.
+
+```yaml
+keycloak:
+  url: https://keycloak.example.com
+  realm: nebari
+
+frontend:
+  branding:
+    title: "ACME Chat"
+    logoUrl: "https://cdn.acme.com/logo.svg"
+    faviconUrl: "https://cdn.acme.com/favicon.ico"
+    theme:
+      light:
+        bgBrandDefault: "#0066cc"
+        bdBrandDefault: "#004a99"
+      dark:
+        bgBrandDefault: "#4da6ff"
+```
+
+## Standalone (non-Kubernetes)
+
+Outside Kubernetes there are two options.
+
+### Environment variables
+
+The container generates `/config.json` from environment variables at startup:
+
+```bash
+docker run -p 8080:8080 \
+  -e API_URL=http://host.docker.internal:8000 \
+  -e KEYCLOAK_URL=https://keycloak.example.com \
+  -e KEYCLOAK_REALM=nebari \
+  -e KEYCLOAK_CLIENT_ID=nebari-chat \
+  -e BRANDING_TITLE="ACME Chat" \
+  -e BRANDING_LOGO_URL="https://cdn.acme.com/logo.svg" \
+  nebari-chat
+```
+
+Supported variables: `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `BRANDING_TITLE`,
+`BRANDING_LOGO_URL`, `BRANDING_LOGO_URL_DARK`, `BRANDING_FAVICON_URL`, and `BRANDING_THEME_LIGHT` /
+`BRANDING_THEME_DARK` (raw JSON objects).
+
+### Mounted config file
+
+For full control — including complex theme objects — mount a complete `config.json`:
+
+```bash
+docker run -p 8080:8080 \
+  -v ./config.json:/usr/share/nginx/html/config.json:ro \
+  nebari-chat
+```
+
+A mounted file takes precedence over environment variables. During local development (`npm run dev`),
+edit `frontend/public/config.json` directly.

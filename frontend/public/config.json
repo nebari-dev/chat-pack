@@ -1,0 +1,17 @@
+{
+  "keycloak": {
+    "url": "https://keycloak.hrafnar-nebari-dev.openteams.app",
+    "realm": "nebari",
+    "clientId": "nebari-chat-dev"
+  },
+  "branding": {
+    "title": "",
+    "logoUrl": "",
+    "logoUrlDark": "",
+    "faviconUrl": "",
+    "theme": {
+      "light": {},
+      "dark": {}
+    }
+  }
+}

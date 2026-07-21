@@ -46,8 +46,8 @@ spec:
                   key: API_URL
           volumeMounts:
             - name: config
-              mountPath: /usr/share/nginx/html/keycloak-config.json
-              subPath: keycloak-config.json
+              mountPath: /usr/share/nginx/html/config.json
+              subPath: config.json
               readOnly: true
           ports:
             - containerPort: {{ .Values.frontend.service.targetPort }}

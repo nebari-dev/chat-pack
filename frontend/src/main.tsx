@@ -12,8 +12,10 @@ import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { initAuth } from '@/auth';
 import { ErrorBoundary, ErrorFallback } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/sonner';
+import { applyBranding, loadAppConfig } from '@/config';
 import { ThemeProvider } from '@/hooks/themecontext';
 import { notifyError } from '@/lib/notifications';
 
@@ -64,5 +66,15 @@ function App() {
   );
 }
 
-// Render the app into the root element.
-createRoot(document.getElementById('root')!).render(<App />);
+// Bootstrap the application.
+//
+// Runtime config is loaded from `/config.json` first so branding can be applied
+// (title, favicon, theme tokens) and Keycloak initialized before React mounts.
+async function bootstrap() {
+  const config = await loadAppConfig();
+  applyBranding(config.branding);
+  await initAuth(config.keycloak);
+  createRoot(document.getElementById('root')!).render(<App />);
+}
+
+bootstrap();
