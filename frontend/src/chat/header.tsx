@@ -68,6 +68,7 @@ namespace Private {
       <Select value={agentId} onValueChange={handleValueChange}>
         <SelectTrigger
           size="sm"
+          aria-label="Select agent"
           className={cn(
             'w-[200px] rounded-sm shadow-none focus-visible:ring-0',
             'focus-visible:border-bd-brand-default data-[size=sm]:h-7',

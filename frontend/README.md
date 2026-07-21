@@ -115,6 +115,44 @@ the terminal.
 npm run dev
 ```
 
+# Testing
+
+The frontend uses [Playwright](https://playwright.dev/) for end-to-end tests (the primary
+strategy) and [Vitest](https://vitest.dev/) for minimal unit coverage of pure
+functions/utilities. Playwright also runs automated accessibility checks with
+[`@axe-core/playwright`](https://github.com/dequelabs/axe-core-npm), asserting that key pages have
+no critical or serious WCAG violations.
+
+## First-time setup
+
+Playwright needs its browser binaries installed once (Chromium, Firefox, and WebKit):
+
+```
+npx playwright install
+```
+
+In CI (and on a fresh Linux machine) also install the OS-level dependencies:
+
+```
+npx playwright install --with-deps
+```
+
+## Running the tests
+
+```
+npm run test        # Vitest unit tests
+npm run test:e2e    # Playwright e2e across Chromium, Firefox & WebKit (includes a11y)
+npm run test:a11y   # Only the accessibility assertions
+```
+
+The e2e suite boots the app itself with a Vite dev server (auth disabled) and intercepts every
+`/api/*` request with route mocks, so **no backend or Keycloak is required**. After a run, an HTML
+report is written to `playwright-report/`; open it with:
+
+```
+npx playwright show-report
+```
+
 # Running with Docker
 
 Build the image:
