@@ -107,6 +107,31 @@ frontend:
     # -- The URL of the backend API. Auto-detected if not set
     url: ""
 
+  # Branding settings — rendered into /config.json at deploy time.
+  # Leave empty to use the built-in Nebari defaults.
+  branding:
+    # -- Browser tab title. Empty keeps the default ("Nebari Chat")
+    title: ""
+    # -- URL to a custom logo shown in the sidebar header. Empty uses the built-in Nebari logo
+    logoUrl: ""
+    # -- URL to a custom dark-mode logo. Empty falls back to logoUrl / the built-in Nebari dark logo
+    logoUrlDark: ""
+    # -- URL to a custom favicon. Empty uses the built-in Nebari favicon
+    faviconUrl: ""
+    # -- CSS variable overrides injected at runtime — no image rebuild required.
+    # Keys are camelCase brand tokens (see frontend/src/main.css), e.g. bgBrandDefault,
+    # bdBrandDefault, bgBrandSecondary, textBrandOnBrand, textNeutralDefault, radius.
+    # Example:
+    #   theme:
+    #     light:
+    #       bgBrandDefault: "#0066cc"
+    #       bdBrandDefault: "#004a99"
+    #     dark:
+    #       bgBrandDefault: "#4da6ff"
+    theme:
+      light: {}
+      dark: {}
+
   nebariapp:
     # -- The hostname for the frontend NebariApp
     hostname: ""

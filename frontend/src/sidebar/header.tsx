@@ -7,6 +7,8 @@ import { PanelLeft } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { getAppConfig } from '@/config';
+import { useTheme } from '@/hooks/themecontext';
 import { cn } from '@/lib/utils';
 
 /**
@@ -16,6 +18,16 @@ export function Header(props: Header.Props): ReactNode {
   // Extract the props.
   const { isSidebarOpen, toggleSidebar } = props;
 
+  // Resolve the branded logo, if configured. Dark mode prefers the dark logo,
+  // then the general custom logo; light mode uses the custom logo. When no
+  // custom logo applies, fall back to the built-in Nebari logo (rendered as a
+  // themed background image).
+  const { isDarkMode } = useTheme();
+  const branding = getAppConfig()?.branding;
+  const logoUrl = isDarkMode
+    ? (branding?.logoUrlDark ?? branding?.logoUrl)
+    : branding?.logoUrl;
+
   // Return the rendered component with the sidebar state.
   return (
     <div
@@ -24,15 +36,31 @@ export function Header(props: Header.Props): ReactNode {
         isSidebarOpen ? 'justify-between' : 'justify-center',
       )}
     >
-      <Link
-        to="/"
-        className={cn(
-          'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)] bg-[auto_100px]',
-          'dark:bg-[url(/assets/Nebari-Logo-Horizontal-Lockup-Dark.svg)]',
-          'bg-center bg-no-repeat w-[100px] cursor-pointer ml-2',
-          isSidebarOpen ? '' : 'hidden',
-        )}
-      />
+      {logoUrl ? (
+        <Link
+          to="/"
+          className={cn(
+            'flex items-center ml-2 cursor-pointer',
+            isSidebarOpen ? '' : 'hidden',
+          )}
+        >
+          <img
+            src={logoUrl}
+            alt={branding?.title ?? 'Home'}
+            className="h-8 w-auto max-w-[100px] object-contain"
+          />
+        </Link>
+      ) : (
+        <Link
+          to="/"
+          className={cn(
+            'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)] bg-[auto_100px]',
+            'dark:bg-[url(/assets/Nebari-Logo-Horizontal-Lockup-Dark.svg)]',
+            'bg-center bg-no-repeat w-[100px] cursor-pointer ml-2',
+            isSidebarOpen ? '' : 'hidden',
+          )}
+        />
+      )}
       <button
         onClick={toggleSidebar}
         className="cursor-pointer w-8 rounded-sm hover:bg-bg-neutral-dark"

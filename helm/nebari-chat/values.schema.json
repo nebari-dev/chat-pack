@@ -185,6 +185,34 @@
             }
           }
         },
+        "branding": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "logoUrl": {
+              "type": "string"
+            },
+            "logoUrlDark": {
+              "type": "string"
+            },
+            "faviconUrl": {
+              "type": "string"
+            },
+            "theme": {
+              "type": "object",
+              "properties": {
+                "light": {
+                  "$ref": "#/definitions/themeTokens"
+                },
+                "dark": {
+                  "$ref": "#/definitions/themeTokens"
+                }
+              }
+            }
+          }
+        },
         "nebariapp": {
           "$ref": "#/definitions/nebariapp"
         }
@@ -192,6 +220,12 @@
     }
   },
   "definitions": {
+    "themeTokens": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
     "nebariapp": {
       "type": "object",
       "properties": {
