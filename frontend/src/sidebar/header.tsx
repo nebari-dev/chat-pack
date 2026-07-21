@@ -53,6 +53,7 @@ export function Header(props: Header.Props): ReactNode {
       ) : (
         <Link
           to="/"
+          aria-label={branding?.title || 'Home'}
           className={cn(
             'bg-[url(/assets/Nebari-Logo-Horizontal-Lockup.svg)] bg-[auto_100px]',
             'dark:bg-[url(/assets/Nebari-Logo-Horizontal-Lockup-Dark.svg)]',
@@ -62,7 +63,10 @@ export function Header(props: Header.Props): ReactNode {
         />
       )}
       <button
+        type="button"
         onClick={toggleSidebar}
+        aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        aria-expanded={isSidebarOpen}
         className="cursor-pointer w-8 rounded-sm hover:bg-bg-neutral-dark"
       >
         <PanelLeft size={20} className="m-auto" />
