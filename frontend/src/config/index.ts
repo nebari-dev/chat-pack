@@ -157,11 +157,30 @@ export function getAppConfig(): AppConfig | null {
   return _config;
 }
 
+// Image MIME types accepted as base64-encoded `data:` URIs. Anything not on
+// this list (e.g. text/html) is rejected even when base64-encoded.
+const ALLOWED_DATA_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/svg+xml',
+  'image/webp',
+  'image/gif',
+  'image/x-icon',
+  'image/vnd.microsoft.icon',
+]);
+
 /**
- * Accept only non-empty, well-formed http(s) URLs or root-relative paths;
- * anything else (including an empty string) becomes `undefined`.
+ * Accept root-relative paths, well-formed http(s) URLs, and `data:` image URIs
+ * for a safe-listed set of base64-encoded image MIME types; anything else
+ * (including an empty string) becomes `undefined`.
+ *
+ * `data:image/*;base64,...` URIs were dropped by the original http(s)-only
+ * check, which broke deployers who ship an inline base64 logo or favicon. They
+ * are restored here while still rejecting `javascript:`, `data:text/html`, and
+ * non-base64 `data:` URIs as defense-in-depth.
  */
-function sanitizeUrl(value: string | undefined): string | undefined {
+export function sanitizeUrl(value: string | undefined): string | undefined {
   if (!value) {
     return undefined;
   }
@@ -170,7 +189,22 @@ function sanitizeUrl(value: string | undefined): string | undefined {
   }
   try {
     const { protocol } = new URL(value);
-    return protocol === 'http:' || protocol === 'https:' ? value : undefined;
+    if (protocol === 'http:' || protocol === 'https:') {
+      return value;
+    }
+    if (protocol === 'data:') {
+      // Format: data:<mime>[;base64],<data>. Only accept base64-encoded
+      // images from the allow-list; reject text/html, javascript, and the
+      // rest.
+      const match = /^data:([^;,]+)(;base64)?,/.exec(value);
+      if (!match) {
+        return undefined;
+      }
+      const mime = match[1].toLowerCase();
+      const isBase64 = Boolean(match[2]);
+      return isBase64 && ALLOWED_DATA_MIME_TYPES.has(mime) ? value : undefined;
+    }
+    return undefined;
   } catch {
     return undefined;
   }
