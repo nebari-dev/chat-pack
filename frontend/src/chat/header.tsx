@@ -68,6 +68,7 @@ namespace Private {
       <Select value={agentId} onValueChange={handleValueChange}>
         <SelectTrigger
           size="sm"
+          aria-label="Select agent"
           className={cn(
             'w-[200px] rounded-sm shadow-none focus-visible:ring-0',
             'focus-visible:border-bd-brand-default data-[size=sm]:h-7',
@@ -93,7 +94,11 @@ namespace Private {
     }
 
     // Return the rendered component.
-    return <div className="px-4 flex items-center">{thread.name}</div>;
+    return (
+      <div className="px-4 min-w-0 flex items-center">
+        <span className="truncate">{thread.name}</span>
+      </div>
+    );
   }
 
   /**
@@ -114,7 +119,8 @@ namespace Private {
         to="."
         search={(prev) => ({ agentId: prev.agentId })}
         className={cn(
-          'h-7 w-24 flex justify-center items-center rounded-sm text-white',
+          'h-7 w-24 shrink-0 whitespace-nowrap',
+          'flex justify-center items-center rounded-sm text-white',
           isDisabled ? 'bg-bd-brand-default/50' : 'bg-bd-brand-default',
         )}
         disabled={isDisabled}

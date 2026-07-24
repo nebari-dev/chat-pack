@@ -55,9 +55,9 @@ export function Chat(): ReactNode {
   // viewport in the same tree position avoids remounting the chat (and
   // losing in-progress input) when the sidebar is toggled.
   return (
-    <main className="grow flex flex-col">
+    <main className="grow min-w-0 flex flex-col">
       <Header />
-      <div className="grow min-h-0 flex flex-row">
+      <div className="grow min-h-0 min-w-0 flex flex-row">
         <div className="grow min-w-0">
           <Viewport>
             <ChatOutput />

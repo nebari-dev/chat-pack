@@ -29,18 +29,80 @@ Then copy the example `env` file and set `VITE_API_URL` to match your Ravnar dep
 cp .env.example .env
 ```
 
-Nebari Chat uses [KeyCloak](https://www.keycloak.org/) for authentication. Keycloak is configured
-via `public/keycloak-config.json`. Edit this file to match your Keycloak deployment before running:
+Nebari Chat reads its runtime configuration — Keycloak connection settings and branding — from a
+single `/config.json` fetched at startup, before React mounts. For local development this is served
+from `public/config.json`. Edit it to match your deployment:
 
 ```json
 {
-  "auth-server-url": "https://keycloak.example.com",
-  "realm": "myrealm",
-  "resource": "nebari-chat"
+  "keycloak": {
+    "url": "https://keycloak.example.com",
+    "realm": "myrealm",
+    "clientId": "nebari-chat"
+  },
+  "branding": {
+    "title": "",
+    "logoUrl": "",
+    "logoUrlDark": "",
+    "faviconUrl": "",
+    "theme": { "light": {}, "dark": {} }
+  }
 }
 ```
 
-To bypass authentication for local development, set `VITE_AUTH_ENABLED=false` in your `.env`.
+[Keycloak](https://www.keycloak.org/) provides authentication; the `keycloak` block is passed
+straight to `keycloak-js`. To bypass authentication for local development, set
+`VITE_AUTH_ENABLED=false` in your `.env`.
+
+## Branding
+
+Every `branding` field is optional and empty by default, so the app looks identical to the built-in
+Nebari defaults when nothing is set. Supported fields:
+
+| Field | Description |
+| --- | --- |
+| `title` | Browser tab title. Empty keeps the default (`Nebari Chat`). |
+| `logoUrl` | Sidebar header logo. Empty uses the built-in Nebari logo. |
+| `logoUrlDark` | Dark-mode logo. Empty falls back to `logoUrl`, then the built-in dark logo. |
+| `faviconUrl` | Favicon. Empty uses the built-in Nebari favicon. |
+| `theme.light` / `theme.dark` | CSS variable overrides per color scheme (see below). |
+
+Theme tokens are camelCase brand variables (see `src/main.css`), converted to `--kebab-case` CSS
+custom properties at runtime. Useful tokens include `bgBrandDefault`, `bgBrandSecondary`,
+`bdBrandDefault`, `textBrandOnBrand`, `textNeutralDefault`, `textNeutralSecondary`, and `radius`.
+Values are validated at runtime — anything containing `;`, `{`, `}`, quotes, `url(`, `expression(`,
+or `javascript:` is rejected — and logo/favicon URLs must be root-relative paths or `http(s)` URLs.
+
+```json
+{
+  "branding": {
+    "title": "ACME Chat",
+    "logoUrl": "https://cdn.acme.com/logo.svg",
+    "theme": {
+      "light": { "bgBrandDefault": "#0066cc", "bdBrandDefault": "#004a99" },
+      "dark":  { "bgBrandDefault": "#4da6ff" }
+    }
+  }
+}
+```
+
+### Configuration precedence
+
+`/config.json` is resolved at runtime in this order (highest wins):
+
+1. **Chart-rendered ConfigMap** (Kubernetes) — the Helm chart renders `frontend.branding` and
+   `keycloak.*` into a ConfigMap mounted read-only over `/config.json`.
+2. **Local config file** — a file mounted read-only over `/config.json`
+   (e.g. `docker run -v ./config.json:/usr/share/nginx/html/config.json:ro ...`).
+3. **Environment variables** — when the file is writable (the image-baked placeholder), the
+   container entrypoint generates `/config.json` from env vars (see below).
+4. **Built-in defaults** — the baked `public/config.json` placeholder; empty branding fields fall
+   back to the app's built-in title, favicon, logo, and `main.css` theme tokens.
+
+Supported environment variables (non-k8s): `KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`,
+`BRANDING_TITLE`, `BRANDING_LOGO_URL`, `BRANDING_LOGO_URL_DARK`, `BRANDING_FAVICON_URL`, and
+`BRANDING_THEME_LIGHT` / `BRANDING_THEME_DARK` (raw JSON objects). Env vars are only applied when no
+config file has been mounted; for full theme control, mount a `config.json` instead.
 
 
 # Run the Development Server
@@ -51,6 +113,44 @@ the terminal.
 
 ```
 npm run dev
+```
+
+# Testing
+
+The frontend uses [Playwright](https://playwright.dev/) for end-to-end tests (the primary
+strategy) and [Vitest](https://vitest.dev/) for minimal unit coverage of pure
+functions/utilities. Playwright also runs automated accessibility checks with
+[`@axe-core/playwright`](https://github.com/dequelabs/axe-core-npm), asserting that key pages have
+no critical or serious WCAG violations.
+
+## First-time setup
+
+Playwright needs its browser binaries installed once (Chromium, Firefox, and WebKit):
+
+```
+npx playwright install
+```
+
+In CI (and on a fresh Linux machine) also install the OS-level dependencies:
+
+```
+npx playwright install --with-deps
+```
+
+## Running the tests
+
+```
+npm run test        # Vitest unit tests
+npm run test:e2e    # Playwright e2e across Chromium, Firefox & WebKit (includes a11y)
+npm run test:a11y   # Only the accessibility assertions
+```
+
+The e2e suite boots the app itself with a Vite dev server (auth disabled) and intercepts every
+`/api/*` request with route mocks, so **no backend or Keycloak is required**. After a run, an HTML
+report is written to `playwright-report/`; open it with:
+
+```
+npx playwright show-report
 ```
 
 # Running with Docker
@@ -64,12 +164,20 @@ docker build -t nebari-chat .
 Then run the container, passing environment values as needed:
 
 ```
-docker run -p 8080:8080 -e API_URL=http://host.docker.internal:8000 nebari-chat
+docker run -p 8080:8080 \
+  -e API_URL=http://host.docker.internal:8000 \
+  -e KEYCLOAK_URL=https://keycloak.example.com \
+  -e KEYCLOAK_REALM=nebari \
+  -e KEYCLOAK_CLIENT_ID=nebari-chat \
+  -e BRANDING_TITLE="ACME Chat" \
+  nebari-chat
 ```
 
-> **Note:** Keycloak settings are read from `public/keycloak-config.json` at runtime. In a Kubernetes
-> deployment, mount a ConfigMap over `/usr/share/nginx/html/keycloak-config.json` to inject the correct
-> values without rebuilding the image.
+> **Note:** `/config.json` is generated from environment variables at container startup (see the
+> precedence list above). To supply a full config — including theme tokens — mount a file instead:
+> `docker run -v ./config.json:/usr/share/nginx/html/config.json:ro ... nebari-chat`. In a Kubernetes
+> deployment the Helm chart renders `keycloak.*` and `frontend.branding` into a ConfigMap mounted over
+> `/config.json`, so values can be changed without rebuilding the image.
 
 Open your browser at `http://localhost:8080`.
 

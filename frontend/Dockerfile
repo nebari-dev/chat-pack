@@ -39,6 +39,10 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # without rebuilding the image.
 COPY nginx.conf /tmp/nginx/nginx.conf.template
 
+# Copy the entrypoint that renders nginx.conf and generates /config.json.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Make directories writable for non-root.
 RUN chown -R 1000:1000 /var/cache/nginx /var/log/nginx /usr/share/nginx/html && \
     chmod -R 755 /var/cache/nginx /var/log/nginx
@@ -50,9 +54,5 @@ EXPOSE 8080
 
 USER 1000
 
-# 1. Substitute ${API_URL} in the template and write the final nginx.conf.
-#    Only ${API_URL} is substituted — all other nginx $variable references
-#    (e.g. $host, $remote_addr) are left untouched.
-# 2. Start nginx in the foreground with config from writable path.
-CMD ["/bin/sh", "-c", \
-  "envsubst '${API_URL}' < /tmp/nginx/nginx.conf.template > /tmp/nginx/nginx.conf && nginx -c /tmp/nginx/nginx.conf -g 'daemon off;'"]
+# Render nginx.conf, generate /config.json from env vars (non-k8s), start nginx.
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -7,19 +7,40 @@ import { AlertCircle, X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+
 import { useChatConfig } from '@/context';
 
-import { threadErrorQuery, threadMessagesQuery } from '@/queries';
+import {
+  abortRun,
+  threadErrorQuery,
+  threadMessagesQuery,
+  threadStalledQuery,
+} from '@/queries';
 
 import { ApprovalPrompts } from './approvalprompts';
 
-import { useIsRunning } from './hooks';
+import { useDelayedFlag, useIsRunning } from './hooks';
 
 import { MessageRendererMemo } from './messagerenderer';
+
+import { activityProgressLabel, runningToolName } from './progress';
 
 import { usePendingApprovals } from './tools';
 
 import { WaitingSpinner } from './waitingspinner';
+
+/**
+ * How long a run must be in flight, in milliseconds, before the reassuring
+ * "still working" message is shown.
+ */
+const SLOW_RUN_DELAY_MS = 20_000;
+
+/**
+ * The message shown once a run has been in flight past {@link SLOW_RUN_DELAY_MS}.
+ */
+const SLOW_RUN_MESSAGE =
+  'This is taking longer than usual — still working, hang tight…';
 
 /**
  * A react component that renders the chat output for the session.
@@ -40,8 +61,15 @@ export function ChatOutput(): ReactNode {
   // Fetch the inline error state for the thread, if any.
   const { data: error } = useQuery(threadErrorQuery(thread?.id));
 
+  // Fetch the stalled state for the thread's in-flight run, if any.
+  const { data: stalled } = useQuery(threadStalledQuery(thread?.id));
+
   // Determine whether the thread is waiting on an LLM response.
   const isRunning = useIsRunning(thread?.id);
+
+  // After a run has been in flight for a while, surface a reassuring message
+  // so a long wait reads as ongoing work rather than a freeze.
+  const isSlow = useDelayedFlag(isRunning, SLOW_RUN_DELAY_MS);
 
   // Fetch any human-in-the-loop approval requests for this thread awaiting a
   // decision.
@@ -52,23 +80,58 @@ export function ChatOutput(): ReactNode {
     <MessageRendererMemo key={msg.id} message={msg} />
   ));
 
-  // Show the waiting spinner whenever the run is in-flight and the model is
-  // not actively speaking. The only state that should replace the spinner is
-  // an assistant message with text content, which streams as its own
-  // indicator. Every other state — the user's prompt, a reasoning step, a
-  // running tool call, or an activity — means the model is still working
-  // toward its answer, so the spinner stays up to show progress.
+  // Show a progress indicator for the whole time a run is in flight, so there
+  // is always clear feedback and never just a lone Stop button. A pending
+  // approval means the run is paused on the user, not the model, so the
+  // approval card stands in for the indicator.
+  const showSpinner = isRunning && approvals.length === 0;
+
+  // Choose the most specific progress label available, so a long step reads
+  // as concrete work rather than a freeze:
+  //   1. a building activity (e.g. a map plotting its points),
+  //   2. a currently-running tool call,
+  //   3. once the run has been slow, a reassuring "still working" message,
+  //   4. otherwise, once the assistant has started answering, a neutral
+  //      "Working…" so a mid-answer pause still shows progress.
+  // When none apply (the initial thinking phase) the label is left undefined
+  // so the spinner falls back to its rotating messages.
   const last = messages?.at(-1);
   const assistantSpeaking =
     last?.role === 'assistant' && !!last.content?.trim();
-  // A pending approval means the run is paused on the user, not the model, so
-  // the approval card stands in for the spinner.
-  const showSpinner = isRunning && !assistantSpeaking && approvals.length === 0;
+  const runningTool = runningToolName(messages);
+  const spinnerLabel =
+    activityProgressLabel(messages) ??
+    (runningTool ? `Running ${runningTool}…` : undefined) ??
+    (isSlow ? SLOW_RUN_MESSAGE : undefined) ??
+    (assistantSpeaking ? 'Working…' : undefined);
   const spinner = showSpinner ? (
     <div className="mt-4">
-      <WaitingSpinner />
+      <WaitingSpinner label={spinnerLabel} />
     </div>
   ) : null;
+
+  // Render a non-fatal notice when the run's event stream has stalled. The
+  // run is not cancelled automatically; the user can keep waiting or stop it.
+  const stalledNotice =
+    isRunning && stalled && thread ? (
+      <div className="mt-4 flex flex-row items-start gap-2 text-muted-foreground">
+        <AlertCircle size={16} className="mt-0.5 shrink-0" />
+        <span className="grow text-sm">
+          This is taking longer than expected — the connection may have stalled.
+          You can keep waiting or stop the run.
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => {
+            abortRun(thread.id);
+          }}
+        >
+          Stop
+        </Button>
+      </div>
+    ) : null;
 
   // Render the inline error when the latest run failed to send.
   const inlineError =
@@ -93,6 +156,7 @@ export function ChatOutput(): ReactNode {
     <div className="grow mx-auto w-full min-w-3xs max-w-3xl">
       {content}
       {spinner}
+      {stalledNotice}
       <ApprovalPrompts threadId={thread?.id} />
       {inlineError}
     </div>

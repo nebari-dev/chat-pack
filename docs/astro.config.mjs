@@ -17,6 +17,7 @@ export default defineConfig({
       plugins: [nebari({ logoHref: 'https://packs.nebari.dev/' })],
       sidebar: [
         { label: 'Introduction', slug: 'index' },
+        { label: 'Branding & Configuration', slug: 'branding' },
       ],
     }),
   ],

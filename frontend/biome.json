@@ -9,10 +9,13 @@
   "files": {
     "includes": [
       "src/**",
+      "e2e/**",
       "biome.json",
       "package.json",
       "tsconfig*.json",
       "vite.config.ts",
+      "vitest.config.ts",
+      "playwright.config.ts",
       "!!**/dist",
       "!**/*.gen.ts",
       "!src/components/ui/*",

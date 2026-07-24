@@ -8,12 +8,29 @@ metadata:
   labels:
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
 data:
-  keycloak-config.json: |
+  {{- $branding := .Values.frontend.branding | default dict }}
+  {{- $theme := $branding.theme | default dict }}
+  # Served by nginx at /config.json. The frontend fetches this file at startup,
+  # so Keycloak connection settings and branding can be changed without
+  # rebuilding the image. Empty branding fields fall back to built-in defaults.
+  config.json: |
     {{-
     dict
-      "auth-server-url" (required "keycloak.url is required" .Values.keycloak.url)
-      "realm" (required "keycloak.realm is required" .Values.keycloak.realm)
-      "resource" (.Values.keycloak.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" $component))))
+      "keycloak" (dict
+        "url" (required "keycloak.url is required" .Values.keycloak.url)
+        "realm" (required "keycloak.realm is required" .Values.keycloak.realm)
+        "clientId" (.Values.keycloak.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" $component))))
+      )
+      "branding" (dict
+        "title" ($branding.title | default "")
+        "logoUrl" ($branding.logoUrl | default "")
+        "logoUrlDark" ($branding.logoUrlDark | default "")
+        "faviconUrl" ($branding.faviconUrl | default "")
+        "theme" (dict
+          "light" ($theme.light | default dict)
+          "dark" ($theme.dark | default dict)
+        )
+      )
     | toPrettyJson | nindent 4
     }}
   {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
