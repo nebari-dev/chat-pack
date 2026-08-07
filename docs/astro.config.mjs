@@ -20,7 +20,19 @@ export default defineConfig({
           label: 'Getting Started',
           items: [
             { label: 'Introduction', link: '/' },
+            { label: 'Getting started', link: '/getting-started/' },
+            { label: 'Agents & models', link: '/agents/' },
+            { label: 'Tools', link: '/tools/' },
             { label: 'Branding & Configuration', link: '/branding/' },
+            { label: 'Local development', link: '/local-development/' },
+          ],
+        },
+        {
+          label: 'Reference',
+          items: [
+            { label: 'Helm values', link: '/helm-values/' },
+            { label: 'REST API', link: '/api-reference/' },
+            { label: 'Architecture & auth', link: '/architecture/' },
           ],
         },
       ],

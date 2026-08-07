@@ -10,7 +10,5 @@ docs/dist/
 docs/.astro/
 docs/.cache-loader/
 
-# Local agent / contributor playbook (not for the public repo)
-AGENT.md
-AGENTS.md
+# Local agent / contributor playbook (not for the public repo).
 .claude/
