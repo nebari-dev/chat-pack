@@ -16,8 +16,13 @@ export default defineConfig({
       // portal the header logo returns users to the pack catalog.
       plugins: [nebari({ logoHref: 'https://packs.nebari.dev/' })],
       sidebar: [
-        { label: 'Introduction', slug: 'index' },
-        { label: 'Branding & Configuration', slug: 'branding' },
+        {
+          label: 'Getting Started',
+          items: [
+            { label: 'Introduction', link: '/' },
+            { label: 'Branding & Configuration', link: '/branding/' },
+          ],
+        },
       ],
     }),
   ],

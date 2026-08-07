@@ -3,8 +3,6 @@ title: Branding & Configuration
 description: Customize the Nebari Chat title, logo, favicon, and theme — in Kubernetes and standalone.
 ---
 
-# Branding & Configuration
-
 Nebari Chat reads its runtime configuration — Keycloak connection settings and branding — from a
 single `/config.json` that the frontend fetches at startup, **before React mounts**. This decouples
 branding from the build: operators can re-brand without rebuilding the image.
