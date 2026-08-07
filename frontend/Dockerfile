@@ -1,58 +1,8 @@
-# ─── Stage 1: build ──────────────────────────────────────────────────────────
-FROM node:22-alpine AS builder
+ARG NEBI_WORKSPACE="quay.io/reiemp/nebi-chat-frontend:latest"
+FROM quay.io/reiemp/nebi-builder:latest AS builder
 
-WORKDIR /app
+FROM quay.io/reiemp/nebi-runner:debug-latest AS runner
+COPY --from=builder /env /env
+COPY --from=builder /nebi-bundle /nebi-bundle
 
-# Install dependencies first to leverage layer caching.
-COPY package*.json ./
-RUN npm ci
-
-# Copy the rest of the frontend source and build.
-COPY ./ ./
-
-# Declare build-time variables so Vite can embed them into the JS bundle.
-# Pass each one with: docker build --build-arg VITE_AUTH_ENABLED=true ...
-ARG VITE_AUTH_ENABLED=true
-
-RUN npm run build
-# Vite outputs to /app/dist by default.
-
-# ─── Stage 2: serve ──────────────────────────────────────────────────────────
-FROM nginx:1.27-alpine AS final
-
-# envsubst is part of gettext — needed to render ${API_URL} in the template.
-RUN apk add --no-cache gettext
-
-# Remove the default nginx welcome page.
-RUN rm -rf /usr/share/nginx/html/*
-
-# Make nginx runnable as non-root (Kubernetes enforces runAsNonRoot).
-# Create writable directories for temp files, cache, and the generated config.
-RUN mkdir -p /tmp/nginx /var/cache/nginx /var/run && \
-    chown -R 1000:1000 /tmp/nginx /var/cache/nginx /var/run /usr/share/nginx/html
-
-# Copy built assets.
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy the nginx config as a template — ${API_URL} will be substituted at
-# container startup by envsubst, so the backend address can be set via env var
-# without rebuilding the image.
-COPY nginx.conf /tmp/nginx/nginx.conf.template
-
-# Copy the entrypoint that renders nginx.conf and generates /config.json.
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Make directories writable for non-root.
-RUN chown -R 1000:1000 /var/cache/nginx /var/log/nginx /usr/share/nginx/html && \
-    chmod -R 755 /var/cache/nginx /var/log/nginx
-
-# Set a default value for API_URL, which will be substituted into the nginx.conf at runtime.
-ENV API_URL=http://host.docker.internal:8000
-
-EXPOSE 8080
-
-USER 1000
-
-# Render nginx.conf, generate /config.json from env vars (non-k8s), start nginx.
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/env/sbin/nginx", "-c", "/nebi-bundle/nebi-bundle/nginx.conf.rendered", "-g", "daemon off;"]

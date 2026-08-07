@@ -32,4 +32,8 @@ dist-ssr
 # env files
 .*.env
 .env
-.env.development
+.env.development# pixi environments
+.pixi/*
+!.pixi/config.toml
+# FIXME: maybe prevents nebi from picking it up to bundle
+# nebi-bundle
