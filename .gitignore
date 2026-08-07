@@ -13,3 +13,4 @@ docs/.cache-loader/
 # Local agent / contributor playbook (not for the public repo)
 AGENT.md
 AGENTS.md
+.claude/
