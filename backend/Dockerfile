@@ -1,48 +1,11 @@
-FROM python:3.13-slim-trixie AS python
-FROM ghcr.io/astral-sh/uv:latest AS uv
+ARG NEBI_WORKSPACE="quay.io/reiemp/nebi-chat:latest"
+ARG NEBI_INSTALL_ENV_VARS="UV_DYNAMIC_VERSIONING_BYPASS=1.2.3"
+FROM quay.io/reiemp/nebi-builder:latest AS builder
 
-FROM python AS builder
-
-WORKDIR /var/ravnar
-
-COPY pyproject.toml uv.lock ./
-RUN --mount=from=uv,source=/uv,target=/bin/uv \
-    uv sync \
-    --no-progress --link-mode=copy --compile-bytecode \
-    --frozen --python=$(which python) --no-default-groups --no-install-project
-
-# The README is required to build the package as it is considered metadata
-COPY README.md ./
-COPY src ./src
-ARG VERSION
-RUN --mount=from=uv,source=/uv,target=/bin/uv \
-    UV_DYNAMIC_VERSIONING_BYPASS=${VERSION} \
-    uv pip install \
-    --no-progress --link-mode=copy --compile-bytecode \
-    --no-deps .
-
-FROM python AS runtime
-
-RUN groupadd --gid 1000 nebari && \
-    useradd --shell "$(which bash)" --uid 1000 --gid 1000 nebari
-USER nebari
-
-WORKDIR /var/ravnar/plugins
-ENV RAVNARPATH="/var/ravnar/plugins"
+FROM quay.io/reiemp/nebi-runner:debug-latest AS runner
+COPY --from=builder /env /env
+COPY --from=builder /nebi-bundle /nebi-bundle
 
 COPY config-docker.yml /etc/ravnar/config.yml
 
-WORKDIR /var/ravnar
-COPY --from=builder --chown=nebari:nebari /var/ravnar/.venv /var/ravnar/.venv
-ENV PATH="/var/ravnar/.venv/bin:${PATH}"
-
-ENTRYPOINT ["ravnar"]
-CMD ["serve"]
-
-HEALTHCHECK \
-    --start-period=30s \
-    --start-interval=1s \
-    --interval=30s \
-    --timeout=5s \
-    --retries=3 \
-    CMD ["ravnar", "health"]
+ENTRYPOINT ["python", "-m", "ravnar", "serve"]

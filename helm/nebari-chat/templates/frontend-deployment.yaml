@@ -39,16 +39,28 @@ spec:
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
           env:
+            - name: KEYCLOAK_URL
+              value: {{ .Values.keycloak.url | required "keycloak.url is required" | quote }}
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.keycloak.realm | quote }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.keycloak.clientId | default (printf "%s-%s-spa" .Release.Namespace (include "ravnar.component-name" (dict "top" . "component" $component))) | quote }}
+            - name: BRANDING_TITLE
+              value: {{ .Values.frontend.branding.title | default "" | quote }}
+            - name: BRANDING_LOGO_URL
+              value: {{ .Values.frontend.branding.logoUrl | default "" | quote }}
+            - name: BRANDING_LOGO_URL_DARK
+              value: {{ .Values.frontend.branding.logoUrlDark | default "" | quote }}
+            - name: BRANDING_FAVICON_URL
+              value: {{ .Values.frontend.branding.faviconUrl | default "" | quote }}
+            - name: BRANDING_THEME_LIGHT
+              value: {{ .Values.frontend.branding.theme.light | default dict | toJson | quote }}
+            - name: BRANDING_THEME_DARK
+              value: {{ .Values.frontend.branding.theme.dark | default dict | toJson | quote }}
+            {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
             - name: API_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
-                  key: API_URL
-          volumeMounts:
-            - name: config
-              mountPath: /usr/share/nginx/html/config.json
-              subPath: config.json
-              readOnly: true
+              value: {{ $.Values.frontend.api.url | default (printf "http://%s.%s.svc.cluster.local:%d" (include "ravnar.fullname" .) $.Release.Namespace (.Values.service.port | default 80 | int)) | quote }}
+            {{- end }}
           ports:
             - containerPort: {{ .Values.frontend.service.targetPort }}
           startupProbe:
@@ -65,8 +77,4 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 1
             failureThreshold: 3
-      volumes:
-        - name: config
-          configMap:
-            name: {{ include "ravnar.component-name" (dict "top" . "component" $component) }}
 {{- end }}

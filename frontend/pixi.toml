@@ -1,0 +1,12 @@
+[workspace]
+authors = ["Philip Meier <github.pmeier@posteo.de>"]
+channels = ["conda-forge"]
+name = "frontend"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[dependencies]
+nginx = "1.29.*"
+
+[tool.nebi.bundle]
+include = ["dist/**/*", "config.json.tpl", "nginx.conf.tpl"]
