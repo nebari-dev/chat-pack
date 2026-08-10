@@ -62,11 +62,11 @@ frontend:
   securityContext:
     pod:
       # -- The user ID to run the pod with
-      runAsUser: 1000
+      runAsUser: 65532
       # -- The group ID to run the pod with
-      runAsGroup: 1000
+      runAsGroup: 65532
       # -- The group ID for the pod's filesystem
-      fsGroup: 1000
+      fsGroup: 65532
       # -- Prevent privilege escalation
       runAsNonRoot: true
     container:
