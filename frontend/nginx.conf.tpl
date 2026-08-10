@@ -1,0 +1,74 @@
+error_log /tmp/nginx/error.log;
+pid /tmp/nginx/nginx.pid;
+
+events {}
+
+http {
+    client_body_temp_path /tmp/nginx/client_body;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
+    access_log /tmp/nginx/access.log;
+
+    default_type  application/octet-stream;
+    sendfile      on;
+
+    server {
+        listen       8080;
+        server_name  _;
+        root         /nebi-bundle/dist;
+        index        index.html;
+
+        # Health check endpoint.
+        location = /healthz {
+            access_log off;
+            return 200 "ok";
+        }
+
+        # Gzip compression
+        gzip on;
+        gzip_types text/plain text/css application/json application/javascript
+                text/xml application/xml application/xml+rss text/javascript
+                image/svg+xml;
+        gzip_min_length 1024;
+
+        # Proxy API requests to the backend; avoids CORS and keeps paths relative.
+        location /api/ {
+            proxy_pass {{ .API_URL }}/api/;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Authorization $http_authorization;
+            proxy_set_header Connection "";
+            # Allow streaming / SSE responses.
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 300s;
+            proxy_send_timeout 300s;
+            proxy_connect_timeout 75s;
+            chunked_transfer_encoding on;
+            # Override any upstream buffering hints
+            proxy_hide_header X-Accel-Buffering;
+            add_header X-Accel-Buffering no;
+        }
+
+        # Serve pre-built assets directly; fall back to index.html for SPA routes.
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Cache static assets aggressively; versions are content-hashed by Vite.
+        location ~* \.(js|css|woff2?|ttf|eot|svg|png|ico)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+            try_files $uri =404;
+        }
+
+        # Do not cache index.html so browsers always pick up new asset hashes.
+        location = /index.html {
+            add_header Cache-Control "no-store";
+        }
+    }
+}

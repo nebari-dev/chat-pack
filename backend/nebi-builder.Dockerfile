@@ -6,7 +6,7 @@ WORKDIR /workspace
 ONBUILD ARG NEBI_WORKSPACE
 ONBUILD RUN nebi import ${NEBI_WORKSPACE}
 
-ONBUILD RUN mkdir /nebi-bundle && cp --recursive ./* /nebi-bundle && chmod --recursive a+rX /nebi-bundle
+ONBUILD RUN mkdir /nebi-bundle && cp --recursive ./* /nebi-bundle && chmod --recursive a+rwX /nebi-bundle
 
 ONBUILD ARG NEBI_INSTALL_ENV_VARS
 ONBUILD RUN export ${NEBI_INSTALL_ENV_VARS:-NEBI_BUILDER_NO_INSTALL_ENV_VARS=1} && pixi install

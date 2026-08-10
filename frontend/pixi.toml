@@ -9,4 +9,4 @@ version = "0.1.0"
 nginx = "1.29.*"
 
 [tool.nebi.bundle]
-include = ["nebi-bundle/**/*"]
+include = ["dist/**/*", "config.json.tpl", "nginx.conf.tpl"]

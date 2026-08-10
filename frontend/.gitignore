@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist
 dist-ssr
 *.local
 
@@ -35,5 +35,3 @@ dist-ssr
 .env.development# pixi environments
 .pixi/*
 !.pixi/config.toml
-# FIXME: maybe prevents nebi from picking it up to bundle
-# nebi-bundle
