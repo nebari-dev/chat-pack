@@ -12,6 +12,10 @@ concurrency:
   group: helm-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   metadata:
     runs-on: ubuntu-latest
@@ -98,3 +102,51 @@ jobs:
       - name: Push helm chart
         if: steps.registry.outputs.publish == 'true'
         run: helm push nebari-chat-*.tgz oci://quay.io/nebari/charts
+
+  comment:
+    needs: helm
+    # Comments require a write token, which fork PRs don't get, so skip them there.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Compute workflow metadata
+        id: workflow-metadata
+        uses: ./.github/actions/workflow-metadata
+
+      - name: Build comment
+        id: comment
+        shell: bash
+        env:
+          CHART_JSON: ${{ steps.workflow-metadata.outputs.chart-version-json }}
+        run: |
+          STABLE_TAG=$(echo "${CHART_JSON}" | jq --raw-output '."stable-tag"')
+          TAG_LIST=$(echo "${CHART_JSON}" | jq --raw-output '.tags | map("`" + . + "`") | join(", ")')
+
+          CHART=oci://quay.io/nebari/charts/nebari-chat
+
+          {
+            echo "## Helm chart"
+            echo
+            echo "Built from ${{ github.event.pull_request.head.sha }}."
+            echo
+            echo "| Chart | Versions |"
+            echo "| --- | --- |"
+            echo "| \`${CHART}\` | ${TAG_LIST} |"
+            echo
+            echo '```sh'
+            echo "helm install chat ${CHART} --version ${STABLE_TAG}"
+            echo '```'
+          } > comment.md
+
+      - name: Post comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: helm-tags
+          path: comment.md

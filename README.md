@@ -98,6 +98,26 @@ Docker images for the frontend and backend are published by pushing a `v$SEMVER`
 > [!IMPORTANT]
 > Do not push the app and chart tags at the same time. Each tag triggers the release workflow independently, and if the chart tag arrives first, the chart may reference the previous app version instead of the newly tagged one.
 
+## Available tags
+
+Every build publishes a set of tags that depends on what triggered it. `<base>` is the next version computed from the most recent tag (e.g. `v1.2.4`); `<semver>` is the version of the release tag (e.g. `v1.2.3`); `<pr>` is the PR number; `<commit>` is the short commit SHA.
+
+Docker images (`quay.io/nebari/nebari-chat-backend` and `quay.io/nebari/nebari-chat-frontend`):
+
+| Trigger | Tags |
+| --- | --- |
+| Release (`v$SEMVER`) | `<semver>`, `latest` |
+| Push to `main` | `<base>-main`, `main` |
+| Pull request | `<base>-pr.<pr>.<commit>`, `<base>-pr.<pr>`, `pr.<pr>` |
+
+Helm chart (`oci://quay.io/nebari/charts/nebari-chat`):
+
+| Trigger | Tags |
+| --- | --- |
+| Release (`chart/v$SEMVER`) | `<semver>` |
+| Push to `main` | `<base>-main` |
+| Pull request | `<base>-pr.<pr>.<commit>`, `<base>-pr.<pr>` |
+
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
