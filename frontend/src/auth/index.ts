@@ -3,6 +3,8 @@
 |----------------------------------------------------------------------------*/
 import Keycloak from 'keycloak-js';
 
+import type { KeycloakConfig } from '@/config';
+
 // Save a reference to the native fetch before it can be overridden.
 //
 // This does two things:
@@ -42,14 +44,28 @@ export class FetchError extends Error {
 // Whether auth is enabled for the application.
 const AUTH_ENABLED = import.meta.env.VITE_AUTH_ENABLED === 'true';
 
-// The singleton `Keycloak` instance for handling authentication.
-const keycloak = new Keycloak('/keycloak-config.json');
+// The singleton `Keycloak` instance, created by `initAuth` from the runtime
+// config. `null` until `initAuth` runs (or when auth is disabled).
+let keycloak: Keycloak | null = null;
 
-// If auth is enabled, init keycloak before anything else is loaded.
-//
-// This allows redirects to happen cleanly after a login and prevents
-// redirect loops if it were to be performed lazily in `login()`.
-if (AUTH_ENABLED) {
+/**
+ * Initialize authentication from the runtime Keycloak config.
+ *
+ * Called once at startup, before React mounts, after `/config.json` has been
+ * loaded. Initializing eagerly lets redirects happen cleanly after a login and
+ * prevents redirect loops that a lazy init inside `login()` could cause.
+ *
+ * A no-op when auth is disabled or no Keycloak config is present.
+ */
+export async function initAuth(config?: KeycloakConfig): Promise<void> {
+  if (!AUTH_ENABLED) {
+    return;
+  }
+  if (!config) {
+    console.error('Auth is enabled but no keycloak config was provided.');
+    return;
+  }
+  keycloak = new Keycloak(config);
   await keycloak.init({ checkLoginIframe: false });
 }
 
@@ -66,13 +82,13 @@ export async function fetch(
   init: RequestInit = {},
 ): Promise<Response> {
   // Ensure we have an unexpired token.
-  if (AUTH_ENABLED) {
+  if (AUTH_ENABLED && keycloak) {
     await keycloak.updateToken();
   }
 
   // Create the extra headers if needed.
   const headers = (
-    AUTH_ENABLED ? { Authorization: `Bearer ${keycloak.token ?? ''}` } : {}
+    AUTH_ENABLED ? { Authorization: `Bearer ${keycloak?.token ?? ''}` } : {}
   ) as HeadersInit;
 
   // Clone the init object and headers to prevent snooping by the caller.
@@ -97,7 +113,7 @@ export async function fetch(
  */
 export async function login(): Promise<void> {
   // Bail early if login is not needed.
-  if (!AUTH_ENABLED || keycloak.authenticated) {
+  if (!AUTH_ENABLED || !keycloak || keycloak.authenticated) {
     return;
   }
 
@@ -116,7 +132,7 @@ export async function logout(): Promise<void> {
   // On execution, `keycloak.authenticated` might be `false` if the user
   // is authed but the `keycloak.init()` promise has not yet resolved,
   // which would yield a false negative, so don't check for it.
-  if (!AUTH_ENABLED) {
+  if (!AUTH_ENABLED || !keycloak) {
     window.location.replace(window.location.origin);
     return;
   }
@@ -145,7 +161,7 @@ export type UserProfile = {
  */
 export function getUserProfile(): UserProfile | null {
   // Bail early if auth is not enabled.
-  if (!AUTH_ENABLED || !keycloak.authenticated) {
+  if (!AUTH_ENABLED || !keycloak?.authenticated) {
     return null;
   }
 

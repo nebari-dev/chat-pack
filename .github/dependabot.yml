@@ -16,6 +16,45 @@ updates:
         versions: [">=25"]
       - dependency-name: "@types/react"
       - dependency-name: "@types/react-dom"
+      # Stay on TypeScript 6.x
+      - dependency-name: "typescript"
+        versions: [">=7"]
+    groups:
+      # Group all patch and minor updates into a single PR
+      patch-and-minor:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    # Major updates are not grouped, so each opens its own PR
+
+  - package-ecosystem: "npm"
+    directory: "/docs"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "08:00"
+      timezone: "US/Eastern"
+    ignore:
+      # Stay on TypeScript 6.x
+      - dependency-name: "typescript"
+        versions: [">=7"]
+    groups:
+      # Group all patch and minor updates into a single PR
+      patch-and-minor:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    # Major updates are not grouped, so each opens its own PR
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "08:00"
+      timezone: "US/Eastern"
     groups:
       # Group all patch and minor updates into a single PR
       patch-and-minor:

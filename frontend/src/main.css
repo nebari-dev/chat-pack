@@ -13,7 +13,6 @@ html {
 body {
   font-family: Inter;
   font-weight: 400;
-  color: #1e1e1e;
   height: 100%;
   font-size: 14px;
 }
@@ -153,31 +152,27 @@ body {
 }
 
 @theme {
-  /* Background Colors */
-  --color-bg-neutral-dark: #ededed;
-  --color-bg-neutral-xdark: #d5d5d5;
-  --color-bg-neutral-default: #f5f5f5;
-  --color-bg-neutral-white: #fbfbfb;
-  --color-bg-brand-default: #9b3dcc;
-  --color-bg-brand-secondary: #e8d7fb;
-  --color-bg-white: #ffffff;
-
-  /* Border Colors */
-  --color-bd-neutral-default: #d9d9d9;
-  --color-bd-neutral-secondary: #b3b3b3;
-  --color-bd-brand-default: #682888;
-
-  /* Text Colors */
-  --color-text-brand-on-brand: #fbfbfb;
-  --color-text-neutral-default: #1e1e1e;
-  --color-text-neutral-secondary: #757575;
-
   --thread-max-width: 44rem;
 }
 
 /*---break---*/
 
 @theme inline {
+  /* Custom brand tokens, driven by CSS variables so they respond to `.dark`. */
+  --color-bg-neutral-dark: var(--bg-neutral-dark);
+  --color-bg-neutral-xdark: var(--bg-neutral-xdark);
+  --color-bg-neutral-default: var(--bg-neutral-default);
+  --color-bg-neutral-white: var(--bg-neutral-white);
+  --color-bg-brand-default: var(--bg-brand-default);
+  --color-bg-brand-secondary: var(--bg-brand-secondary);
+  --color-bg-white: var(--bg-white);
+  --color-bd-neutral-default: var(--bd-neutral-default);
+  --color-bd-neutral-secondary: var(--bd-neutral-secondary);
+  --color-bd-brand-default: var(--bd-brand-default);
+  --color-text-brand-on-brand: var(--text-brand-on-brand);
+  --color-text-neutral-default: var(--text-neutral-default);
+  --color-text-neutral-secondary: var(--text-neutral-secondary);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -218,6 +213,21 @@ body {
 /*---break---*/
 
 :root {
+  /* Custom brand tokens (light). */
+  --bg-neutral-dark: #ededed;
+  --bg-neutral-xdark: #d5d5d5;
+  --bg-neutral-default: #f5f5f5;
+  --bg-neutral-white: #fbfbfb;
+  --bg-brand-default: #9b3dcc;
+  --bg-brand-secondary: #e8d7fb;
+  --bg-white: #ffffff;
+  --bd-neutral-default: #d9d9d9;
+  --bd-neutral-secondary: #b3b3b3;
+  --bd-brand-default: #682888;
+  --text-brand-on-brand: #fbfbfb;
+  --text-neutral-default: #1e1e1e;
+  --text-neutral-secondary: #757575;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -255,6 +265,21 @@ body {
 /*---break---*/
 
 .dark {
+  /* Custom brand tokens (dark). */
+  --bg-neutral-dark: #333333;
+  --bg-neutral-xdark: #404040;
+  --bg-neutral-default: #2a2a2a;
+  --bg-neutral-white: #262626;
+  --bg-brand-default: #9b3dcc;
+  --bg-brand-secondary: #3a2352;
+  --bg-white: #1e1e1e;
+  --bd-neutral-default: #404040;
+  --bd-neutral-secondary: #525252;
+  --bd-brand-default: #b45ee0;
+  --text-brand-on-brand: #fbfbfb;
+  --text-neutral-default: #ededed;
+  --text-neutral-secondary: #a3a3a3;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

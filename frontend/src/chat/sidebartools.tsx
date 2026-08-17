@@ -5,11 +5,13 @@ import type * as agui from '@ag-ui/core';
 
 import { useQuery } from '@tanstack/react-query';
 
-import { JsonEditor } from 'json-edit-react';
+import { githubDarkTheme, JsonEditor } from 'json-edit-react';
 
 import type { ReactNode } from 'react';
 
 import { useChatConfig } from '@/context/chat';
+
+import { useTheme } from '@/hooks/themecontext';
 
 import { threadMessagesQuery } from '@/queries';
 
@@ -89,6 +91,9 @@ namespace Private {
     // Extract the props.
     const { toolCall } = props;
 
+    // Match the JSON viewer theme to the active app theme.
+    const { isDarkMode } = useTheme();
+
     // Try to parse the arguments to JSON, falling back on the string.
     const args = (() => {
       try {
@@ -102,6 +107,7 @@ namespace Private {
     return (
       <JsonEditor
         className="ot-NebariChat-jer"
+        theme={isDarkMode ? githubDarkTheme : undefined}
         data={args}
         maxWidth="100%"
         rootName="arguments"
@@ -119,6 +125,9 @@ namespace Private {
     // Extract the props.
     const { toolCall } = props;
 
+    // Match the JSON viewer theme to the active app theme.
+    const { isDarkMode } = useTheme();
+
     // Find the tool message that matches the tool call id.
     const toolMessage = useToolMessage(toolCall.id);
 
@@ -135,6 +144,7 @@ namespace Private {
     return (
       <JsonEditor
         className="ot-NebariChat-jer"
+        theme={isDarkMode ? githubDarkTheme : undefined}
         data={result}
         maxWidth="100%"
         rootName="result"

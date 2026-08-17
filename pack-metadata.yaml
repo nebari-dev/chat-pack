@@ -23,7 +23,7 @@
 
 # Must equal the GitHub repo name exactly (e.g. "nebari-data-science-pack").
 # The dashboard uses this to cross-check that the file is in the right repo.
-name: nebari-chat-pack
+name: chat-pack
 
 # Human-readable name shown on the dashboard. Title-case recommended.
 display_name: Chat Pack
@@ -31,7 +31,7 @@ display_name: Chat Pack
 # Maturity level. Must be lowercase. Allowed values: experimental | alpha | beta | ga
 # Definitions, per-level promotion checklist, and dashboard flag reference:
 #   https://github.com/nebari-dev/nebari-software-pack-template/blob/main/docs/release-readiness-checklist.md
-level: experimental
+level: alpha
 
 # GitHub username of the accountable engineer. No "@" prefix.
 # For packs with multiple maintainers, name the single most-accountable one
@@ -62,16 +62,23 @@ product_owner: null
 # sourced from the GitHub repo description (set via repo settings or
 # `gh repo edit -d`), NOT from this field, so it is optional. If you do set
 # it, it is still validated against the 200-char limit.
-# description: One short sentence describing what this pack does and who it is for.
+description: A drop-in chat application with a React frontend and a Ravnar/AG-UI backend, deployed on Nebari behind Keycloak SSO.
 
 # How the pack integrates with the NebariApp CRD.
 # Allowed: full | partial | none | na    Default: na
 # Use "na" for packs that are not user-facing applications.
-# nebariapp_integration: full
+# The Helm chart ships NebariApp resources for both the frontend and the
+# backend, with routing and Keycloak auth wired in.
+nebariapp_integration: full
+
+# Whether the pack publishes a documentation site. true | false.
+docs_site: true
 
 # Whether the pack installs without the Nebari operator.
-# scope:
-#   standalone-supported: yes    # yes | no    Default: no
+# The container generates /config.json from environment variables at startup,
+# so it also runs standalone under plain `docker run`. See the branding docs.
+scope:
+  standalone-supported: true
 
 # When the pack was most recently promoted to its current level.
 # ISO 8601 date. Useful audit trail.
@@ -88,9 +95,7 @@ product_owner: null
 #   on cluster provisioning.
 
 # Links shown alongside the pack on the dashboard. Both are optional.
-# links:
-#   Extended documentation (NOT the README - that is auto-linked from the
-#   pack name column).
-#   docs: https://example.com/docs/my-pack
-#   Recorded or live demo URL.
-#   demo: https://example.com/demos/my-pack
+links:
+  # Extended documentation (NOT the README - that is auto-linked from the
+  # pack name column).
+  docs: https://packs.nebari.dev/chat-pack/

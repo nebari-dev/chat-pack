@@ -16,7 +16,7 @@ maintainers:
 dependencies:
   - name: ravnar
     repository: oci://quay.io/nebari/charts
-    version: "0.0.10"
+    version: "0.0.11"
   - name: nebari-app
     repository: oci://quay.io/nebari/charts
     version: "0.1.0"

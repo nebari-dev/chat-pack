@@ -7,7 +7,7 @@ import { useMutation, useMutationState } from '@tanstack/react-query';
 
 import { useNavigate } from '@tanstack/react-router';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import * as api from '@/api';
 
@@ -142,6 +142,44 @@ export function useIsRunning(threadId: string | undefined): boolean {
 
   // The thread is running if its id is among the pending runs.
   return threadId !== undefined && pendingThreadIds.includes(threadId);
+}
+
+/**
+ * A hook that becomes `true` once `active` has stayed true for `delayMs`.
+ *
+ * The flag starts `false`, flips to `true` after the delay elapses while
+ * active, and resets to `false` whenever `active` becomes false. It is used to
+ * surface a reassuring message only once a run has been going long enough to
+ * warrant one, rather than immediately.
+ *
+ * @param active - Whether the delay timer should be running.
+ *
+ * @param delayMs - The delay, in milliseconds, before the flag becomes true.
+ *
+ * @returns `true` once `active` has been continuously true for `delayMs`.
+ */
+export function useDelayedFlag(active: boolean, delayMs: number): boolean {
+  const [elapsed, setElapsed] = useState(false);
+
+  useEffect(() => {
+    // Reset when inactive so the next run starts the delay from scratch.
+    if (!active) {
+      setElapsed(false);
+      return;
+    }
+
+    // Flip the flag once the delay has passed while active.
+    setElapsed(false);
+    const timeoutId = setTimeout(() => {
+      setElapsed(true);
+    }, delayMs);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [active, delayMs]);
+
+  return elapsed;
 }
 
 /**
