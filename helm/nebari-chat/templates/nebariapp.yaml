@@ -1,3 +1,15 @@
+{{- define "nebariApp" -}}
+{{- $top := .top -}}
+{{- $component := .component -}}
+{{- include "nebari-app.nebariApp" (dict
+    "metadata" (dict
+      "name"      (include "ravnar.component-name" (dict "top" $top "component" $component))
+      "namespace" $top.Release.Namespace
+      "labels"    (include "ravnar.labels" (dict "top" $top "component" $component) | fromYaml)
+    )
+    "spec" .spec
+) -}}
+{{- end -}}
 {{- $component := "nebariapp" }}
 apiVersion: v1
 kind: Namespace
@@ -9,7 +21,7 @@ metadata:
 ---
 {{- $component := "backend" }}
 {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
-{{- include "nebari-chat.nebariApp" (dict
+{{- include "nebariApp" (dict
     "top" $
     "component" $component
     "spec" (mergeOverwrite (dict
@@ -22,7 +34,7 @@ metadata:
 {{- end }}
 ---
 {{- $component := "frontend" }}
-{{- include "nebari-chat.nebariApp" (dict
+{{- include "nebariApp" (dict
     "top" $
     "component" $component
     "spec" (mergeOverwrite (dict
