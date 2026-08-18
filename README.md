@@ -98,6 +98,43 @@ Docker images for the frontend and backend are published by pushing a `v$SEMVER`
 > [!IMPORTANT]
 > Do not push the app and chart tags at the same time. Each tag triggers the release workflow independently, and if the chart tag arrives first, the chart may reference the previous app version instead of the newly tagged one.
 
+Both are lightweight tags cut from `main`:
+
+```bash
+git checkout main && git pull
+git tag v0.0.16 && git push origin v0.0.16          # app images first
+# wait for the image build to finish, then:
+git tag chart/v0.0.27 && git push origin chart/v0.0.27
+```
+
+### Versions come from tags, not the tree
+
+`helm/nebari-chat/Chart.yaml` reads `version: "set-by-cd"` / `appVersion: "set-by-cd"` and stays that way — **do not bump it by hand**. On a tag push the release workflow resolves each with `git describe` against its own tag prefix:
+
+| Field | Source | For `chart/v0.0.27` |
+|---|---|---|
+| chart `version` | latest `chart/v*` tag | `0.0.27` |
+| chart `appVersion` | latest `v*` tag | the current app release |
+
+This is the mechanism behind the ordering warning above: `appVersion` is resolved from whatever app tag is newest **at the moment the chart workflow runs**, so a chart tag pushed first bakes in the previous app version.
+
+A corollary: the chart cannot be installed from a git checkout, because `set-by-cd` is not valid semver and Helm rejects it. Consume the published chart:
+
+```bash
+helm pull oci://quay.io/nebari/charts/nebari-chat --version <version> --untar
+```
+
+### Verify the release landed
+
+Chart tags are published to the OCI registry, and pre-release builds share the namespace, so confirm the stable version is actually there:
+
+```bash
+helm show chart oci://quay.io/nebari/charts/nebari-chat --version 0.0.27 | \
+  grep -E '^(version|appVersion)'
+```
+
+Check `appVersion` in that output rather than assuming — it is the fastest way to catch an ordering mistake, and it is visible before anyone deploys the chart.
+
 ## License
 
 Apache 2.0 — see [LICENSE](LICENSE).
