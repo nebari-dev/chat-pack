@@ -1,48 +1,35 @@
 {{- define "nebari-chat.nebariapp" -}}
 {{- $top := .top -}}
 {{- $component := .component -}}
+{{- $spec := .spec -}}
 {{- include "nebari-app.nebariApp" (dict
     "metadata" (dict
       "name"      (include "ravnar.component-name" (dict "top" $top "component" $component))
       "namespace" $top.Release.Namespace
       "labels"    (include "ravnar.labels" (dict "top" $top "component" $component) | fromYaml)
     )
-    "spec" .spec
+    "spec" $spec
+    "ctx"  $top
 ) -}}
 {{- end -}}
-{{- $component := "nebariapp" }}
 apiVersion: v1
 kind: Namespace
 metadata:
   name: {{ .Release.Namespace }}
   labels:
     nebari.dev/managed: "true"
-    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+    {{- include "ravnar.labels" (dict "top" . "component" "nebariapp") | nindent 4 }}
 ---
-{{ $component := "backend" }}
-{{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
-{{- include "nebari-chat.nebariapp" (dict
-    "top" $
-    "component" $component
-    "spec" (mergeOverwrite (dict
-      "service" (dict
-        "name" (include "ravnar.fullname" .)
-        "port" .Values.service.port
-      )
-    ) $.Values.backend.nebariapp)
+{{ include "nebari-chat.nebariapp" (dict
+    "top"       .
+    "component" "backend"
+    "spec"      .Values.backend.nebariapp
 ) }}
-{{- end }}
 ---
 {{ if .Values.frontend.enabled }}
-{{- $component := "frontend" }}
 {{- include "nebari-chat.nebariapp" (dict
-    "top" $
-    "component" $component
-    "spec" (mergeOverwrite (dict
-      "service" (dict
-        "name" (include "ravnar.component-name" (dict "top" . "component" $component))
-        "port" .Values.frontend.service.port
-      )
-    ) .Values.frontend.nebariapp)
+    "top"       .
+    "component" "frontend"
+    "spec"      .Values.frontend.nebariapp
 ) }}
 {{- end }}

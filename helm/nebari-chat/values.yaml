@@ -32,7 +32,11 @@ ravnar:
 backend:
   nebariapp:
     # -- The hostname for the backend nebariapp
-    hostname: ""
+    hostname: '{{ fail "backend.nebariapp.hostname is required" }}'
+    # -- The service for the backend nebariapp
+    service:
+      name: '{{ include "ravnar.fullname" (include "nebari-chat.ravnarContextJson" . | fromJson) }}'
+      port: '{{ .Values.ravnar.service.port }}'
     # -- Routing configuration for the backend nebariapp
     routing:
       routes:
@@ -134,7 +138,11 @@ frontend:
 
   nebariapp:
     # -- The hostname for the frontend nebariapp
-    hostname: ""
+    hostname: '{{ fail "if frontend.enabled, frontend.nebariapp.hostname is required" }}'
+    # -- The service for the frontend nebariapp
+    service:
+      name: '{{ include "ravnar.component-name" (dict "top" . "component" "frontend") }}'
+      port: '{{ .Values.frontend.service.port }}' 
     # -- Authentication configuration for the frontend nebariapp
     auth:
       # -- Whether authentication is enabled for the frontend nebariapp
