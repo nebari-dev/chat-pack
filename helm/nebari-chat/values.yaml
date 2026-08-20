@@ -30,10 +30,10 @@ ravnar:
     enabled: false
 
 backend:
-  nebariApp:
-    # -- The hostname for the backend NebariApp
+  nebariapp:
+    # -- The hostname for the backend nebariapp
     hostname: ""
-    # -- Routing configuration for the backend NebariApp
+    # -- Routing configuration for the backend nebariapp
     routing:
       routes:
         - pathPrefix: /
@@ -132,12 +132,12 @@ frontend:
       light: {}
       dark: {}
 
-  nebariApp:
-    # -- The hostname for the frontend NebariApp
+  nebariapp:
+    # -- The hostname for the frontend nebariapp
     hostname: ""
-    # -- Authentication configuration for the frontend NebariApp
+    # -- Authentication configuration for the frontend nebariapp
     auth:
-      # -- Whether authentication is enabled for the frontend NebariApp
+      # -- Whether authentication is enabled for the frontend nebariapp
       enabled: true
       # -- The OIDC authentication provider
       provider: keycloak
@@ -156,12 +156,12 @@ frontend:
       spaClient:
         # -- Whether to provision a public OIDC client for SPA use
         enabled: true
-    # -- Routing configuration for the frontend NebariApp
+    # -- Routing configuration for the frontend nebariapp
     routing:
       routes:
         - pathPrefix: /
           pathType: PathPrefix
-    # -- Landing page configuration for the frontend NebariApp
+    # -- Landing page configuration for the frontend nebariapp
     landingPage:
       # -- Whether to show the service on the landing page
       enabled: true

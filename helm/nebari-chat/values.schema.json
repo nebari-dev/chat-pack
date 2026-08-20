@@ -70,11 +70,11 @@
     "backend": {
       "type": "object",
       "properties": {
-        "nebariApp": {
-          "$ref": "#/definitions/nebariApp"
+        "nebariapp": {
+          "$ref": "#/definitions/nebariapp"
         }
       },
-      "required": ["nebariApp"]
+      "required": ["nebariapp"]
     },
     "frontend": {
       "type": "object",
@@ -213,8 +213,8 @@
             }
           }
         },
-        "nebariApp": {
-          "$ref": "#/definitions/nebariApp"
+        "nebariapp": {
+          "$ref": "#/definitions/nebariapp"
         }
       }
     }
@@ -226,7 +226,7 @@
         "type": "string"
       }
     },
-    "nebariApp": {
+    "nebariapp": {
       "type": "object",
       "additionalProperties": true
     }

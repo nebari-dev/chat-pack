@@ -1,4 +1,4 @@
-{{- define "nebariApp" -}}
+{{- define "nebari-chat.nebariapp" -}}
 {{- $top := .top -}}
 {{- $component := .component -}}
 {{- include "nebari-app.nebariApp" (dict
@@ -19,9 +19,9 @@ metadata:
     nebari.dev/managed: "true"
     {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
 ---
-{{- $component := "backend" }}
+{{ $component := "backend" }}
 {{- with include "nebari-chat.ravnarContextJson" . | fromJson }}
-{{- include "nebariApp" (dict
+{{- include "nebari-chat.nebariapp" (dict
     "top" $
     "component" $component
     "spec" (mergeOverwrite (dict
@@ -29,12 +29,13 @@ metadata:
         "name" (include "ravnar.fullname" .)
         "port" .Values.service.port
       )
-    ) $.Values.backend.nebariApp)
+    ) $.Values.backend.nebariapp)
 ) }}
 {{- end }}
 ---
+{{ if .Values.frontend.enabled }}
 {{- $component := "frontend" }}
-{{- include "nebariApp" (dict
+{{- include "nebari-chat.nebariapp" (dict
     "top" $
     "component" $component
     "spec" (mergeOverwrite (dict
@@ -42,5 +43,6 @@ metadata:
         "name" (include "ravnar.component-name" (dict "top" . "component" $component))
         "port" .Values.frontend.service.port
       )
-    ) .Values.frontend.nebariApp)
+    ) .Values.frontend.nebariapp)
 ) }}
+{{- end }}
