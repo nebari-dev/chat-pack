@@ -9,7 +9,7 @@
       "labels"    (include "ravnar.labels" (dict "top" $top "component" $component) | fromYaml)
     )
     "spec" $spec
-    "ctx"  $top
+    "tplCtx"  $top
 ) -}}
 {{- end -}}
 apiVersion: v1
