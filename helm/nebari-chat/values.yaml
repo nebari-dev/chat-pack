@@ -31,9 +31,13 @@ ravnar:
 
 backend:
   nebariapp:
-    # -- The hostname for the backend NebariApp
-    hostname: ""
-    # -- Routing configuration for the backend NebariApp
+    # -- The hostname for the backend nebariapp
+    hostname: '{{ fail "backend.nebariapp.hostname is required" }}'
+    # -- The service for the backend nebariapp
+    service:
+      name: '{{ include "ravnar.fullname" (include "nebari-chat.ravnarContextJson" . | fromJson) | toJson }}'
+      port: '{{ .Values.ravnar.service.port }}'
+    # -- Routing configuration for the backend nebariapp
     routing:
       routes:
         - pathPrefix: /
@@ -133,11 +137,15 @@ frontend:
       dark: {}
 
   nebariapp:
-    # -- The hostname for the frontend NebariApp
-    hostname: ""
-    # -- Authentication configuration for the frontend NebariApp
+    # -- The hostname for the frontend nebariapp
+    hostname: '{{ fail "if frontend.enabled, frontend.nebariapp.hostname is required" }}'
+    # -- The service for the frontend nebariapp
+    service:
+      name: '{{ include "ravnar.component-name" (dict "top" . "component" "frontend") | toJson }}'
+      port: '{{ .Values.frontend.service.port }}' 
+    # -- Authentication configuration for the frontend nebariapp
     auth:
-      # -- Whether authentication is enabled for the frontend NebariApp
+      # -- Whether authentication is enabled for the frontend nebariapp
       enabled: true
       # -- The OIDC authentication provider
       provider: keycloak
@@ -156,12 +164,12 @@ frontend:
       spaClient:
         # -- Whether to provision a public OIDC client for SPA use
         enabled: true
-    # -- Routing configuration for the frontend NebariApp
+    # -- Routing configuration for the frontend nebariapp
     routing:
       routes:
         - pathPrefix: /
           pathType: PathPrefix
-    # -- Landing page configuration for the frontend NebariApp
+    # -- Landing page configuration for the frontend nebariapp
     landingPage:
       # -- Whether to show the service on the landing page
       enabled: true

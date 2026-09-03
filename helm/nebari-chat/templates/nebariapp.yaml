@@ -1,0 +1,35 @@
+{{- define "nebari-chat.nebariapp" -}}
+{{- $top := .top -}}
+{{- $component := .component -}}
+{{- $spec := .spec -}}
+{{- include "nebari-app.nebariApp" (dict
+    "metadata" (dict
+      "name"      (include "ravnar.component-name" (dict "top" $top "component" $component))
+      "namespace" $top.Release.Namespace
+      "labels"    (include "ravnar.labels" (dict "top" $top "component" $component) | fromYaml)
+    )
+    "spec" $spec
+    "tplCtx"  $top
+) -}}
+{{- end -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    nebari.dev/managed: "true"
+    {{- include "ravnar.labels" (dict "top" . "component" "nebariapp") | nindent 4 }}
+---
+{{ include "nebari-chat.nebariapp" (dict
+    "top"       .
+    "component" "backend"
+    "spec"      .Values.backend.nebariapp
+) }}
+---
+{{ if .Values.frontend.enabled }}
+{{- include "nebari-chat.nebariapp" (dict
+    "top"       .
+    "component" "frontend"
+    "spec"      .Values.frontend.nebariapp
+) }}
+{{- end }}
