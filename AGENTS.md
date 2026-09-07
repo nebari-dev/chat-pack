@@ -8,7 +8,7 @@ Nebari Chat Pack is a drop-in chat application for [Nebari](https://www.nebari.d
 
 - `frontend/` — React + Vite chat UI, authenticates via Keycloak. Image: `quay.io/nebari/nebari-chat-frontend`.
 - `backend/` — A thin extension of [Ravnar](https://github.com/nebari-dev/ravnar) (an agent server that speaks the [AG-UI](https://docs.ag-ui.com/introduction) protocol plus thread-history endpoints). Image: `quay.io/nebari/nebari-chat-backend`.
-- `helm/nebari-chat/` — Umbrella Helm chart that deploys the frontend and pulls in the upstream `ravnar` chart for the backend, wiring both into Nebari's Keycloak for SSO.
+- `helm/nebari-chat/` — Umbrella Helm chart that deploys the frontend and pulls in the upstream `ravnar` chart for the backend, wiring both into Nebari's Keycloak for SSO. Also depends on the `nebari-app` library chart, which supplies the `NebariApp` CR template.
 
 The frontend is just an AG-UI client; the backend is just Ravnar with a Keycloak authenticator and a set of agents declared in `config.yml`. Most "add a feature" work lands in one of those two seams.
 
@@ -86,7 +86,14 @@ The backend image (`backend/Dockerfile`) is a multi-stage uv build running as us
 
 ## Helm (`helm/nebari-chat/`)
 
-Umbrella chart depending on the upstream `ravnar` chart (`Chart.yaml` → `oci://quay.io/nebari/charts`). Top-level values bridge both services: `keycloak.url`/`keycloak.realm`, `frontend.nebariapp.hostname`, `backend.nebariapp.hostname`, `frontend.enabled`, and `config.inline` (Ravnar config merged into the backend's `config.yml`). `Chart.yaml` `version`/`appVersion` are placeholders set by CI at release time. See `values.yaml` and `values.schema.json`.
+Umbrella chart with two dependencies, both from `oci://quay.io/nebari/charts`, both pinned to exact versions in `Chart.yaml` and bumped by hand (Dependabot does not cover the `helm` ecosystem in this repo):
+
+- `ravnar` is an **application** subchart. It renders the backend Deployment and Service, the bundled PostgreSQL StatefulSet, Service, and Secret, and the storage PVC. Its values live under `ravnar.*` (note that `backend.nebariapp.*` is *not* ravnar's values surface: it is parent-owned and feeds the `NebariApp` CR). Its own ConfigMap and Ingress templates stay suppressed by this chart's values (`ravnar.config.existingConfigMap.name`, `ravnar.ingress.enabled: false`).
+- `nebari-app` is a **library** chart. It renders no resources of its own and ships no values; it contributes the `nebari-app.nebariApp` template that `templates/nebariapp.yaml` wraps to emit each `NebariApp` CR. Treat a version bump as a change to the values surface, not just to the rendered output: it can change how `*.nebariapp` values are interpreted. The `0.1.0` to `0.1.1` bump on this branch is the example, moving `spec.service` from parent-side `mergeOverwrite` to templated strings in `values.yaml`.
+
+`templates/nebariapp.yaml` also emits the release Namespace carrying `nebari.dev/managed: "true"`, which is what makes the operator reconcile these resources at all. The library chart deliberately does not template that label, so it has to live here.
+
+Top-level values bridge both services: `keycloak.url`/`keycloak.realm`, `frontend.nebariapp.hostname`, `backend.nebariapp.hostname`, `frontend.enabled`, and `config.inline` (Ravnar config merged into the backend's `config.yml`). `Chart.yaml` `version`/`appVersion` are placeholders set by CI at release time. See `values.yaml` and `values.schema.json`.
 
 ## Release process
 
