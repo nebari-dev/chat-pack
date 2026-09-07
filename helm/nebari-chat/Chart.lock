@@ -3,7 +3,7 @@ dependencies:
   repository: oci://quay.io/nebari/charts
   version: 0.0.11
 - name: nebari-app
-  repository: oci://quay.io/reiemp/charts
-  version: 0.1.3
-digest: sha256:4c9732b7205a3f5077047412c6c388d4aa66d4552ee4836d92cb7ff407ded73d
-generated: "2026-08-31T17:04:25.070075068+02:00"
+  repository: oci://quay.io/nebari/charts
+  version: 0.1.1
+digest: sha256:7539224278f2e5b212713dfd59c51a52e0de6d7f99375f3e601ffa2c8c77b280
+generated: "2026-09-07T08:32:07.962659737+02:00"
