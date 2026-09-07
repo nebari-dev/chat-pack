@@ -10,7 +10,7 @@ The pack ships as a Helm chart that deploys both services and wires them into Ne
 | --- | --- | --- |
 | `frontend/` | React + Vite chat UI, authenticates via Keycloak. | `quay.io/nebari/nebari-chat-frontend` |
 | `backend/`  | Ravnar agent server with a Keycloak bearer-token authenticator. | `quay.io/nebari/nebari-chat-backend` |
-| `helm/nebari-chat/` | Umbrella chart that deploys the frontend and pulls in the [`ravnar`](https://github.com/nebari-dev/ravnar) chart for the backend. | `oci://quay.io/nebari/charts/nebari-chat` |
+| `helm/nebari-chat/` | Umbrella chart that deploys the frontend and pulls in the [`ravnar`](https://github.com/nebari-dev/ravnar) chart for the backend, plus the [`nebari-app`](https://github.com/nebari-dev/nebari-operator/tree/main/charts/nebari-app) library chart for the `NebariApp` resources. | `oci://quay.io/nebari/charts/nebari-chat` |
 
 The backend is a thin extension of Ravnar — bring your own agents by adding them to the image or mounting them as plugins under `RAVNARPATH`. See [`backend/README.md`](backend/README.md) for the Python package and [`frontend/README.md`](frontend/README.md) for the UI.
 
