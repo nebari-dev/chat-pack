@@ -163,7 +163,7 @@ curl https://chat-api.example.com/health
 - **`Error: ... namespace "chat" exists and cannot be imported into the current release`** — the
   namespace was created outside the release. Apply the label and annotations from
   [Prepare the namespace](#prepare-the-namespace), matching your release name.
-- **`keycloak.url is required` / `frontend.nebariapp.hostname is required`** — the chart's
+- **`keycloak.url is required` / `frontend.nebariapp.hostname is required if frontend.nebariapp.enabled`** — the chart's
   `required` guards. Set every value listed in [Install](#install).
 - **The UI loads but every request 401s** — the browser's token is not accepted by the backend.
   Check that `keycloak.url` and `keycloak.realm` are identical for both halves (they come from

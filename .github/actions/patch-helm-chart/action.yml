@@ -4,8 +4,10 @@ description: "Patch helm chart"
 inputs:
   chart-version:
     description: Chart version
+    default: 0.0.0
   app-version:
     description: App version
+    default: 0.0.0
 
 runs:
   using: composite

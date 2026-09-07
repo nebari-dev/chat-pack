@@ -71,3 +71,32 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 14
+
+  helm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Install mise and setup helm
+        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
+        with:
+          mise_toml: |
+            [tools]
+            helm = "3"
+
+      - name: Patch helm chart
+        uses: ./.github/actions/patch-helm-chart
+
+      - name: Build helm chart dependencies
+        run: helm dependency build ./helm/nebari-chat
+
+      - name: Lint helm chart
+        run: helm lint --values ./.github/helm/values.yaml ./helm/nebari-chat
+      
+      - name: Template helm chart
+        run: helm template --values ./.github/helm/values.yaml ./helm/nebari-chat

@@ -1,0 +1,9 @@
+keycloak:
+  url: keycloak.example.com
+backend:
+  nebariapp:
+    hostname: backend.example.com
+frontend:
+  enabled: true
+  nebariapp:
+    hostname: frontend.example.com
