@@ -21,6 +21,7 @@ export default defineConfig({
           githubHref: 'https://github.com/nebari-dev/chat-pack',
         }),
       ],
+      lastUpdated: true,
       sidebar: [
         {
           label: 'Getting Started',
