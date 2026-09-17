@@ -70,6 +70,41 @@
     "backend": {
       "type": "object",
       "properties": {
+        "catalog": {
+          "type": "object",
+          "properties": {
+            "tools": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["kind", "label"],
+                "properties": {
+                  "kind": { "type": "string", "enum": ["visualization", "sql"] },
+                  "label": { "type": "string" },
+                  "description": { "type": "string" },
+                  "database_url": { "type": "string" },
+                  "schema_query": { "type": "string" },
+                  "map_popup_prompt": { "type": "string" }
+                }
+              }
+            },
+            "mcp_servers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "required": ["label", "url"],
+                "properties": {
+                  "label": { "type": "string" },
+                  "description": { "type": "string" },
+                  "url": { "type": "string" },
+                  "auth": { "type": "string", "enum": ["none", "impersonate"] },
+                  "tool_prefix": { "type": "string" },
+                  "timeout": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
         "nebariapp": {
           "$ref": "#/definitions/nebariapp"
         }

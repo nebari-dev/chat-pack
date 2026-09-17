@@ -58,7 +58,10 @@ uv run ravnar serve                      # reads ./config.yml, serves on 127.0.0
 To try [agent authoring](/agents/#dynamic-agents) locally, also set `agents.dynamic.enabled: true`
 in `config.yml` and export `NEBARI_CHAT_AGENT_MODELS=anthropic/claude-sonnet-4.6` (any
 comma-separated OpenRouter ids), then list the same ids under `agentAuthoring.models` in
-`frontend/public/config.json`.
+`frontend/public/config.json`. To offer tools or MCP servers, point `NEBARI_CHAT_CATALOG` at a
+[catalog file](/agents/#the-capability-catalog) and mirror its keys, labels and kinds under
+`agentAuthoring.tools`, `agentAuthoring.mcpServers` and `agentAuthoring.databases` in the same
+`config.json` (the Helm chart derives those for you in a deployment).
 
 Check it is alive:
 

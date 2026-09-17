@@ -8,6 +8,22 @@ config:
 backend:
   nebariapp:
     hostname: backend.example.com
+  catalog:
+    tools:
+      charts:
+        kind: visualization
+        label: Charts and maps
+      permits:
+        kind: sql
+        label: Austin permits
+        description: Building permits, read-only
+        database_url: "postgresql+psycopg://reader:{{ PERMITS_DB_PASSWORD }}@db.example/permits"
+    mcp_servers:
+      frames:
+        label: Frames
+        url: https://frames.example/mcp
+        auth: impersonate
+        tool_prefix: frames
 frontend:
   enabled: true
   nebariapp:

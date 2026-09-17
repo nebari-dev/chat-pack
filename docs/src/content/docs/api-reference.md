@@ -44,8 +44,8 @@ prompt }`.
 
 Agents created from the UI go through the pack's `make_chat_agent` factory and carry their
 authored definition at `capabilities.identity.metadata.nebariChat`:
-`{ kind: "dynamic", version: 1, definition: { name, description, instructions, model, mcpUrl },
-setupError, createdAt }`. Agents declared in config have no such key. Every string in a
+`{ kind: "dynamic", version: 2, definition: { name, description, instructions, model, tools,
+mcpServers: [{ server } | { url }], dataSources: [{ database }] }, setupError, createdAt }`. Agents declared in config have no such key. Every string in a
 `POST /api/agents` body is Jinja-rendered by Ravnar; wrap free text in `{% raw %}…{% endraw %}`.
 See [Dynamic agents](/agents/#dynamic-agents).
 

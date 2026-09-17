@@ -89,7 +89,19 @@ Two things to know:
 | `frontend.podAnnotations` / `frontend.podLabels` | `{}` | Extra pod metadata. |
 | `frontend.branding.*` | empty | Title, logos, favicon, and theme tokens rendered into `/config.json`. Full reference in [Branding & configuration](/branding/). |
 | `frontend.agentAuthoring.models` | `[]` | Models offered in the agent authoring form, as `[{ id, label? }]`. Each `id` must also be in `ravnar.extraEnv.NEBARI_CHAT_AGENT_MODELS`; the render fails on a mismatch when that variable is a literal `value`. Empty disables creation. See [Dynamic agents](/agents/#dynamic-agents). |
-| `frontend.agentAuthoring.mcp.enabled` | `false` | Show the MCP server URL field in the authoring form. Pair with `ravnar.extraEnv.NEBARI_CHAT_MCP_ALLOWED_HOSTS`. |
+| `frontend.agentAuthoring.mcp.enabled` | `false` | Let users enter a custom MCP server URL in the authoring form. Pair with `ravnar.extraEnv.NEBARI_CHAT_MCP_ALLOWED_HOSTS`. Catalog servers are offered regardless. |
+
+The authoring form's tool, database and MCP server pickers are derived from `backend.catalog`
+(below) at render time, so there is one source of truth for them.
+
+## Capability catalog (`backend.catalog`)
+
+| Value | Default | Purpose |
+| --- | --- | --- |
+| `backend.catalog` | `{}` | The [capability catalog](/agents/#the-capability-catalog): `tools` (visualization or read-only `sql` with a `database_url`) and `mcp_servers` (URL, `auth`, `tool_prefix`) keyed by slug. Rendered verbatim into the `<release>-backend-catalog` ConfigMap and mounted at `/etc/nebari-chat/catalog.yaml` through the default `ravnar.extraVolumes` / `extraVolumeMounts`. Ravnar-style `{{ VAR }}` placeholders are left for the backend to resolve, so no Helm escaping is needed. |
+
+If you set `ravnar.extraVolumes` or `ravnar.extraVolumeMounts` yourself, lists replace rather than
+merge: copy the `nebari-chat-catalog` entries from the chart's `values.yaml` into yours.
 
 `frontend.keycloak.*` (`authServerUrl`, `realm`, `resource`) exists in `values.yaml` but the
 browser's Keycloak settings are rendered from the top-level `keycloak.*` values — set those.
@@ -157,10 +169,14 @@ The ones you are most likely to set yourself:
 | `ravnar.extraVolumes` / `ravnar.extraVolumeMounts` | `[]` | Mount extra content into the backend — e.g. agent plugin modules under `RAVNARPATH`, or a private CA bundle. |
 | `ravnar.securityContext.container.readOnlyRootFilesystem` | `true` | |
 
-Two optional variables configure [agent authoring](/agents/#dynamic-agents) and belong in
-`ravnar.extraEnv` too: `NEBARI_CHAT_AGENT_MODELS` (comma-separated model ids users may pick) and
-`NEBARI_CHAT_MCP_ALLOWED_HOSTS` (comma-separated hostnames an authored MCP server URL may target, or
-`*`). Both take effect only with `config.inline.agents.dynamic.enabled: true`.
+Optional variables that configure [agent authoring](/agents/#dynamic-agents) belong in
+`ravnar.extraEnv` too, and take effect only with `config.inline.agents.dynamic.enabled: true`:
+`NEBARI_CHAT_AGENT_MODELS` (comma-separated model ids users may pick),
+`NEBARI_CHAT_MCP_ALLOWED_HOSTS` (comma-separated hostnames a *custom* MCP server URL may target, or
+`*`), `NEBARI_CHAT_CATALOG` (catalog path; defaults to where the chart mounts `backend.catalog`), and
+the three `NEBARI_CHAT_MCP_IMPERSONATION_{ISSUER,CLIENT_ID,CLIENT_SECRET}` values required by
+catalog MCP servers with `auth: impersonate`. Secrets referenced by the catalog's `{{ VAR }}`
+placeholders go here as well.
 
 Some environment variables are reserved by the subchart and will fail the render if you set them
 in `extraEnv`: `RAVNAR_CONFIG`, `RAVNAR_LOCAL_STORAGE`, `RAVNAR_STORAGE__FILE_STORAGE__PATH`
@@ -201,6 +217,16 @@ frontend:
 backend:
   nebariapp:
     hostname: chat-api.example.com
+  catalog:
+    tools:
+      charts:
+        kind: visualization
+        label: Charts and maps
+    mcp_servers:
+      frames:
+        label: Frames
+        url: https://frames.internal/mcp
+        tool_prefix: frames
 
 ravnar:
   extraEnv:

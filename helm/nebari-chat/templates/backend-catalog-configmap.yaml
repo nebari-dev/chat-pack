@@ -1,0 +1,15 @@
+{{- if .Values.backend.catalog }}
+{{- $component := "backend" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backend-catalog
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ravnar.labels" (dict "top" . "component" $component) | nindent 4 }}
+data:
+  # Mounted at /etc/nebari-chat/catalog.yaml by the default ravnar.extraVolumes /
+  # extraVolumeMounts. Written verbatim so `{{ "{{ VAR }}" }}` placeholders reach Ravnar.
+  catalog.yaml: |
+    {{- toYaml .Values.backend.catalog | nindent 4 }}
+{{- end }}

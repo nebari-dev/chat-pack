@@ -28,8 +28,41 @@ ravnar:
   ingress:
     # -- Whether to enable ingress for the backend
     enabled: false
+  # The capability catalog (backend.catalog) is rendered into its own ConfigMap and
+  # mounted where the backend looks for it by default (/etc/nebari-chat/catalog.yaml).
+  # If you set ravnar.extraVolumes / extraVolumeMounts yourself, keep these entries.
+  extraVolumes:
+    - name: nebari-chat-catalog
+      configMap:
+        name: '{{ .Release.Name }}-backend-catalog'
+        optional: true
+  extraVolumeMounts:
+    - name: nebari-chat-catalog
+      mountPath: /etc/nebari-chat
+      readOnly: true
 
 backend:
+  # -- The capability catalog for user-authored agents: built-in tools and MCP servers
+  # users may attach from the UI. Keys are slugs. Written verbatim (no Helm templating),
+  # so Ravnar-style `{{ VAR }}` placeholders resolve from the backend environment.
+  # The frontend's pickers are derived from this at render time. Example:
+  #   catalog:
+  #     tools:
+  #       charts:
+  #         kind: visualization
+  #         label: Charts and maps
+  #       permits:
+  #         kind: sql
+  #         label: Austin permits
+  #         database_url: "postgresql+psycopg://reader:{{ PERMITS_DB_PASSWORD }}@db/permits"
+  #     mcp_servers:
+  #       frames:
+  #         label: Frames
+  #         url: https://frames.internal/mcp
+  #         auth: impersonate   # none | impersonate (OIDC token exchange as the user)
+  #         tool_prefix: frames
+  catalog: {}
+
   # NebariApp CR (https://github.com/nebari-dev/nebari-operator) for the frontend.
   # Rendered through the official nebari-app.nebariApp template 
   # (https://github.com/nebari-dev/nebari-operator/tree/main/charts/nebari-app) with templating enabled.

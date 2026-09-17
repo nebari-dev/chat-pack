@@ -209,7 +209,9 @@ factory, `ravnar_nebari_chat.dynamic_agents.make_chat_agent`, which accepts:
 | `instructions` | The system prompt. |
 | `model` | An OpenRouter model id. Must appear in the `NEBARI_CHAT_AGENT_MODELS` allowlist. |
 | `quick_prompts` | Up to 12 starter cards, each `title`, optional `description`, and `prompt`. |
-| `mcp_url` | Optional. A streamable-HTTP MCP server whose tools the agent may call. Accepted only when its host is listed in `NEBARI_CHAT_MCP_ALLOWED_HOSTS` (or that variable is `*`); plain `http` is allowed only for explicitly listed hosts. |
+| `tools` | Keys of built-in tools from the [catalog](#the-capability-catalog). |
+| `data_sources` | `[{ database: <key> }]` — a catalog SQL tool attached as a read-only data source. File sources are not supported yet. |
+| `mcp_servers` | `[{ server: <key> }]` for catalog MCP servers, or `[{ url: ... }]` for a custom streamable-HTTP endpoint. Custom URLs are accepted only when their host is listed in `NEBARI_CHAT_MCP_ALLOWED_HOSTS` (or that variable is `*`); plain `http` is allowed only for explicitly listed hosts. Catalog servers are operator-approved and bypass that list. |
 
 The factory builds the pydantic-ai agent server-side, reads `OPENROUTER_API_KEY` from its own
 environment (so `agents.dynamic.allowed_env_vars` can stay empty), and records the authored
@@ -218,9 +220,51 @@ definition under `capabilities.identity.metadata.nebariChat` so the UI can fill 
 allowlist or API key is a `503`. If the MCP server cannot be reached during registration, the agent
 is still created — with no tools and a `setupError` the UI shows as **Setup failed**.
 
+### The capability catalog
+
+Tools, databases and MCP servers users may attach come from an operator-owned YAML file the
+backend reads from `NEBARI_CHAT_CATALOG` (default `/etc/nebari-chat/catalog.yaml`). Under Helm,
+set `backend.catalog` and the chart renders the file, mounts it, and derives the UI's pickers
+from it; nothing but keys, labels, kinds and auth modes reaches the browser.
+
+```yaml
+tools:
+  charts:
+    kind: visualization # create_chart, create_map
+    label: Charts and maps
+  permits:
+    kind: sql # get_database_schema, execute_query (read-only)
+    label: Austin permits
+    description: Building permits, read-only
+    database_url: "postgresql+psycopg://reader:{{ PERMITS_DB_PASSWORD }}@db.internal/permits"
+    # schema_query: optional; defaults to an information_schema listing
+mcp_servers:
+  frames:
+    label: Frames
+    url: https://frames.internal/mcp
+    auth: impersonate # none | impersonate
+    tool_prefix: frames # keeps tool names from colliding across servers
+    timeout: 10
+```
+
+The file is operator-owned, so `{{ VAR }}` placeholders render against the full backend
+environment; put secrets in `ravnar.extraEnv` and reference them here. Keys are slugs. A missing
+file at the default path is an empty catalog; a missing file at an explicit `NEBARI_CHAT_CATALOG`
+path is an error, and an invalid file makes registrations fail with a `503`.
+
+`auth: impersonate` makes the backend call that MCP server *as the signed-in user*: a confidential
+Keycloak client performs OIDC token exchange with `requested_subject` set to the user's id, and the
+resulting token is the bearer for every tool call in that run. It needs three more variables in
+the backend environment — `NEBARI_CHAT_MCP_IMPERSONATION_ISSUER` (the realm URL),
+`NEBARI_CHAT_MCP_IMPERSONATION_CLIENT_ID` and `NEBARI_CHAT_MCP_IMPERSONATION_CLIENT_SECRET` — and a
+Keycloak client with token exchange and impersonation permitted for the target audience. Without
+them, selecting such a server fails with a `503` that names the missing setting. Tool discovery at
+registration uses the client's own token.
+
 ### Enabling it
 
-Three settings across the backend and the frontend:
+Three settings across the backend and the frontend, plus the catalog above if you want
+capabilities:
 
 ```yaml
 # Backend config — config.inline under Helm, or backend/config.yml locally
@@ -232,7 +276,8 @@ agents:
 ```yaml
 # Backend environment — ravnar.extraEnv under Helm, or exported in your shell locally
 NEBARI_CHAT_AGENT_MODELS: anthropic/claude-sonnet-4.6,openai/gpt-5.5
-NEBARI_CHAT_MCP_ALLOWED_HOSTS: mcp.internal.example.com # optional; unset disables MCP URLs
+NEBARI_CHAT_MCP_ALLOWED_HOSTS: mcp.internal.example.com # optional; unset disables custom MCP URLs
+NEBARI_CHAT_CATALOG: /etc/nebari-chat/catalog.yaml # optional; this is the default
 ```
 
 ```yaml
@@ -244,7 +289,7 @@ agentAuthoring:
     - id: openai/gpt-5.5
       label: GPT-5.5
   mcp:
-    enabled: false
+    enabled: false # allow custom MCP URLs; catalog servers are offered regardless
 ```
 
 The frontend list only populates the picker; the backend variable is the authority and rejects
@@ -273,9 +318,13 @@ Read these before enabling dynamic agents on a shared deployment.
   Enabling dynamic agents therefore lets any authenticated user run arbitrary Python callables in
   the backend. Restrict `agents:write` and `agents:delete` with your own
   [authenticator](#authentication) before enabling this where you do not trust every user.
-- **MCP URLs are reached from the backend.** The host allowlist and the https requirement are the
-  only guards; there is no DNS-rebinding protection, and no user identity is forwarded to the MCP
-  server.
+- **MCP URLs are reached from the backend.** For custom URLs the host allowlist and the https
+  requirement are the only guards; there is no DNS-rebinding protection. Catalog servers are
+  trusted as configured. Only `auth: impersonate` servers receive a user identity.
+- **Every catalog entry is available to every user.** There is no per-entry group gating yet;
+  what you list is what any authenticated user may attach. Registration-time tool discovery
+  connects to each selected MCP server, so several servers add latency and each can produce a
+  `setupError`.
 
 ## Authentication
 

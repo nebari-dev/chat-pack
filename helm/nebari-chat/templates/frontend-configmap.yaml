@@ -14,6 +14,29 @@ data:
   {{- $authoringMcp := $authoring.mcp | default dict }}
   {{- $authoringModels := $authoring.models | default list }}
   {{- /*
+  The UI's capability pickers are the public subset of backend.catalog: keys,
+  labels, kinds and auth modes. URLs and connection details never reach the browser.
+  */}}
+  {{- $catalog := .Values.backend.catalog | default dict }}
+  {{- $catalogTools := list }}
+  {{- $catalogDatabases := list }}
+  {{- range $key, $tool := ($catalog.tools | default dict) }}
+    {{- $entry := dict "id" $key "label" ($tool.label | default $key) "kind" ($tool.kind | default "") }}
+    {{- if $tool.description }}{{- $_ := set $entry "description" $tool.description }}{{- end }}
+    {{- $catalogTools = append $catalogTools $entry }}
+    {{- if eq ($tool.kind | default "") "sql" }}
+      {{- $db := dict "id" $key "label" ($tool.label | default $key) }}
+      {{- if $tool.description }}{{- $_ := set $db "description" $tool.description }}{{- end }}
+      {{- $catalogDatabases = append $catalogDatabases $db }}
+    {{- end }}
+  {{- end }}
+  {{- $catalogServers := list }}
+  {{- range $key, $server := ($catalog.mcp_servers | default dict) }}
+    {{- $entry := dict "id" $key "label" ($server.label | default $key) "auth" ($server.auth | default "none") }}
+    {{- if $server.description }}{{- $_ := set $entry "description" $server.description }}{{- end }}
+    {{- $catalogServers = append $catalogServers $entry }}
+  {{- end }}
+  {{- /*
   The frontend list only populates the model picker; the backend's
   NEBARI_CHAT_AGENT_MODELS is the authority. When that variable is given as a
   literal value, fail the render on any id the backend would reject.
@@ -50,6 +73,9 @@ data:
       )
       "agentAuthoring" (dict
         "models" $authoringModels
+        "tools" $catalogTools
+        "mcpServers" $catalogServers
+        "databases" $catalogDatabases
         "mcp" (dict
           "enabled" ($authoringMcp.enabled | default false)
         )
