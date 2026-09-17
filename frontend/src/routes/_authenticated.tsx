@@ -27,6 +27,7 @@ const REQUIRED_PERMISSIONS = [
  */
 type LoaderData = {
   agents: import('@/api').AgentConfig[];
+  appConfig: import('@/api').AppConfig;
   permissions: Set<string>;
 };
 
@@ -73,7 +74,7 @@ export const Route = createFileRoute('/_authenticated')({
     }
 
     // Return the loader data.
-    return { agents, permissions };
+    return { agents, appConfig, permissions };
   },
   component: RouteComponent,
 });
@@ -90,12 +91,12 @@ function RouteComponent(): ReactNode {
     return <ConfigErrorScreen {...loaderData} />;
   }
 
-  // Extract the agent and permissions data.
-  const { agents, permissions } = loaderData;
+  // Extract the agent, config, and permissions data.
+  const { agents, appConfig, permissions } = loaderData;
 
   // Return the rendered component.
   return (
-    <AppConfigContext value={agents}>
+    <AppConfigContext value={{ agents, config: appConfig }}>
       <PermissionsContext value={permissions}>
         <Sidebar />
         <Outlet />

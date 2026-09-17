@@ -13,5 +13,11 @@
       "light": {},
       "dark": {}
     }
+  },
+  "agentAuthoring": {
+    "models": [],
+    "mcp": {
+      "enabled": false
+    }
   }
 }

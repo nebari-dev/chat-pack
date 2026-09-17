@@ -99,6 +99,45 @@ export type BrandingConfig = {
 };
 
 /**
+ * A model users may pick when authoring an agent.
+ */
+export type AuthoringModel = {
+  /**
+   * The provider model id, e.g. `anthropic/claude-sonnet-4.6`.
+   *
+   * Must also appear in the backend's `NEBARI_CHAT_AGENT_MODELS` allowlist,
+   * which is the authority; this list only populates the picker.
+   */
+  id: string;
+
+  /**
+   * An optional human-readable label. Falls back to the id.
+   */
+  label?: string;
+};
+
+/**
+ * Operator-configurable agent authoring options.
+ */
+export type AgentAuthoringConfig = {
+  /**
+   * The models offered in the authoring form. Empty disables creation.
+   */
+  models?: AuthoringModel[];
+
+  /**
+   * MCP server options.
+   */
+  mcp?: {
+    /**
+     * Whether to show the MCP server URL field. Requires the backend's
+     * `NEBARI_CHAT_MCP_ALLOWED_HOSTS` to be set as well.
+     */
+    enabled?: boolean;
+  };
+};
+
+/**
  * The shape of `/config.json`.
  */
 export type AppConfig = {
@@ -111,6 +150,13 @@ export type AppConfig = {
    * Branding overrides. Absent (or empty) uses built-in defaults.
    */
   branding?: BrandingConfig;
+
+  /**
+   * Agent authoring options. Absent disables the authoring form's model
+   * picker (the UI is additionally gated on the backend's
+   * `dynamicAgentsEnabled` flag).
+   */
+  agentAuthoring?: AgentAuthoringConfig;
 };
 
 // The cached config, loaded once by `loadAppConfig`.
@@ -155,6 +201,63 @@ export async function loadAppConfig(): Promise<AppConfig> {
  */
 export function getAppConfig(): AppConfig | null {
   return _config;
+}
+
+/**
+ * The sanitized, non-optional form of {@link AgentAuthoringConfig}.
+ */
+export type ResolvedAgentAuthoringConfig = {
+  readonly models: readonly AuthoringModel[];
+  readonly mcpEnabled: boolean;
+};
+
+// Model ids are provider-style slugs; anything else is dropped rather than
+// rendered into the picker.
+const MODEL_ID = /^[\w.\-/:]{1,200}$/;
+
+/**
+ * Sanitize a raw `agentAuthoring` value from `/config.json`.
+ *
+ * Malformed entries are dropped, duplicate ids keep their first occurrence,
+ * and non-string labels are ignored. Exported for testing.
+ */
+export function sanitizeAgentAuthoring(
+  raw: unknown,
+): ResolvedAgentAuthoringConfig {
+  const models: AuthoringModel[] = [];
+  const seen = new Set<string>();
+  let mcpEnabled = false;
+
+  if (typeof raw === 'object' && raw !== null) {
+    const { models: rawModels, mcp } = raw as AgentAuthoringConfig;
+    if (Array.isArray(rawModels)) {
+      for (const entry of rawModels as unknown[]) {
+        if (typeof entry !== 'object' || entry === null) {
+          continue;
+        }
+        const { id, label } = entry as { id?: unknown; label?: unknown };
+        if (typeof id !== 'string' || !MODEL_ID.test(id) || seen.has(id)) {
+          continue;
+        }
+        seen.add(id);
+        models.push(
+          typeof label === 'string' && label.trim()
+            ? { id, label: label.trim() }
+            : { id },
+        );
+      }
+    }
+    mcpEnabled = mcp?.enabled === true;
+  }
+
+  return { models, mcpEnabled };
+}
+
+/**
+ * Get the sanitized agent authoring config from the loaded `/config.json`.
+ */
+export function getAgentAuthoringConfig(): ResolvedAgentAuthoringConfig {
+  return sanitizeAgentAuthoring(_config?.agentAuthoring);
 }
 
 // Image MIME types accepted as base64-encoded `data:` URIs. Anything not on

@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import { toast } from 'sonner';
 
-import { classifyError } from './errors';
+import { classifyError, ErrorCategory } from './errors';
 
 /**
  * The default duration, in milliseconds, before a toast auto-dismisses.
@@ -18,7 +18,8 @@ export const DEFAULT_TOAST_DURATION = 6000;
  * auto-dismiss and require explicit user action.
  *
  * Notifications are de-duplicated by category, so a burst of identical
- * errors collapses into a single toast rather than stacking.
+ * errors collapses into a single toast rather than stacking. Validation
+ * errors carry distinct server messages, so they de-duplicate by message.
  *
  * @param error - The thrown value to surface.
  *
@@ -36,8 +37,12 @@ export function notifyError(
   console.error(message, error);
 
   // Show the toast, de-duplicating by category via a stable id.
+  const id =
+    category === ErrorCategory.Validation
+      ? `error:${category}:${message}`
+      : `error:${category}`;
   toast.error(message, {
-    id: `error:${category}`,
+    id,
     description: detail,
     duration: persistent
       ? Number.POSITIVE_INFINITY

@@ -31,6 +31,14 @@ export enum ErrorCategory {
   RateLimit = 'rate-limit',
 
   /**
+   * The server rejected the request as invalid (400, 409, 422).
+   *
+   * These carry a curated `detail` written by our own backend, so the copy
+   * shown to the user is the server's message when one is present.
+   */
+  Validation = 'validation',
+
+  /**
    * The server encountered an internal error (>= 500).
    */
   Server = 'server',
@@ -100,6 +108,8 @@ const COPY: Record<ErrorCategory, string> = {
     'Authentication error. Refresh the page or sign in again.',
   [ErrorCategory.RateLimit]:
     "You've hit the rate limit. Wait a moment before retrying.",
+  [ErrorCategory.Validation]:
+    'The request was rejected. Check your input and try again.',
   [ErrorCategory.Server]: 'Something went wrong. Try again shortly.',
   [ErrorCategory.Unknown]: 'An unexpected error occurred.',
 };
@@ -108,6 +118,11 @@ const COPY: Record<ErrorCategory, string> = {
  * The categories whose notifications should persist until dismissed.
  */
 const PERSISTENT = new Set([ErrorCategory.Auth, ErrorCategory.Network]);
+
+/**
+ * The maximum length of a server-supplied validation message shown to the user.
+ */
+const MAX_DETAIL_LENGTH = 300;
 
 /**
  * Classify an arbitrary thrown value into a displayable error.
@@ -120,7 +135,7 @@ export function classifyError(error: unknown): ClassifiedError {
   const category = categorize(error);
   return {
     category,
-    message: COPY[category],
+    message: messageFor(error, category),
     detail: detailFor(error, category),
     persistent: PERSISTENT.has(category),
   };
@@ -144,6 +159,9 @@ function categorize(error: unknown): ErrorCategory {
     if (error.status >= 500) {
       return ErrorCategory.Server;
     }
+    if (error.status === 400 || error.status === 409 || error.status === 422) {
+      return ErrorCategory.Validation;
+    }
     return ErrorCategory.Unknown;
   }
 
@@ -163,6 +181,24 @@ function categorize(error: unknown): ErrorCategory {
   }
 
   return ErrorCategory.Unknown;
+}
+
+/**
+ * Produce the user-facing message for an error.
+ *
+ * Validation failures use the backend's own `detail` when present, since it
+ * is curated copy from our factory (e.g. "Model 'x' is not allowed"). Every
+ * other category uses the fixed copy for that category.
+ */
+function messageFor(error: unknown, category: ErrorCategory): string {
+  if (
+    category === ErrorCategory.Validation &&
+    error instanceof FetchError &&
+    error.detail
+  ) {
+    return error.detail.slice(0, MAX_DETAIL_LENGTH);
+  }
+  return COPY[category];
 }
 
 /**

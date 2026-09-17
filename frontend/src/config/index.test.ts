@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import { describe, expect, it } from 'vitest';
 
-import { sanitizeUrl } from './index';
+import { sanitizeAgentAuthoring, sanitizeUrl } from './index';
 
 describe('sanitizeUrl', () => {
   it('preserves root-relative paths', () => {
@@ -54,5 +54,61 @@ describe('sanitizeUrl', () => {
     expect(sanitizeUrl(undefined)).toBeUndefined();
     expect(sanitizeUrl('')).toBeUndefined();
     expect(sanitizeUrl('not a url')).toBeUndefined();
+  });
+});
+
+describe('sanitizeAgentAuthoring', () => {
+  it('returns empty defaults for missing or malformed input', () => {
+    expect(sanitizeAgentAuthoring(undefined)).toEqual({
+      models: [],
+      mcpEnabled: false,
+    });
+    expect(sanitizeAgentAuthoring('nope')).toEqual({
+      models: [],
+      mcpEnabled: false,
+    });
+    expect(sanitizeAgentAuthoring({ models: 'nope' })).toEqual({
+      models: [],
+      mcpEnabled: false,
+    });
+  });
+
+  it('keeps well-formed models and trims labels', () => {
+    expect(
+      sanitizeAgentAuthoring({
+        models: [
+          { id: 'anthropic/claude-sonnet-4.6', label: '  Claude  ' },
+          { id: 'openai/gpt-5.5' },
+        ],
+      }).models,
+    ).toEqual([
+      { id: 'anthropic/claude-sonnet-4.6', label: 'Claude' },
+      { id: 'openai/gpt-5.5' },
+    ]);
+  });
+
+  it('drops malformed ids, duplicates, and non-string labels', () => {
+    expect(
+      sanitizeAgentAuthoring({
+        models: [
+          { id: 'a/b', label: 42 },
+          { id: 'a/b', label: 'dupe' },
+          { id: 'has spaces' },
+          { id: '' },
+          { label: 'no id' },
+          null,
+        ],
+      }).models,
+    ).toEqual([{ id: 'a/b' }]);
+  });
+
+  it('only enables MCP on an explicit true', () => {
+    expect(sanitizeAgentAuthoring({ mcp: { enabled: true } }).mcpEnabled).toBe(
+      true,
+    );
+    expect(sanitizeAgentAuthoring({ mcp: { enabled: 'yes' } }).mcpEnabled).toBe(
+      false,
+    );
+    expect(sanitizeAgentAuthoring({}).mcpEnabled).toBe(false);
   });
 });

@@ -11,7 +11,7 @@ import type { KeycloakConfig } from '@/config';
 //   1) It prevents a monkey-patched fetch from intercepting the
 //      the auth token, unless it's patched before this module loads.
 //   2) It allows us to define our own `fetch` without name-clashing.
-const nativeFetch = window.fetch;
+const nativeFetch = globalThis.fetch;
 
 /**
  * An error thrown when a fetch request returns a non-ok response.
@@ -31,13 +31,55 @@ export class FetchError extends Error {
   readonly statusText: string;
 
   /**
+   * The human-readable `detail` from the JSON error body, if any.
+   *
+   * Ravnar (FastAPI) answers 4xx with `{ detail: string }`, or with
+   * `{ detail: [{ msg, loc }] }` for request validation failures. Only
+   * client-error categories surface this to the user; see `lib/errors.ts`.
+   */
+  readonly detail?: string;
+
+  /**
    * Construct a new `FetchError`.
    */
-  constructor(status: number, statusText: string) {
+  constructor(status: number, statusText: string, detail?: string) {
     super(`Fetch failure: ${status} ${statusText}`);
     this.name = 'FetchError';
     this.status = status;
     this.statusText = statusText;
+    this.detail = detail;
+  }
+}
+
+/**
+ * Extract the `detail` string from a failed response body, if present.
+ *
+ * Never throws: a missing, non-JSON, or unexpectedly shaped body yields
+ * `undefined`.
+ */
+async function readErrorDetail(resp: Response): Promise<string | undefined> {
+  try {
+    const body: unknown = JSON.parse(await resp.text());
+    if (typeof body !== 'object' || body === null || !('detail' in body)) {
+      return undefined;
+    }
+    const { detail } = body as { detail: unknown };
+    if (typeof detail === 'string') {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const messages = detail
+        .map((item: unknown) =>
+          typeof item === 'object' && item !== null && 'msg' in item
+            ? String((item as { msg: unknown }).msg)
+            : '',
+        )
+        .filter(Boolean);
+      return messages.length > 0 ? messages.join('; ') : undefined;
+    }
+    return undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -99,7 +141,11 @@ export async function fetch(
 
   // Guard against request failure.
   if (!resp.ok) {
-    throw new FetchError(resp.status, resp.statusText);
+    throw new FetchError(
+      resp.status,
+      resp.statusText,
+      await readErrorDetail(resp),
+    );
   }
 
   // Return the response.
