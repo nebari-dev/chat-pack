@@ -35,9 +35,15 @@ Repository = "https://github.com/nebari-dev/nebari-chat-pack"
 lint = [
     "ravnar-nebari-chat",
     "mypy==1.17.*",
+    "ruff==0.15.*",
     "pre-commit>=4.2,<5",
 ]
-test = []
+test = [
+    "ravnar-nebari-chat",
+    "pytest>=8.3,<9",
+    "pytest-asyncio>=0.25,<2",
+    "httpx>=0.28.1",
+]
 docs = []
 dev = [
     "hatch",
@@ -81,6 +87,10 @@ path = "src/ravnar_nebari_chat/_version.py"
 template = '''
 __version__ = "{version}"
 '''
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py314"

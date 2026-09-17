@@ -72,6 +72,39 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 14
 
+  backend:
+    name: Backend - Lint, Type Check & Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --group test --group lint
+
+      - name: Lint & Format check
+        run: |
+          uv run ruff check
+          uv run ruff format --check
+
+      # Scoped to the chat package: `ravnar_nebari_mcp` predates this job and does
+      # not type-check against the current pydantic-ai.
+      - name: Type check
+        run: uv run mypy src/ravnar_nebari_chat
+
+      - name: Unit tests (pytest)
+        run: uv run pytest
+
   helm:
     runs-on: ubuntu-latest
 

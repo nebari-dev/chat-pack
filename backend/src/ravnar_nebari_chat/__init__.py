@@ -1,6 +1,6 @@
-__all__ = ["__version__", "demo_agents", "keycloak_authenticator"]
+__all__ = ["__version__", "demo_agents", "dynamic_agents", "keycloak_authenticator"]
 
-from . import demo_agents
+from . import demo_agents, dynamic_agents
 from ._authenticators import keycloak_authenticator
 
 try:
