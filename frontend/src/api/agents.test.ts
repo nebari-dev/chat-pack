@@ -10,6 +10,7 @@ import {
   AgentDefinitionSchema,
   buildRegisterAgentBody,
   getDynamicAgent,
+  McpServerInputSchema,
 } from './agents';
 import type { AgentConfig } from './app';
 
@@ -18,7 +19,12 @@ const definition: AgentDefinition = {
   description: 'Answers support questions',
   instructions: 'Use {{ tone }} and {% if x %}y{% endif %}',
   model: 'test/model-a',
-  mcpUrl: '',
+  tools: ['charts'],
+  databases: ['permits'],
+  mcpServers: [
+    { server: 'frames', url: '' },
+    { server: '', url: 'https://mcp.example.com/mcp' },
+  ],
   quickPrompts: [{ title: 'Hi', description: '', prompt: 'Hello!' }],
 };
 
@@ -36,13 +42,18 @@ const dynamicAgent: AgentConfig = {
       metadata: {
         nebariChat: {
           kind: 'dynamic',
-          version: 1,
+          version: 2,
           definition: {
             name: 'Support Bot',
             description: null,
             instructions: 'Be helpful.',
             model: 'test/model-a',
-            mcpUrl: 'https://mcp.example.com/mcp',
+            tools: ['charts'],
+            mcpServers: [
+              { server: 'frames' },
+              { url: 'https://mcp.example.com/mcp' },
+            ],
+            dataSources: [{ database: 'permits' }],
           },
           setupError: null,
           createdAt: '2026-09-16T00:00:00+00:00',
@@ -65,7 +76,9 @@ describe('AgentDefinitionSchema', () => {
       description: '',
       instructions: 'Help.',
       model: 'test/model-a',
-      mcpUrl: '',
+      tools: [],
+      databases: [],
+      mcpServers: [],
       quickPrompts: [],
     });
   });
@@ -96,15 +109,27 @@ describe('AgentDefinitionSchema', () => {
     });
     expect(result.success).toBe(false);
   });
+});
 
-  it('rejects a malformed MCP url but allows blank', () => {
+describe('McpServerInputSchema', () => {
+  it('accepts a catalog server or a custom URL', () => {
+    expect(McpServerInputSchema.safeParse({ server: 'frames' }).success).toBe(
+      true,
+    );
     expect(
-      AgentDefinitionSchema.safeParse({ ...definition, mcpUrl: 'nope' })
+      McpServerInputSchema.safeParse({ url: 'https://mcp.example.com/mcp' })
         .success,
-    ).toBe(false);
-    expect(
-      AgentDefinitionSchema.safeParse({ ...definition, mcpUrl: '' }).success,
     ).toBe(true);
+  });
+
+  it('requires a URL for a custom row and validates it', () => {
+    const empty = McpServerInputSchema.safeParse({ server: '', url: '' });
+    expect(empty.success).toBe(false);
+    expect(empty.success ? [] : empty.error.issues[0].path).toEqual(['url']);
+    expect(McpServerInputSchema.safeParse({ url: 'nope' }).success).toBe(false);
+    expect(
+      McpServerInputSchema.safeParse({ url: 'ftp://x.example' }).success,
+    ).toBe(false);
   });
 });
 
@@ -119,7 +144,12 @@ describe('buildRegisterAgentBody', () => {
       instructions:
         '{% raw %}Use {{ tone }} and {% if x %}y{% endif %}{% endraw %}',
       model: '{% raw %}test/model-a{% endraw %}',
-      mcp_url: null,
+      tools: ['{% raw %}charts{% endraw %}'],
+      mcp_servers: [
+        { server: '{% raw %}frames{% endraw %}' },
+        { url: '{% raw %}https://mcp.example.com/mcp{% endraw %}' },
+      ],
+      data_sources: [{ database: '{% raw %}permits{% endraw %}' }],
       quick_prompts: [
         {
           title: '{% raw %}Hi{% endraw %}',
@@ -134,12 +164,8 @@ describe('buildRegisterAgentBody', () => {
     const body = buildRegisterAgentBody('x-abc123', {
       ...definition,
       description: '',
-      mcpUrl: 'https://mcp.example.com/mcp',
     });
     expect(body.agent.params.description).toBeNull();
-    expect(body.agent.params.mcp_url).toBe(
-      '{% raw %}https://mcp.example.com/mcp{% endraw %}',
-    );
   });
 });
 
@@ -156,7 +182,12 @@ describe('getDynamicAgent', () => {
         description: '',
         instructions: 'Be helpful.',
         model: 'test/model-a',
-        mcpUrl: 'https://mcp.example.com/mcp',
+        tools: ['charts'],
+        databases: ['permits'],
+        mcpServers: [
+          { server: 'frames', url: '' },
+          { server: '', url: 'https://mcp.example.com/mcp' },
+        ],
         quickPrompts: [{ title: 'Hi', description: '', prompt: 'Hello!' }],
       },
       setupError: null,
@@ -164,13 +195,13 @@ describe('getDynamicAgent', () => {
     });
   });
 
-  it('ignores metadata of an unknown version', () => {
+  it('ignores metadata of another version', () => {
     const agent: AgentConfig = {
       ...dynamicAgent,
       capabilities: {
         identity: {
           name: 'x',
-          metadata: { nebariChat: { kind: 'dynamic', version: 2 } },
+          metadata: { nebariChat: { kind: 'dynamic', version: 1 } },
         },
       },
     };

@@ -35,6 +35,18 @@ const templateSafe = <T extends z.ZodString>(schema: T) =>
   });
 
 /**
+ * Whether a string parses as an http(s) URL.
+ */
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const { protocol } = new URL(value);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+/**
  * The schema for a quick prompt as entered in the authoring form.
  */
 export const QuickPromptInputSchema = z.object({
@@ -51,10 +63,43 @@ export const QuickPromptInputSchema = z.object({
 export type QuickPromptInput = z.infer<typeof QuickPromptInputSchema>;
 
 /**
+ * The schema for an MCP server row as entered in the authoring form.
+ *
+ * Exactly one of `server` (a catalog key) or `url` (a custom endpoint, where
+ * the deployment allows it) is set; a blank `server` means "custom URL".
+ */
+export const McpServerInputSchema = z
+  .object({
+    server: z.string().trim().max(63).default(''),
+    url: templateSafe(z.string().trim().max(2000)).default(''),
+  })
+  .superRefine((value, ctx) => {
+    if (value.server === '' && value.url === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['url'],
+        message: 'Enter the MCP server URL',
+      });
+    } else if (value.server === '' && !isHttpUrl(value.url)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['url'],
+        message: 'Enter a valid URL',
+      });
+    }
+  });
+
+/**
+ * A type alias for an MCP server input.
+ */
+export type McpServerInput = z.infer<typeof McpServerInputSchema>;
+
+/**
  * The schema for an agent definition as entered in the authoring form.
  *
  * This is the UI's form model. Blank optional fields are empty strings here
  * and become `null` on the wire (see {@link buildRegisterAgentBody}).
+ * `tools` and `databases` hold catalog keys.
  */
 export const AgentDefinitionSchema = z.object({
   name: templateSafe(z.string().trim().min(1, 'Name is required').max(80)),
@@ -63,12 +108,9 @@ export const AgentDefinitionSchema = z.object({
     z.string().trim().min(1, 'Instructions are required').max(20_000),
   ),
   model: z.string().min(1, 'Model is required').max(200),
-  mcpUrl: z
-    .union([
-      z.literal(''),
-      templateSafe(z.string().trim().url('Enter a valid URL')),
-    ])
-    .default(''),
+  tools: z.array(z.string().min(1).max(63)).max(20).default([]),
+  databases: z.array(z.string().min(1).max(63)).max(20).default([]),
+  mcpServers: z.array(McpServerInputSchema).max(8).default([]),
   quickPrompts: z.array(QuickPromptInputSchema).max(12).default([]),
 });
 
@@ -85,7 +127,9 @@ export const EMPTY_AGENT_DEFINITION: AgentDefinition = {
   description: '',
   instructions: '',
   model: '',
-  mcpUrl: '',
+  tools: [],
+  databases: [],
+  mcpServers: [],
   quickPrompts: [],
 };
 
@@ -93,18 +137,31 @@ export const EMPTY_AGENT_DEFINITION: AgentDefinition = {
  * The schema for the metadata the backend factory stashes on an agent.
  *
  * Lives at `capabilities.identity.metadata.nebariChat`. Static agents have
- * no such key, which is how the UI tells the two apart.
+ * no such key, which is how the UI tells the two apart. Version 2 added
+ * `tools`, `mcpServers` and `dataSources`.
  */
 export const DynamicAgentMetadataSchema = z.object({
   nebariChat: z.object({
     kind: z.literal('dynamic'),
-    version: z.literal(1),
+    version: z.literal(2),
     definition: z.object({
       name: z.string(),
       description: z.string().nullable(),
       instructions: z.string(),
       model: z.string(),
-      mcpUrl: z.string().nullable(),
+      tools: z.array(z.string()),
+      mcpServers: z.array(
+        z.object({
+          server: z.string().optional(),
+          url: z.string().optional(),
+        }),
+      ),
+      dataSources: z.array(
+        z.object({
+          database: z.string().optional(),
+          file: z.string().optional(),
+        }),
+      ),
     }),
     setupError: z.string().nullable(),
     createdAt: z.string(),
@@ -140,7 +197,8 @@ export type DynamicAgent = {
 /**
  * Read a dynamic agent's authored definition back from its config.
  *
- * @returns The dynamic agent, or `null` for a static (config-declared) agent.
+ * @returns The dynamic agent, or `null` for a static (config-declared) agent
+ * or one written by an incompatible metadata version.
  */
 export function getDynamicAgent(agent: AgentConfig): DynamicAgent | null {
   const parsed = DynamicAgentMetadataSchema.safeParse(
@@ -157,7 +215,14 @@ export function getDynamicAgent(agent: AgentConfig): DynamicAgent | null {
       description: definition.description ?? '',
       instructions: definition.instructions,
       model: definition.model,
-      mcpUrl: definition.mcpUrl ?? '',
+      tools: definition.tools,
+      databases: definition.dataSources.flatMap((source) =>
+        source.database ? [source.database] : [],
+      ),
+      mcpServers: definition.mcpServers.map((server) => ({
+        server: server.server ?? '',
+        url: server.url ?? '',
+      })),
       quickPrompts: agent.quickPrompts.map(toQuickPromptInput),
     },
     setupError,
@@ -196,7 +261,9 @@ export type RegisterAgentBody = {
       description: string | null;
       instructions: string;
       model: string;
-      mcp_url: string | null;
+      tools: string[];
+      mcp_servers: ({ server: string } | { url: string })[];
+      data_sources: { database: string }[];
       quick_prompts: {
         title: string;
         description: string | null;
@@ -209,9 +276,9 @@ export type RegisterAgentBody = {
 /**
  * Build the registration body for an agent definition.
  *
- * Every string is raw-wrapped, including the model id and URL, so the
- * payload is uniformly immune to template rendering; the backend receives
- * the unwrapped values.
+ * Every string is raw-wrapped, including catalog keys, the model id and URLs,
+ * so the payload is uniformly immune to template rendering; the backend
+ * receives the unwrapped values.
  */
 export function buildRegisterAgentBody(
   id: string,
@@ -228,7 +295,15 @@ export function buildRegisterAgentBody(
         description: optional(definition.description),
         instructions: escapeTemplate(definition.instructions),
         model: escapeTemplate(definition.model),
-        mcp_url: optional(definition.mcpUrl),
+        tools: definition.tools.map(escapeTemplate),
+        mcp_servers: definition.mcpServers.map((server) =>
+          server.server
+            ? { server: escapeTemplate(server.server) }
+            : { url: escapeTemplate(server.url) },
+        ),
+        data_sources: definition.databases.map((database) => ({
+          database: escapeTemplate(database),
+        })),
         quick_prompts: definition.quickPrompts.map((prompt) => ({
           title: escapeTemplate(prompt.title),
           description: optional(prompt.description),

@@ -4,7 +4,12 @@
 import { createContext, useContext } from 'react';
 
 import type * as api from '@/api';
-import type { AuthoringModel } from '@/config';
+import type {
+  AuthoringModel,
+  CatalogDatabase,
+  CatalogMcpServer,
+  CatalogTool,
+} from '@/config';
 
 /**
  * The configuration for the agents page.
@@ -16,7 +21,22 @@ export type AgentsConfig = {
   readonly models: readonly AuthoringModel[];
 
   /**
-   * Whether the MCP server URL field is offered.
+   * Built-in tools from the operator catalog.
+   */
+  readonly tools: readonly CatalogTool[];
+
+  /**
+   * MCP servers from the operator catalog.
+   */
+  readonly mcpServers: readonly CatalogMcpServer[];
+
+  /**
+   * Databases from the operator catalog.
+   */
+  readonly databases: readonly CatalogDatabase[];
+
+  /**
+   * Whether users may enter a custom MCP server URL.
    */
   readonly mcpEnabled: boolean;
 

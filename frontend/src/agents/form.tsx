@@ -32,6 +32,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 import { useAgentsConfig } from '@/context';
 
+import { CapabilityChecklist, McpServerRows } from './capabilities';
+
 import { QuickPromptRows } from './quickprompts';
 
 /**
@@ -46,7 +48,8 @@ export function AgentForm(props: AgentForm.Props): ReactNode {
   const { initial, submitLabel, pending, onSubmit } = props;
 
   // Fetch the authoring options.
-  const { models, mcpEnabled } = useAgentsConfig();
+  const { models, tools, databases, mcpServers, mcpEnabled } =
+    useAgentsConfig();
 
   // Setup the form state.
   const [draft, setDraft] = useState<api.AgentDefinition>(initial);
@@ -87,6 +90,11 @@ export function AgentForm(props: AgentForm.Props): ReactNode {
       {model.label ?? model.id}
     </SelectItem>
   ));
+
+  // The MCP section is offered when the catalog lists servers or custom URLs
+  // are allowed; editing an agent that already has rows always shows it.
+  const showMcp =
+    mcpServers.length > 0 || mcpEnabled || draft.mcpServers.length > 0;
 
   // Return the rendered component.
   return (
@@ -167,24 +175,44 @@ export function AgentForm(props: AgentForm.Props): ReactNode {
         ) : null}
       </Field>
 
-      {mcpEnabled ? (
-        <Field>
-          <FieldLabel htmlFor="agent-mcp-url">MCP server URL</FieldLabel>
-          <Input
-            id="agent-mcp-url"
-            type="url"
-            placeholder="https://"
-            value={draft.mcpUrl}
-            disabled={pending}
-            aria-invalid={Boolean(errors.mcpUrl)}
-            onChange={(e) => patch({ mcpUrl: e.target.value })}
-          />
-          <FieldDescription>
-            Optional. A streamable HTTP MCP endpoint whose tools this agent may
-            call. The host must be on the deployment's allowlist.
-          </FieldDescription>
-          {errors.mcpUrl ? <FieldError>{errors.mcpUrl}</FieldError> : null}
-        </Field>
+      {tools.length > 0 ? (
+        <CapabilityChecklist
+          idPrefix="agent-tool"
+          legend="Tools"
+          description="Built-in tools this agent may call."
+          items={tools.map((tool) => ({
+            id: tool.id,
+            label: tool.label,
+            description: tool.description,
+            hint: tool.kind,
+          }))}
+          value={draft.tools}
+          disabled={pending}
+          onChange={(selected) => patch({ tools: selected })}
+        />
+      ) : null}
+
+      {databases.length > 0 ? (
+        <CapabilityChecklist
+          idPrefix="agent-database"
+          legend="Data"
+          description="Databases this agent may query, read-only."
+          items={databases}
+          value={draft.databases}
+          disabled={pending}
+          onChange={(selected) => patch({ databases: selected })}
+        />
+      ) : null}
+
+      {showMcp ? (
+        <McpServerRows
+          servers={mcpServers}
+          allowCustomUrl={mcpEnabled}
+          value={draft.mcpServers}
+          errors={errors}
+          disabled={pending}
+          onChange={(rows) => patch({ mcpServers: rows })}
+        />
       ) : null}
 
       <QuickPromptRows

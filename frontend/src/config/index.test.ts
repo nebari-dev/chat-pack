@@ -58,19 +58,46 @@ describe('sanitizeUrl', () => {
 });
 
 describe('sanitizeAgentAuthoring', () => {
+  const EMPTY = {
+    models: [],
+    tools: [],
+    mcpServers: [],
+    databases: [],
+    mcpEnabled: false,
+  };
+
   it('returns empty defaults for missing or malformed input', () => {
-    expect(sanitizeAgentAuthoring(undefined)).toEqual({
-      models: [],
-      mcpEnabled: false,
+    expect(sanitizeAgentAuthoring(undefined)).toEqual(EMPTY);
+    expect(sanitizeAgentAuthoring('nope')).toEqual(EMPTY);
+    expect(sanitizeAgentAuthoring({ models: 'nope', tools: 'nope' })).toEqual(
+      EMPTY,
+    );
+  });
+
+  it('sanitizes catalog entries', () => {
+    const resolved = sanitizeAgentAuthoring({
+      tools: [
+        { id: 'charts', label: 'Charts', kind: 'visualization' },
+        { id: 'permits', kind: 'sql', description: ' Permits ' },
+        { id: 'no-kind', label: 'x' },
+        { id: 'Bad Id', label: 'x', kind: 'sql' },
+        { id: 'charts', label: 'dupe', kind: 'sql' },
+      ],
+      mcpServers: [
+        { id: 'frames', label: 'Frames', auth: 'impersonate' },
+        { id: 'plain', label: 'Plain', auth: 'bogus' },
+      ],
+      databases: [{ id: 'permits', label: 'Permits' }, 42],
     });
-    expect(sanitizeAgentAuthoring('nope')).toEqual({
-      models: [],
-      mcpEnabled: false,
-    });
-    expect(sanitizeAgentAuthoring({ models: 'nope' })).toEqual({
-      models: [],
-      mcpEnabled: false,
-    });
+    expect(resolved.tools).toEqual([
+      { id: 'charts', label: 'Charts', kind: 'visualization' },
+      { id: 'permits', label: 'permits', kind: 'sql', description: 'Permits' },
+    ]);
+    expect(resolved.mcpServers).toEqual([
+      { id: 'frames', label: 'Frames', auth: 'impersonate' },
+      { id: 'plain', label: 'Plain', auth: 'none' },
+    ]);
+    expect(resolved.databases).toEqual([{ id: 'permits', label: 'Permits' }]);
   });
 
   it('keeps well-formed models and trims labels', () => {

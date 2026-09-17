@@ -78,6 +78,7 @@ test.describe('agents page', () => {
     const customRow = page.getByRole('row', { name: /Custom Agent/ });
     await expect(customRow.getByText('Custom', { exact: true })).toBeVisible();
     await expect(customRow.getByText('test/model-a')).toBeVisible();
+    await expect(customRow.getByText('1 tool, 1 MCP')).toBeVisible();
     await expect(customRow.getByText('Ready')).toBeVisible();
     await expect(
       customRow.getByRole('link', { name: 'Edit Custom Agent' }),
@@ -112,9 +113,18 @@ test.describe('agents page', () => {
     await expect(dialog.getByText('Model is required')).toBeVisible();
     expect(mock.requests).toHaveLength(0);
 
-    // Fill in the form, including a quick prompt and text with braces that
-    // Ravnar would otherwise treat as a template.
+    // Fill in the form, including capabilities, a quick prompt and text with
+    // braces that Ravnar would otherwise treat as a template.
     await dialog.getByLabel('Name', { exact: true }).fill('Support Bot');
+    await dialog.getByLabel('Charts and maps').check();
+    await dialog
+      .getByRole('group', { name: 'Data' })
+      .getByLabel('Austin permits')
+      .check();
+    await dialog.getByRole('button', { name: 'Add MCP server' }).click();
+    await expect(
+      dialog.getByRole('combobox', { name: 'Server' }),
+    ).toContainText('Frames');
     await dialog
       .getByLabel('Instructions', { exact: true })
       .fill('Use {{ tone }} politely.');
@@ -141,7 +151,13 @@ test.describe('agents page', () => {
     expect(body.agent.params.instructions).toBe(
       '{% raw %}Use {{ tone }} politely.{% endraw %}',
     );
-    expect(body.agent.params.mcp_url).toBeNull();
+    expect(body.agent.params.tools).toEqual(['{% raw %}charts{% endraw %}']);
+    expect(body.agent.params.data_sources).toEqual([
+      { database: '{% raw %}permits{% endraw %}' },
+    ]);
+    expect(body.agent.params.mcp_servers).toEqual([
+      { server: '{% raw %}frames{% endraw %}' },
+    ]);
     expect(body.agent.params.quick_prompts).toEqual([
       {
         title: '{% raw %}Greet{% endraw %}',
@@ -183,6 +199,12 @@ test.describe('agents page', () => {
         .getByRole('group', { name: 'Quick prompt 1' })
         .getByLabel('Prompt title'),
     ).toHaveValue('Hi');
+    await expect(dialog.getByLabel('Charts and maps')).toBeChecked();
+    await expect(
+      dialog
+        .getByRole('group', { name: 'MCP server 1' })
+        .getByRole('combobox', { name: 'Server' }),
+    ).toContainText('Frames');
 
     await dialog
       .getByLabel('Instructions', { exact: true })
@@ -308,14 +330,56 @@ test.describe('agents page', () => {
     ).toBeDisabled();
   });
 
-  test('only offers the MCP field when enabled', async ({ page }) => {
+  test('offers custom MCP URLs only when enabled', async ({ page }) => {
+    // Catalog servers but no custom URLs: the section exists, no URL option.
     await mockAuthoring(page, { mcpEnabled: false });
     await page.goto('/agents?new=true');
-    await expect(page.getByLabel('MCP server URL')).toHaveCount(0);
+    const dialog = page.getByRole('dialog', { name: 'New agent' });
+    await dialog.getByRole('button', { name: 'Add MCP server' }).click();
+    await dialog.getByRole('combobox', { name: 'Server' }).click();
+    await expect(page.getByRole('option', { name: 'Custom URL…' })).toHaveCount(
+      0,
+    );
+    await page.keyboard.press('Escape');
 
-    await mockAuthoring(page, { mcpEnabled: true });
+    // Custom URLs enabled: pick the option, enter a URL, and it is sent raw.
+    const mock = await mockAuthoring(page, { mcpEnabled: true });
     await page.goto('/agents?new=true');
-    await expect(page.getByLabel('MCP server URL')).toBeVisible();
+    await dialog.getByLabel('Name', { exact: true }).fill('URL Bot');
+    await dialog.getByLabel('Instructions', { exact: true }).fill('Help.');
+    await dialog.getByRole('combobox', { name: 'Model' }).click();
+    await page.getByRole('option', { name: 'Model A' }).click();
+    await dialog.getByRole('button', { name: 'Add MCP server' }).click();
+    await dialog.getByRole('combobox', { name: 'Server' }).click();
+    await page.getByRole('option', { name: 'Custom URL…' }).click();
+    await dialog.getByLabel('URL', { exact: true }).fill('not a url');
+    await dialog.getByRole('button', { name: 'Create agent' }).click();
+    await expect(dialog.getByText('Enter a valid URL')).toBeVisible();
+    await dialog
+      .getByLabel('URL', { exact: true })
+      .fill('https://mcp.example.com/mcp');
+    await dialog.getByRole('button', { name: 'Create agent' }).click();
+    await expect(page).toHaveURL(/\/chat\?agentId=/);
+    const body = mock.requests[0].body as {
+      agent: { params: { mcp_servers: unknown } };
+    };
+    expect(body.agent.params.mcp_servers).toEqual([
+      { url: '{% raw %}https://mcp.example.com/mcp{% endraw %}' },
+    ]);
+  });
+
+  test('hides capability sections when the catalog is empty', async ({
+    page,
+  }) => {
+    await mockAuthoring(page, { catalog: null, mcpEnabled: false });
+    await page.goto('/agents?new=true');
+    const dialog = page.getByRole('dialog', { name: 'New agent' });
+    await expect(dialog.getByLabel('Name', { exact: true })).toBeVisible();
+    await expect(dialog.getByRole('group', { name: 'Tools' })).toHaveCount(0);
+    await expect(dialog.getByRole('group', { name: 'Data' })).toHaveCount(0);
+    await expect(
+      dialog.getByRole('button', { name: 'Add MCP server' }),
+    ).toHaveCount(0);
   });
 
   test('has no critical or serious accessibility violations', {

@@ -64,7 +64,8 @@ function RouteComponent() {
   // Resolve the permission gates and the deploy-time authoring options.
   const canWrite = useHasPermission('agents:write');
   const canDelete = useHasPermission('agents:delete');
-  const { models, mcpEnabled } = getAgentAuthoringConfig();
+  const { models, tools, mcpServers, databases, mcpEnabled } =
+    getAgentAuthoringConfig();
 
   // Create the handler for registering a new agent.
   //
@@ -107,6 +108,9 @@ function RouteComponent() {
   // Create the agents config.
   const config: AgentsConfig = {
     models,
+    tools,
+    mcpServers,
+    databases,
     mcpEnabled,
     canWrite,
     canDelete,

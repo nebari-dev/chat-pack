@@ -206,6 +206,31 @@ namespace Private {
       },
     });
 
+    const capabilitiesColumn = columnHelper.display({
+      id: 'capabilities',
+      header: 'Capabilities',
+      cell: (cellContext) => {
+        const dynamic = api.getDynamicAgent(cellContext.row.original);
+        if (!dynamic) {
+          return <span className="text-xs text-muted-foreground">—</span>;
+        }
+        const { tools, databases, mcpServers } = dynamic.definition;
+        const parts: string[] = [];
+        const toolCount = tools.length + databases.length;
+        if (toolCount > 0) {
+          parts.push(`${toolCount} ${toolCount === 1 ? 'tool' : 'tools'}`);
+        }
+        if (mcpServers.length > 0) {
+          parts.push(`${mcpServers.length} MCP`);
+        }
+        return (
+          <span className="whitespace-nowrap text-xs text-muted-foreground">
+            {parts.length > 0 ? parts.join(', ') : '—'}
+          </span>
+        );
+      },
+    });
+
     const toolsColumn = columnHelper.display({
       id: 'tools',
       header: 'Tools',
@@ -267,6 +292,7 @@ namespace Private {
       idColumn,
       kindColumn,
       modelColumn,
+      capabilitiesColumn,
       toolsColumn,
       statusColumn,
       actionsColumn,

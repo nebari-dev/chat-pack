@@ -117,7 +117,39 @@ export type AuthoringModel = {
 };
 
 /**
+ * A built-in tool from the operator catalog.
+ */
+export type CatalogTool = {
+  id: string;
+  label: string;
+  kind: string;
+  description?: string;
+};
+
+/**
+ * An MCP server from the operator catalog.
+ */
+export type CatalogMcpServer = {
+  id: string;
+  label: string;
+  auth: 'none' | 'impersonate';
+  description?: string;
+};
+
+/**
+ * A database data source from the operator catalog.
+ */
+export type CatalogDatabase = {
+  id: string;
+  label: string;
+  description?: string;
+};
+
+/**
  * Operator-configurable agent authoring options.
+ *
+ * The catalog lists mirror the backend's `NEBARI_CHAT_CATALOG` file, which
+ * is the authority; these only populate the pickers.
  */
 export type AgentAuthoringConfig = {
   /**
@@ -126,11 +158,26 @@ export type AgentAuthoringConfig = {
   models?: AuthoringModel[];
 
   /**
+   * Built-in tools users may attach.
+   */
+  tools?: CatalogTool[];
+
+  /**
+   * MCP servers users may attach.
+   */
+  mcpServers?: CatalogMcpServer[];
+
+  /**
+   * Databases users may attach as data sources.
+   */
+  databases?: CatalogDatabase[];
+
+  /**
    * MCP server options.
    */
   mcp?: {
     /**
-     * Whether to show the MCP server URL field. Requires the backend's
+     * Whether users may enter a custom MCP server URL. Requires the backend's
      * `NEBARI_CHAT_MCP_ALLOWED_HOSTS` to be set as well.
      */
     enabled?: boolean;
@@ -208,12 +255,60 @@ export function getAppConfig(): AppConfig | null {
  */
 export type ResolvedAgentAuthoringConfig = {
   readonly models: readonly AuthoringModel[];
+  readonly tools: readonly CatalogTool[];
+  readonly mcpServers: readonly CatalogMcpServer[];
+  readonly databases: readonly CatalogDatabase[];
+  /**
+   * Whether users may enter a custom MCP server URL.
+   */
   readonly mcpEnabled: boolean;
 };
 
 // Model ids are provider-style slugs; anything else is dropped rather than
 // rendered into the picker.
 const MODEL_ID = /^[\w.\-/:]{1,200}$/;
+
+// Catalog keys are slugs, matching the backend's catalog validation.
+const CATALOG_ID = /^[a-z0-9][a-z0-9-]{0,62}$/;
+
+/**
+ * Sanitize a list of catalog entries: valid slug ids, first occurrence wins,
+ * a non-empty label (falling back to the id), an optional description.
+ */
+function sanitizeCatalogEntries<T extends { id: string; label: string }>(
+  raw: unknown,
+  extend: (entry: Record<string, unknown>) => Omit<T, 'id' | 'label'> | null,
+): T[] {
+  const entries: T[] = [];
+  const seen = new Set<string>();
+  if (!Array.isArray(raw)) {
+    return entries;
+  }
+  for (const item of raw as unknown[]) {
+    if (typeof item !== 'object' || item === null) {
+      continue;
+    }
+    const entry = item as Record<string, unknown>;
+    const { id, label, description } = entry;
+    if (typeof id !== 'string' || !CATALOG_ID.test(id) || seen.has(id)) {
+      continue;
+    }
+    const extra = extend(entry);
+    if (extra === null) {
+      continue;
+    }
+    seen.add(id);
+    const base = {
+      id,
+      label: typeof label === 'string' && label.trim() ? label.trim() : id,
+      ...(typeof description === 'string' && description.trim()
+        ? { description: description.trim() }
+        : {}),
+    };
+    entries.push({ ...base, ...extra } as T);
+  }
+  return entries;
+}
 
 /**
  * Sanitize a raw `agentAuthoring` value from `/config.json`.
@@ -227,9 +322,34 @@ export function sanitizeAgentAuthoring(
   const models: AuthoringModel[] = [];
   const seen = new Set<string>();
   let mcpEnabled = false;
+  let tools: CatalogTool[] = [];
+  let mcpServers: CatalogMcpServer[] = [];
+  let databases: CatalogDatabase[] = [];
 
   if (typeof raw === 'object' && raw !== null) {
-    const { models: rawModels, mcp } = raw as AgentAuthoringConfig;
+    const {
+      models: rawModels,
+      mcp,
+      tools: rawTools,
+      mcpServers: rawServers,
+      databases: rawDatabases,
+    } = raw as AgentAuthoringConfig;
+    tools = sanitizeCatalogEntries<CatalogTool>(rawTools, (entry) =>
+      typeof entry.kind === 'string' && entry.kind
+        ? { kind: entry.kind }
+        : null,
+    );
+    mcpServers = sanitizeCatalogEntries<CatalogMcpServer>(
+      rawServers,
+      (entry) =>
+        entry.auth === 'impersonate'
+          ? { auth: 'impersonate' }
+          : { auth: 'none' },
+    );
+    databases = sanitizeCatalogEntries<CatalogDatabase>(
+      rawDatabases,
+      () => ({}),
+    );
     if (Array.isArray(rawModels)) {
       for (const entry of rawModels as unknown[]) {
         if (typeof entry !== 'object' || entry === null) {
@@ -250,7 +370,7 @@ export function sanitizeAgentAuthoring(
     mcpEnabled = mcp?.enabled === true;
   }
 
-  return { models, mcpEnabled };
+  return { models, tools, mcpServers, databases, mcpEnabled };
 }
 
 /**

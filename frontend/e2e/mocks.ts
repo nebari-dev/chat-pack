@@ -36,7 +36,9 @@ export function mockDynamicAgent(options: {
   description?: string | null;
   instructions?: string;
   model?: string;
-  mcpUrl?: string | null;
+  tools?: string[];
+  mcpServers?: ({ server: string } | { url: string })[];
+  dataSources?: { database: string }[];
   setupError?: string | null;
   quickPrompts?: { title: string; description?: string; prompt: string }[];
 }) {
@@ -46,7 +48,9 @@ export function mockDynamicAgent(options: {
     description = null,
     instructions = 'You are helpful.',
     model = 'test/model-a',
-    mcpUrl = null,
+    tools = [],
+    mcpServers = [],
+    dataSources = [],
     setupError = null,
     quickPrompts = [],
   } = options;
@@ -61,8 +65,16 @@ export function mockDynamicAgent(options: {
         metadata: {
           [METADATA_KEY]: {
             kind: 'dynamic',
-            version: 1,
-            definition: { name, description, instructions, model, mcpUrl },
+            version: 2,
+            definition: {
+              name,
+              description,
+              instructions,
+              model,
+              tools,
+              mcpServers,
+              dataSources,
+            },
             setupError,
             createdAt: '2026-01-01T00:00:00+00:00',
           },
@@ -81,6 +93,8 @@ export const MOCK_DYNAMIC_AGENT = mockDynamicAgent({
   id: 'custom-agent-abc123',
   name: 'Custom Agent',
   description: 'Answers questions',
+  tools: ['charts'],
+  mcpServers: [{ server: 'frames' }],
   quickPrompts: [{ title: 'Hi', prompt: 'Hello' }],
 });
 
@@ -90,7 +104,7 @@ export const MOCK_DYNAMIC_AGENT = mockDynamicAgent({
 export const MOCK_BROKEN_AGENT = mockDynamicAgent({
   id: 'broken-agent-def456',
   name: 'Broken Agent',
-  mcpUrl: 'https://mcp.example.com/mcp',
+  mcpServers: [{ url: 'https://mcp.example.com/mcp' }],
   setupError: 'ConnectionError: refused',
 });
 
@@ -101,6 +115,26 @@ export const MOCK_MODELS = [
   { id: 'test/model-a', label: 'Model A' },
   { id: 'test/model-b', label: 'Model B' },
 ];
+
+/**
+ * The catalog the mocked runtime config offers for authoring.
+ */
+export const MOCK_CATALOG = {
+  tools: [
+    { id: 'charts', label: 'Charts and maps', kind: 'visualization' },
+    {
+      id: 'permits',
+      label: 'Austin permits',
+      kind: 'sql',
+      description: 'Building permits, read-only',
+    },
+  ],
+  mcpServers: [
+    { id: 'frames', label: 'Frames', auth: 'none' },
+    { id: 'secure', label: 'Secure', auth: 'impersonate' },
+  ],
+  databases: [{ id: 'permits', label: 'Austin permits' }],
+};
 
 /**
  * The permissions the mocked user holds by default: everything the app
@@ -163,9 +197,15 @@ export type MockApiOptions = {
   authoringModels?: { id: string; label?: string }[];
 
   /**
-   * Whether the runtime config enables the MCP URL field.
+   * Whether the runtime config allows custom MCP server URLs.
    */
   mcpEnabled?: boolean;
+
+  /**
+   * The catalog the runtime config offers. Defaults to `MOCK_CATALOG`; pass
+   * `null` for an empty catalog.
+   */
+  catalog?: typeof MOCK_CATALOG | null;
 };
 
 /**
@@ -239,6 +279,9 @@ export async function mockApi(
         agentAuthoring: {
           models: options.authoringModels ?? MOCK_MODELS,
           mcp: { enabled: options.mcpEnabled ?? false },
+          ...(options.catalog === null
+            ? {}
+            : (options.catalog ?? MOCK_CATALOG)),
         },
       }),
     ),
@@ -277,13 +320,25 @@ export async function mockApi(
       }
       const params = body.agent.params;
       const prompts = (params.quick_prompts as Record<string, unknown>[]) ?? [];
+      const servers = (params.mcp_servers as Record<string, unknown>[]) ?? [];
+      const sources = (params.data_sources as Record<string, unknown>[]) ?? [];
       const agent = mockDynamicAgent({
         id: body.id,
         name: unwrapRaw(params.name) ?? body.id,
         description: unwrapRaw(params.description),
         instructions: unwrapRaw(params.instructions) ?? '',
         model: unwrapRaw(params.model) ?? '',
-        mcpUrl: unwrapRaw(params.mcp_url),
+        tools: ((params.tools as unknown[]) ?? []).map(
+          (t) => unwrapRaw(t) ?? '',
+        ),
+        mcpServers: servers.map((srv) =>
+          typeof srv.server === 'string'
+            ? { server: unwrapRaw(srv.server) ?? '' }
+            : { url: unwrapRaw(srv.url) ?? '' },
+        ),
+        dataSources: sources.map((src) => ({
+          database: unwrapRaw(src.database) ?? '',
+        })),
         quickPrompts: prompts.map((p) => ({
           title: unwrapRaw(p.title) ?? '',
           description: unwrapRaw(p.description) ?? undefined,
