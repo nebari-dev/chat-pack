@@ -219,9 +219,16 @@ class TestCatalogCapabilities:
         assert "frames" in str(exc.detail)
 
     @pytest.mark.usefixtures("catalog_file")
-    def test_impersonating_server_is_503_until_configured(self) -> None:
+    def test_impersonating_server_is_503_when_unconfigured(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for name in (
+            dynamic_agents.IMPERSONATION_ISSUER_ENV,
+            dynamic_agents.IMPERSONATION_CLIENT_ID_ENV,
+            dynamic_agents.IMPERSONATION_CLIENT_SECRET_ENV,
+        ):
+            monkeypatch.delenv(name, raising=False)
         exc = raises_http(503, mcp_servers=[{"server": "secure"}])
         assert "impersonation" in str(exc.detail)
+        assert dynamic_agents.IMPERSONATION_ISSUER_ENV in str(exc.detail)
 
     @pytest.mark.usefixtures("catalog_file")
     def test_catalog_server_bypasses_raw_host_allowlist(self, monkeypatch: pytest.MonkeyPatch) -> None:

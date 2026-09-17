@@ -13,6 +13,9 @@ Ravnar keeps dynamic agents in memory only; see the docs for the caveats.
 __all__ = [
     "ALLOWED_MODELS_ENV",
     "API_KEY_ENV",
+    "IMPERSONATION_CLIENT_ID_ENV",
+    "IMPERSONATION_CLIENT_SECRET_ENV",
+    "IMPERSONATION_ISSUER_ENV",
     "MCP_ALLOWED_HOSTS_ENV",
     "METADATA_KEY",
     "METADATA_VERSION",
@@ -26,6 +29,7 @@ __all__ = [
     "make_chat_agent",
 ]
 
+import functools
 import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -48,6 +52,11 @@ ALLOWED_MODELS_ENV = "NEBARI_CHAT_AGENT_MODELS"
 MCP_ALLOWED_HOSTS_ENV = "NEBARI_CHAT_MCP_ALLOWED_HOSTS"
 # The provider key. Shared with the static agents declared in config.yml.
 API_KEY_ENV = "OPENROUTER_API_KEY"
+# A confidential OIDC client allowed to perform token exchange, used for catalog MCP servers with
+# `auth: impersonate`. All three must be set for such servers to be selectable.
+IMPERSONATION_ISSUER_ENV = "NEBARI_CHAT_MCP_IMPERSONATION_ISSUER"
+IMPERSONATION_CLIENT_ID_ENV = "NEBARI_CHAT_MCP_IMPERSONATION_CLIENT_ID"
+IMPERSONATION_CLIENT_SECRET_ENV = "NEBARI_CHAT_MCP_IMPERSONATION_CLIENT_SECRET"
 
 # Where the authored definition is stashed so the UI can read it back for editing.
 METADATA_KEY = "nebariChat"
@@ -238,10 +247,6 @@ def _resolve_capabilities(definition: AgentDefinition, catalog: Catalog) -> _Res
                 raise _bad_request(
                     f"MCP server {ref.server!r} is not in the catalog. Available servers: {available(catalog.mcp_servers)}"
                 )
-            if server.auth == "impersonate":
-                raise _not_configured(
-                    f"MCP server {ref.server!r} requires per-user impersonation, which is not configured"
-                )
             key = f"server:{ref.server}"
             resolved_server = _ResolvedMcpServer(
                 id=ref.server,
@@ -386,14 +391,7 @@ def make_chat_agent(
     from pydantic_ai.models.openrouter import OpenRouterModel
     from pydantic_ai.providers.openrouter import OpenRouterProvider
 
-    toolsets: list[Any] = []
-    if resolved.mcp_servers:
-        from pydantic_ai.mcp import MCPServerStreamableHTTP
-
-        toolsets = [
-            MCPServerStreamableHTTP(server.url, id=server.id, tool_prefix=server.tool_prefix, timeout=server.timeout)
-            for server in resolved.mcp_servers
-        ]
+    toolsets = [_build_mcp_toolset(server) for server in resolved.mcp_servers]
 
     agent = pydantic_ai.Agent(
         OpenRouterModel(definition.model, provider=OpenRouterProvider(api_key=api_key)),
@@ -404,6 +402,44 @@ def make_chat_agent(
     )
     _attach_catalog_tools(agent, resolved.tools)
     return DynamicChatAgent(agent, definition=definition)
+
+
+@functools.lru_cache(maxsize=4)
+def _impersonator(issuer: str, client_id: str, client_secret: str) -> Any:
+    """One impersonator per client configuration; it caches tokens and performs OIDC discovery once."""
+    from ravnar_nebari_mcp import OIDCImpersonator
+
+    return OIDCImpersonator(issuer=issuer, client_id=client_id, client_secret=client_secret)
+
+
+def _build_mcp_toolset(server: _ResolvedMcpServer) -> Any:
+    from pydantic_ai.mcp import MCPServerStreamableHTTP
+
+    if server.auth != "impersonate":
+        return MCPServerStreamableHTTP(server.url, id=server.id, tool_prefix=server.tool_prefix, timeout=server.timeout)
+
+    issuer = os.environ.get(IMPERSONATION_ISSUER_ENV)
+    client_id = os.environ.get(IMPERSONATION_CLIENT_ID_ENV)
+    client_secret = os.environ.get(IMPERSONATION_CLIENT_SECRET_ENV)
+    if not (issuer and client_id and client_secret):
+        raise _not_configured(
+            f"MCP server {server.id!r} requires per-user impersonation, which is not configured "
+            f"({IMPERSONATION_ISSUER_ENV}, {IMPERSONATION_CLIENT_ID_ENV} and {IMPERSONATION_CLIENT_SECRET_ENV})"
+        )
+
+    from ravnar_nebari_mcp import ImpersonatingMCPToolset, bearer_token_mcp_toolset_factory
+
+    try:
+        impersonator = _impersonator(issuer, client_id, client_secret)
+        return ImpersonatingMCPToolset(
+            mcp_toolset_factory=bearer_token_mcp_toolset_factory(
+                server.url, id=server.id, tool_prefix=server.tool_prefix, timeout=server.timeout
+            ),
+            impersonator=impersonator,
+        )
+    except Exception as exc:  # discovery or client-credentials failure is an operator problem, not a 500
+        structlog.get_logger().error("MCP impersonation setup failed", server=server.id, error=str(exc))
+        raise _not_configured(f"MCP impersonation for server {server.id!r} is misconfigured") from exc
 
 
 def _attach_catalog_tools(agent: Any, tools: dict[str, VisualizationTool | SqlTool]) -> None:

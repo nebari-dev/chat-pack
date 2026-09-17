@@ -1,3 +1,11 @@
+"""Per-user access to MCP servers through OIDC token exchange.
+
+Ravnar hands agents only a :class:`User` (id, claims, permissions), never the caller's bearer
+token. To call an MCP server *as the user*, a confidential Keycloak client performs token
+exchange with ``requested_subject`` set to the user id and the resulting token is sent as the
+MCP server's bearer. Each agent run gets its own MCP client carrying that user's token.
+"""
+
 __all__ = [
     "ImpersonatingMCPToolset",
     "Impersonator",
@@ -14,8 +22,7 @@ from typing import cast
 import httpx
 import pydantic
 import pydantic_ai
-import pydantic_ai.mcp
-from _ravnar.utils import as_awaitable
+from pydantic_ai.mcp import MCPServerStreamableHTTP
 from pydantic_ai.toolsets.abstract import AbstractToolset
 from pydantic_ai.toolsets.wrapper import WrapperToolset
 from ravnar.authenticators import User
@@ -47,10 +54,11 @@ class _OIDCTokenResponse(pydantic.BaseModel):
 
 
 class OIDCImpersonator(Impersonator):
-    """Keycloak-based impersonation via token-exchange.
+    """Keycloak-based impersonation via token exchange.
 
-    Created once at startup. Performs synchronous OIDC discovery on init so
-    that connectivity issues are surfaced immediately.
+    Created once per deployment. Performs synchronous OIDC discovery on init so that
+    connectivity issues surface immediately, where the caller can turn them into a clear
+    configuration error.
     """
 
     def __init__(
@@ -60,14 +68,19 @@ class OIDCImpersonator(Impersonator):
         client_id: str,
         client_secret: str,
         clock_skew: float = 30.0,
+        transport: httpx.BaseTransport | None = None,
+        async_transport: httpx.AsyncBaseTransport | None = None,
     ):
         self._client_id = client_id
         self._client_secret = client_secret
         self._clock_skew = clock_skew
+        # Injectable for tests; ``None`` means httpx's default transport.
+        self._transport = transport
+        self._async_transport = async_transport
 
         issuer = issuer.rstrip("/")
         discovery_url = f"{issuer}/.well-known/openid-configuration"
-        with httpx.Client() as client:
+        with httpx.Client(transport=transport) as client:
             response = client.get(discovery_url).raise_for_status()
             config = _OIDCConfig.model_validate_json(response.content)
 
@@ -75,6 +88,11 @@ class OIDCImpersonator(Impersonator):
 
         self._client_token: tuple[str, float] | None = None
         self._user_cache: dict[str, tuple[str, float]] = {}
+
+    @property
+    def token_endpoint(self) -> str:
+        """The discovered token endpoint."""
+        return self._token_endpoint
 
     def get_client_token(self) -> str:
         """Return a (cached/refreshed) client-credentials bearer token."""
@@ -84,7 +102,7 @@ class OIDCImpersonator(Impersonator):
             if time.time() < expires_at:
                 return token
 
-        with httpx.Client() as client:
+        with httpx.Client(transport=self._transport) as client:
             response = client.post(
                 self._token_endpoint,
                 data={
@@ -101,14 +119,14 @@ class OIDCImpersonator(Impersonator):
         return access_token
 
     async def get_user_token(self, user_id: str) -> str:
-        """Return a (cached/refreshed) bearer token for *user_id* via token-exchange."""
+        """Return a (cached/refreshed) bearer token for *user_id* via token exchange."""
         cached = self._user_cache.get(user_id)
         if cached is not None:
             token, expires_at = cached
             if time.time() < expires_at:
                 return token
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(transport=self._async_transport) as client:
             response = (
                 await client.post(
                     self._token_endpoint,
@@ -116,7 +134,7 @@ class OIDCImpersonator(Impersonator):
                         "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
                         "client_id": self._client_id,
                         "client_secret": self._client_secret,
-                        "subject_token": await as_awaitable(self.get_client_token),
+                        "subject_token": self.get_client_token(),
                         "requested_subject": user_id,
                         "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",
                     },
@@ -130,33 +148,50 @@ class OIDCImpersonator(Impersonator):
         return access_token
 
 
-def bearer_token_mcp_toolset_factory(url: str) -> Callable[[str], pydantic_ai.mcp.MCPToolset]:
-    def factory(bearer_token: str) -> pydantic_ai.mcp.MCPToolset:
-        return pydantic_ai.mcp.MCPToolset(url, headers={"Authorization": f"Bearer {bearer_token}"})
+def bearer_token_mcp_toolset_factory(
+    url: str,
+    *,
+    id: str | None = None,
+    tool_prefix: str | None = None,
+    timeout: float = 10.0,
+) -> Callable[[str], MCPServerStreamableHTTP]:
+    """Return a factory building a streamable-HTTP MCP client for *url* with a given bearer token."""
+
+    def factory(bearer_token: str) -> MCPServerStreamableHTTP:
+        return MCPServerStreamableHTTP(
+            url,
+            id=id,
+            tool_prefix=tool_prefix,
+            timeout=timeout,
+            headers={"Authorization": f"Bearer {bearer_token}"},
+        )
 
     return factory
 
 
 class ImpersonatingMCPToolset(WrapperToolset[User]):
-    """Per-run MCPToolset factory that impersonates the current user.
+    """An MCP toolset that acts as the current user.
 
-    The placeholder (``self.wrapped``) is built at construction time with
-    a client-credentials auth.  Every call to ``for_run(ctx)`` replaces it
-    with a fresh ``MCPToolset`` carrying a bearer token for the current
-    user, obtained via ``impersonator.get_user_token(ctx.deps.id)``.
-    Each run gets an independent, race-free MCP session.
+    The placeholder (``self.wrapped``) is built at construction time with a client-credentials
+    token, which is what tool discovery at registration uses. Every ``for_run(ctx)`` replaces it
+    with a fresh MCP client carrying a token for ``ctx.deps.id`` obtained through token exchange,
+    so each run gets an independent, race-free MCP session as that user.
     """
 
     def __init__(
         self,
         *,
-        mcp_toolset_factory: Callable[[str], pydantic_ai.mcp.MCPToolset],
+        mcp_toolset_factory: Callable[[str], MCPServerStreamableHTTP],
         impersonator: Impersonator,
     ) -> None:
         client_token = impersonator.get_client_token()
         super().__init__(cast(AbstractToolset[User], mcp_toolset_factory(client_token)))
         self._mcp_toolset_factory = mcp_toolset_factory
         self._impersonator = impersonator
+
+    @property
+    def id(self) -> str | None:
+        return self.wrapped.id
 
     async def for_run(self, ctx: pydantic_ai.RunContext[User]) -> AbstractToolset[User]:
         user_token = await self._impersonator.get_user_token(ctx.deps.id)

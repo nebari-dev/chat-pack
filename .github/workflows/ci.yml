@@ -97,10 +97,8 @@ jobs:
           uv run ruff check
           uv run ruff format --check
 
-      # Scoped to the chat package: `ravnar_nebari_mcp` predates this job and does
-      # not type-check against the current pydantic-ai.
       - name: Type check
-        run: uv run mypy src/ravnar_nebari_chat
+        run: uv run mypy src
 
       - name: Unit tests (pytest)
         run: uv run pytest
