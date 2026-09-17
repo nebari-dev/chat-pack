@@ -17,16 +17,17 @@ import {
  */
 export function LinkCard(props: LinkCard.Props): ReactNode {
   // Extract the props.
-  const { to, icon, title, description } = props;
+  const { to, icon, title, description, badge } = props;
 
   // Return the rendered component.
   return (
     <Link to={to}>
       <Card className="py-3 rounded-sm hover:border-bd-brand-default">
         <CardHeader>
-          <CardTitle className="flex flex-row gap-2">
+          <CardTitle className="flex flex-row items-center gap-2">
             {icon}
             {title}
+            {badge ? <span className="ml-auto">{badge}</span> : null}
           </CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
@@ -62,5 +63,10 @@ export namespace LinkCard {
      * The icon for the card.
      */
     readonly icon: ReactNode;
+
+    /**
+     * An optional badge rendered at the end of the title row.
+     */
+    readonly badge?: ReactNode;
   };
 }

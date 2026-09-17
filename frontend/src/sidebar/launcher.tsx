@@ -3,9 +3,11 @@
 |----------------------------------------------------------------------------*/
 import { Link } from '@tanstack/react-router';
 
-import { History, MessageSquarePlus } from 'lucide-react';
+import { Bot, History, MessageSquarePlus } from 'lucide-react';
 
 import type { ReactNode } from 'react';
+
+import { useAppConfig } from '@/context';
 
 import { cn } from '@/lib/utils';
 
@@ -15,6 +17,9 @@ import { cn } from '@/lib/utils';
 export function Launcher(props: Launcher.Props): ReactNode {
   // Extract the props.
   const { isSidebarOpen } = props;
+
+  // The agents page only exists when the backend accepts dynamic agents.
+  const { dynamicAgentsEnabled } = useAppConfig();
 
   // Return the rendered component.
   return (
@@ -31,6 +36,14 @@ export function Launcher(props: Launcher.Props): ReactNode {
         collapsed={!isSidebarOpen}
         icon={<History className="m-auto" size={20} />}
       />
+      {dynamicAgentsEnabled ? (
+        <Private.LauncherLink
+          to="/agents"
+          text="Agents"
+          collapsed={!isSidebarOpen}
+          icon={<Bot className="m-auto" size={20} />}
+        />
+      ) : null}
     </div>
   );
 }
