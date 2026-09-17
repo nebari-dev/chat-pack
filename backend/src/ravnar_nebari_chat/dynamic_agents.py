@@ -3,8 +3,9 @@
 The frontend never sends a raw pydantic-ai constructor graph. It targets exactly one
 ``cls_or_fn`` -- :func:`make_chat_agent` -- with a small, validated set of parameters.
 Everything sensitive (the model provider API key, the model allowlist, the MCP host
-allowlist) is resolved here from the process environment, so nothing needs to be
-whitelisted in ``agents.dynamic.allowed_env_vars``.
+allowlist, and every connection detail in the operator :mod:`catalog`) is resolved here
+from the process environment, so nothing needs to be whitelisted in
+``agents.dynamic.allowed_env_vars``.
 
 Ravnar keeps dynamic agents in memory only; see the docs for the caveats.
 """
@@ -16,7 +17,9 @@ __all__ = [
     "METADATA_KEY",
     "METADATA_VERSION",
     "AgentDefinition",
+    "DataSourceRef",
     "DynamicChatAgent",
+    "McpServerRef",
     "QuickPromptDefinition",
     "allowed_mcp_hosts",
     "allowed_models",
@@ -24,8 +27,9 @@ __all__ = [
 ]
 
 import os
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Self
 
 import ag_ui.core
 import pydantic
@@ -34,18 +38,26 @@ from _ravnar.schema import QuickPrompt
 from fastapi import HTTPException, status
 from ravnar.agents import PydanticAiAgentWrapper
 
+from ravnar_nebari_chat import catalog as catalog_module
+from ravnar_nebari_chat.catalog import Catalog, CatalogError, SqlTool, VisualizationTool
+
 # Comma-separated OpenRouter model ids users may pick from. Unset => authoring is not configured.
 ALLOWED_MODELS_ENV = "NEBARI_CHAT_AGENT_MODELS"
-# Comma-separated hostnames an MCP server URL may point at, or "*" for any. Unset => MCP disabled.
+# Comma-separated hostnames a raw MCP server URL may point at, or "*" for any. Unset => raw URLs disabled.
+# Catalog MCP servers are operator-approved and bypass this list.
 MCP_ALLOWED_HOSTS_ENV = "NEBARI_CHAT_MCP_ALLOWED_HOSTS"
 # The provider key. Shared with the static agents declared in config.yml.
 API_KEY_ENV = "OPENROUTER_API_KEY"
 
 # Where the authored definition is stashed so the UI can read it back for editing.
 METADATA_KEY = "nebariChat"
-METADATA_VERSION = 1
+# Version 2 added `tools`, `mcpServers` and `dataSources` and dropped `mcpUrl`.
+METADATA_VERSION = 2
 
-_MCP_TIMEOUT_SECONDS = 10.0
+_RAW_MCP_TIMEOUT_SECONDS = 10.0
+_MAX_TOOLS = 20
+_MAX_MCP_SERVERS = 8
+_MAX_DATA_SOURCES = 20
 
 
 class QuickPromptDefinition(pydantic.BaseModel):
@@ -58,6 +70,36 @@ class QuickPromptDefinition(pydantic.BaseModel):
     prompt: str = pydantic.Field(min_length=1, max_length=4000)
 
 
+class McpServerRef(pydantic.BaseModel):
+    """A reference to an MCP server: a catalog key, or a raw URL where the deployment allows it."""
+
+    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    server: str | None = pydantic.Field(default=None, min_length=1, max_length=63)
+    url: pydantic.HttpUrl | None = None
+
+    @pydantic.model_validator(mode="after")
+    def _exactly_one(self) -> Self:
+        if (self.server is None) == (self.url is None):
+            raise ValueError("specify exactly one of 'server' or 'url'")
+        return self
+
+
+class DataSourceRef(pydantic.BaseModel):
+    """A reference to a data source: a catalog database key, or (not yet supported) a file id."""
+
+    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    database: str | None = pydantic.Field(default=None, min_length=1, max_length=63)
+    file: str | None = pydantic.Field(default=None, min_length=1, max_length=128)
+
+    @pydantic.model_validator(mode="after")
+    def _exactly_one(self) -> Self:
+        if (self.database is None) == (self.file is None):
+            raise ValueError("specify exactly one of 'database' or 'file'")
+        return self
+
+
 class AgentDefinition(pydantic.BaseModel):
     """The user-authorable shape of a chat agent."""
 
@@ -68,7 +110,9 @@ class AgentDefinition(pydantic.BaseModel):
     instructions: str = pydantic.Field(min_length=1, max_length=20_000)
     model: str = pydantic.Field(min_length=1, max_length=200)
     quick_prompts: list[QuickPromptDefinition] = pydantic.Field(default_factory=list, max_length=12)
-    mcp_url: pydantic.HttpUrl | None = None
+    tools: list[str] = pydantic.Field(default_factory=list, max_length=_MAX_TOOLS)
+    mcp_servers: list[McpServerRef] = pydantic.Field(default_factory=list, max_length=_MAX_MCP_SERVERS)
+    data_sources: list[DataSourceRef] = pydantic.Field(default_factory=list, max_length=_MAX_DATA_SOURCES)
 
     @pydantic.field_validator("description", mode="after")
     @classmethod
@@ -87,7 +131,7 @@ def allowed_models() -> list[str]:
 
 
 def allowed_mcp_hosts() -> list[str] | None:
-    """The MCP hostnames a user may target, or ``None`` when MCP authoring is disabled."""
+    """The hostnames a raw MCP URL may target, or ``None`` when raw URLs are disabled."""
     hosts = [host.lower() for host in _split_env_list(MCP_ALLOWED_HOSTS_ENV)]
     return hosts or None
 
@@ -116,21 +160,109 @@ def _validate_model(definition: AgentDefinition) -> None:
         raise _bad_request(f"Model {definition.model!r} is not allowed. Allowed models: {', '.join(models)}")
 
 
-def _validate_mcp_url(definition: AgentDefinition) -> None:
-    if definition.mcp_url is None:
-        return
-
+def _validate_raw_mcp_url(url: pydantic.HttpUrl) -> None:
     hosts = allowed_mcp_hosts()
     if hosts is None:
-        raise _bad_request(f"MCP servers are not enabled on this deployment ({MCP_ALLOWED_HOSTS_ENV} is unset)")
+        raise _bad_request(
+            f"Custom MCP server URLs are not enabled on this deployment ({MCP_ALLOWED_HOSTS_ENV} is unset)"
+        )
 
-    host = (definition.mcp_url.host or "").lower()
+    host = (url.host or "").lower()
     explicitly_listed = host in hosts
     if not explicitly_listed and "*" not in hosts:
         raise _bad_request(f"MCP host {host!r} is not allowed")
     # Plain http is only acceptable for hosts an operator has named explicitly (e.g. in-cluster services).
-    if definition.mcp_url.scheme != "https" and not explicitly_listed:
+    if url.scheme != "https" and not explicitly_listed:
         raise _bad_request("MCP server URL must use https unless its host is explicitly allowed")
+
+
+@dataclass(frozen=True)
+class _ResolvedMcpServer:
+    id: str
+    url: str
+    tool_prefix: str | None
+    timeout: float
+    auth: str
+
+
+@dataclass
+class _ResolvedCapabilities:
+    """What a definition's selections resolve to, after checking them against the catalog."""
+
+    tools: dict[str, VisualizationTool | SqlTool] = field(default_factory=dict)
+    mcp_servers: list[_ResolvedMcpServer] = field(default_factory=list)
+
+
+def _load_catalog() -> Catalog:
+    try:
+        return catalog_module.load_catalog()
+    except CatalogError as exc:
+        structlog.get_logger().error("Invalid capability catalog", error=str(exc))
+        raise _not_configured("The capability catalog on this deployment is invalid") from exc
+
+
+def _resolve_capabilities(definition: AgentDefinition, catalog: Catalog) -> _ResolvedCapabilities:
+    resolved = _ResolvedCapabilities()
+
+    def available(keys: dict[str, Any]) -> str:
+        return ", ".join(sorted(keys)) if keys else "none"
+
+    # Built-in tools by catalog key.
+    for key in definition.tools:
+        if key in resolved.tools:
+            raise _bad_request(f"Tool {key!r} is listed more than once")
+        entry = catalog.tools.get(key)
+        if entry is None:
+            raise _bad_request(f"Tool {key!r} is not in the catalog. Available tools: {available(catalog.tools)}")
+        resolved.tools[key] = entry
+
+    # Data sources: a database is sugar for its SQL tool; files are not supported yet.
+    databases = catalog.databases()
+    for source in definition.data_sources:
+        if source.file is not None:
+            raise _bad_request("File data sources are not supported yet")
+        assert source.database is not None
+        entry = databases.get(source.database)
+        if entry is None:
+            raise _bad_request(
+                f"Database {source.database!r} is not in the catalog. Available databases: {available(databases)}"
+            )
+        resolved.tools.setdefault(source.database, entry)
+
+    # MCP servers: registry entries are operator-approved; raw URLs go through the host allowlist.
+    seen: set[str] = set()
+    for index, ref in enumerate(definition.mcp_servers):
+        if ref.server is not None:
+            server = catalog.mcp_servers.get(ref.server)
+            if server is None:
+                raise _bad_request(
+                    f"MCP server {ref.server!r} is not in the catalog. Available servers: {available(catalog.mcp_servers)}"
+                )
+            if server.auth == "impersonate":
+                raise _not_configured(
+                    f"MCP server {ref.server!r} requires per-user impersonation, which is not configured"
+                )
+            key = f"server:{ref.server}"
+            resolved_server = _ResolvedMcpServer(
+                id=ref.server,
+                url=str(server.url),
+                tool_prefix=server.tool_prefix,
+                timeout=server.timeout,
+                auth=server.auth,
+            )
+        else:
+            assert ref.url is not None
+            _validate_raw_mcp_url(ref.url)
+            key = f"url:{ref.url}"
+            resolved_server = _ResolvedMcpServer(
+                id=f"mcp{index}", url=str(ref.url), tool_prefix=None, timeout=_RAW_MCP_TIMEOUT_SECONDS, auth="none"
+            )
+        if key in seen:
+            raise _bad_request("The same MCP server is listed more than once")
+        seen.add(key)
+        resolved.mcp_servers.append(resolved_server)
+
+    return resolved
 
 
 class DynamicChatAgent(PydanticAiAgentWrapper):
@@ -191,7 +323,12 @@ class DynamicChatAgent(PydanticAiAgentWrapper):
                         "description": definition.description,
                         "instructions": definition.instructions,
                         "model": definition.model,
-                        "mcpUrl": str(definition.mcp_url) if definition.mcp_url else None,
+                        "tools": list(definition.tools),
+                        "mcpServers": [
+                            {"server": ref.server} if ref.server is not None else {"url": str(ref.url)}
+                            for ref in definition.mcp_servers
+                        ],
+                        "dataSources": [{"database": ref.database} for ref in definition.data_sources],
                     },
                     "setupError": setup_error,
                     "createdAt": self._created_at,
@@ -207,6 +344,9 @@ def make_chat_agent(
     model: str,
     description: str | None = None,
     quick_prompts: list[dict[str, Any]] | None = None,
+    tools: list[str] | None = None,
+    mcp_servers: list[dict[str, Any]] | None = None,
+    data_sources: list[dict[str, Any]] | None = None,
     mcp_url: str | None = None,
 ) -> DynamicChatAgent:
     """Build a user-authored chat agent.
@@ -214,7 +354,14 @@ def make_chat_agent(
     Registered through ``POST /api/agents`` as ``cls_or_fn: ravnar_nebari_chat.dynamic_agents.make_chat_agent``.
     Every failure raises :class:`fastapi.HTTPException` so Ravnar answers with a 4xx/5xx and a
     human-readable ``detail`` instead of a 500.
+
+    ``mcp_url`` is the pre-catalog spelling of a single raw MCP server and is folded into
+    ``mcp_servers``.
     """
+    servers = list(mcp_servers or [])
+    if mcp_url:
+        servers.append({"url": mcp_url})
+
     definition = _validate_definition(
         {
             "name": name,
@@ -222,11 +369,13 @@ def make_chat_agent(
             "instructions": instructions,
             "model": model,
             "quick_prompts": quick_prompts or [],
-            "mcp_url": mcp_url or None,
+            "tools": tools or [],
+            "mcp_servers": servers,
+            "data_sources": data_sources or [],
         }
     )
     _validate_model(definition)
-    _validate_mcp_url(definition)
+    resolved = _resolve_capabilities(definition, _load_catalog())
 
     api_key = os.environ.get(API_KEY_ENV)
     if not api_key:
@@ -237,17 +386,36 @@ def make_chat_agent(
     from pydantic_ai.models.openrouter import OpenRouterModel
     from pydantic_ai.providers.openrouter import OpenRouterProvider
 
-    toolsets: list[Any] | None = None
-    if definition.mcp_url is not None:
+    toolsets: list[Any] = []
+    if resolved.mcp_servers:
         from pydantic_ai.mcp import MCPServerStreamableHTTP
 
-        toolsets = [MCPServerStreamableHTTP(str(definition.mcp_url), id="mcp", timeout=_MCP_TIMEOUT_SECONDS)]
+        toolsets = [
+            MCPServerStreamableHTTP(server.url, id=server.id, tool_prefix=server.tool_prefix, timeout=server.timeout)
+            for server in resolved.mcp_servers
+        ]
 
     agent = pydantic_ai.Agent(
         OpenRouterModel(definition.model, provider=OpenRouterProvider(api_key=api_key)),
         name=definition.name,
         description=definition.description,
         instructions=definition.instructions,
-        toolsets=toolsets,
+        toolsets=toolsets or None,
     )
+    _attach_catalog_tools(agent, resolved.tools)
     return DynamicChatAgent(agent, definition=definition)
+
+
+def _attach_catalog_tools(agent: Any, tools: dict[str, VisualizationTool | SqlTool]) -> None:
+    from ravnar_nebari_chat.demo_agents._tools import add_database_tools, add_visualization_tools
+
+    for key, entry in tools.items():
+        try:
+            match entry:
+                case VisualizationTool():
+                    add_visualization_tools(agent, map_popup_prompt=entry.map_popup_prompt)
+                case SqlTool():
+                    add_database_tools(agent, database_url=entry.database_url, schema_query=entry.schema_query)
+        except Exception as exc:  # operator misconfiguration (e.g. a bad DSN) must not become a 500
+            structlog.get_logger().error("Catalog tool failed to initialize", tool=key, error=str(exc))
+            raise _not_configured(f"Catalog tool {key!r} could not be initialized") from exc

@@ -25,6 +25,7 @@ dependencies = [
     "ravnar[serve,pydantic-ai]==0.0.16",
     "opentelemetry-exporter-otlp>=1.39.0",
     "pydantic-ai-slim[mcp]",
+    "pyyaml>=6,<7",
 ]
 dynamic = ["version"]
 
@@ -36,6 +37,7 @@ lint = [
     "ravnar-nebari-chat",
     "mypy==1.17.*",
     "ruff==0.15.*",
+    "types-pyyaml>=6,<7",
     "pre-commit>=4.2,<5",
 ]
 test = [

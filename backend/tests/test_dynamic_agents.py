@@ -80,7 +80,25 @@ class TestValidation:
     def test_mcp_http_allowed_for_explicit_host(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(dynamic_agents.MCP_ALLOWED_HOSTS_ENV, "mcp.internal")
         agent = make_chat_agent(**valid_params(mcp_url="http://mcp.internal:8080/mcp"))
-        assert metadata(agent)["definition"]["mcpUrl"] == "http://mcp.internal:8080/mcp"
+        assert metadata(agent)["definition"]["mcpServers"] == [{"url": "http://mcp.internal:8080/mcp"}]
+
+    def test_mcp_servers_raw_url_matches_legacy_mcp_url(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv(dynamic_agents.MCP_ALLOWED_HOSTS_ENV, "*")
+        agent = make_chat_agent(**valid_params(mcp_servers=[{"url": "https://mcp.example.com/mcp"}]))
+        assert metadata(agent)["definition"]["mcpServers"] == [{"url": "https://mcp.example.com/mcp"}]
+
+    def test_duplicate_mcp_url_is_422(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv(dynamic_agents.MCP_ALLOWED_HOSTS_ENV, "*")
+        url = "https://mcp.example.com/mcp"
+        raises_http(422, mcp_servers=[{"url": url}, {"url": url}])
+
+    @pytest.mark.parametrize(
+        "ref",
+        [{}, {"server": "frames", "url": "https://x.example/mcp"}, {"bogus": 1}],
+        ids=["empty", "both", "unknown-field"],
+    )
+    def test_malformed_mcp_ref_is_422(self, ref: dict[str, Any]) -> None:
+        raises_http(422, mcp_servers=[ref])
 
 
 class TestAgent:
@@ -111,7 +129,9 @@ class TestAgent:
             "description": "Answers support questions",
             "instructions": "You are a helpful support agent.",
             "model": "test/model-a",
-            "mcpUrl": None,
+            "tools": [],
+            "mcpServers": [],
+            "dataSources": [],
         }
 
         prompts = agent.get_quick_prompts()
@@ -123,7 +143,7 @@ class TestAgent:
 
     async def test_setup_swallows_mcp_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv(dynamic_agents.MCP_ALLOWED_HOSTS_ENV, "127.0.0.1")
-        monkeypatch.setattr(dynamic_agents, "_MCP_TIMEOUT_SECONDS", 0.5)
+        monkeypatch.setattr(dynamic_agents, "_RAW_MCP_TIMEOUT_SECONDS", 0.5)
         # Port 9 (discard) is not listening; the connection is refused immediately.
         agent = make_chat_agent(**valid_params(mcp_url="http://127.0.0.1:9/mcp"))
 
@@ -134,6 +154,103 @@ class TestAgent:
         capabilities = agent.get_capabilities()
         assert capabilities.identity is not None and capabilities.identity.name == "Support Bot"
         assert capabilities.tools is not None and capabilities.tools.items == []
+
+
+def tool_names(agent: DynamicChatAgent) -> list[str]:
+    tools = agent.get_capabilities().tools
+    assert tools is not None and tools.items is not None
+    return sorted(tool.name for tool in tools.items)
+
+
+class TestCatalogCapabilities:
+    def test_unknown_tool_without_catalog_is_422(self) -> None:
+        exc = raises_http(422, tools=["charts"])
+        assert "Available tools: none" in str(exc.detail)
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_unknown_tool_lists_available(self) -> None:
+        exc = raises_http(422, tools=["nope"])
+        assert "charts" in str(exc.detail) and "permits" in str(exc.detail)
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_duplicate_tool_is_422(self) -> None:
+        raises_http(422, tools=["charts", "charts"])
+
+    @pytest.mark.usefixtures("catalog_file")
+    async def test_visualization_tool_attaches_chart_tools(self) -> None:
+        agent = make_chat_agent(**valid_params(tools=["charts"]))
+        await agent.setup()
+        assert tool_names(agent) == ["create_chart", "create_map"]
+        assert metadata(agent)["definition"]["tools"] == ["charts"]
+        assert metadata(agent)["setupError"] is None
+
+    @pytest.mark.usefixtures("catalog_file")
+    async def test_sql_tool_attaches_database_tools(self) -> None:
+        agent = make_chat_agent(**valid_params(tools=["permits"]))
+        await agent.setup()
+        assert tool_names(agent) == ["execute_query", "get_database_schema"]
+
+    @pytest.mark.usefixtures("catalog_file")
+    async def test_database_data_source_is_sugar_for_sql_tool(self) -> None:
+        agent = make_chat_agent(**valid_params(data_sources=[{"database": "permits"}]))
+        await agent.setup()
+        assert tool_names(agent) == ["execute_query", "get_database_schema"]
+        assert metadata(agent)["definition"]["dataSources"] == [{"database": "permits"}]
+
+    @pytest.mark.usefixtures("catalog_file")
+    async def test_tool_and_data_source_for_same_database_attach_once(self) -> None:
+        agent = make_chat_agent(**valid_params(tools=["permits", "charts"], data_sources=[{"database": "permits"}]))
+        await agent.setup()
+        assert tool_names(agent) == ["create_chart", "create_map", "execute_query", "get_database_schema"]
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_database_must_be_sql_kind(self) -> None:
+        exc = raises_http(422, data_sources=[{"database": "charts"}])
+        assert "Available databases: permits" in str(exc.detail)
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_file_data_source_not_supported_yet(self) -> None:
+        exc = raises_http(422, data_sources=[{"file": "abc"}])
+        assert "not supported yet" in str(exc.detail)
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_unknown_mcp_server_is_422(self) -> None:
+        exc = raises_http(422, mcp_servers=[{"server": "nope"}])
+        assert "frames" in str(exc.detail)
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_impersonating_server_is_503_until_configured(self) -> None:
+        exc = raises_http(503, mcp_servers=[{"server": "secure"}])
+        assert "impersonation" in str(exc.detail)
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_catalog_server_bypasses_raw_host_allowlist(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv(dynamic_agents.MCP_ALLOWED_HOSTS_ENV, raising=False)
+        agent = make_chat_agent(**valid_params(mcp_servers=[{"server": "frames"}]))
+        assert metadata(agent)["definition"]["mcpServers"] == [{"server": "frames"}]
+        toolsets = agent._agent.toolsets
+        mcp = [t for t in toolsets if type(t).__name__ == "MCPServerStreamableHTTP"]
+        assert len(mcp) == 1
+        assert mcp[0].tool_prefix == "frames"
+        assert mcp[0].id == "frames"
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_duplicate_catalog_server_is_422(self) -> None:
+        raises_http(422, mcp_servers=[{"server": "frames"}, {"server": "frames"}])
+
+    def test_invalid_catalog_is_503(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
+        bad = tmp_path / "bad.yaml"
+        bad.write_text("tools:\n  x:\n    kind: magic\n    label: X\n")
+        monkeypatch.setenv("NEBARI_CHAT_CATALOG", str(bad))
+        exc = raises_http(503)
+        assert "catalog" in str(exc.detail).lower()
+
+    @pytest.mark.usefixtures("catalog_file")
+    def test_bad_catalog_dsn_is_503(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
+        bad = tmp_path / "catalog.yaml"
+        bad.write_text("tools:\n  db:\n    kind: sql\n    label: DB\n    database_url: nonsense://nowhere\n")
+        exc = raises_http(503, tools=["db"])
+        assert "could not be initialized" in str(exc.detail)
 
 
 class TestRavnarIntegration:
@@ -178,6 +295,15 @@ class TestRavnarIntegration:
 
         resp = await client.get("/api/agents")
         assert resp.json() == []
+
+    @pytest.mark.usefixtures("catalog_file")
+    async def test_register_with_catalog_tools(self, client: httpx.AsyncClient) -> None:
+        resp = await client.post("/api/agents", json=self.body("charted", tools=["charts"]))
+        assert resp.status_code == 200, resp.text
+        info = resp.json()
+        assert info["capabilities"]["identity"]["metadata"][METADATA_KEY]["version"] == 2
+        assert info["capabilities"]["identity"]["metadata"][METADATA_KEY]["definition"]["tools"] == ["charts"]
+        assert sorted(t["name"] for t in info["capabilities"]["tools"]["items"]) == ["create_chart", "create_map"]
 
     async def test_bad_model_is_422_not_500(self, client: httpx.AsyncClient) -> None:
         resp = await client.post("/api/agents", json=self.body("bad", model="test/nope"))
