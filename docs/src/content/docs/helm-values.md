@@ -88,6 +88,8 @@ Two things to know:
 | `frontend.securityContext.container` | `allowPrivilegeEscalation: false` | |
 | `frontend.podAnnotations` / `frontend.podLabels` | `{}` | Extra pod metadata. |
 | `frontend.branding.*` | empty | Title, logos, favicon, and theme tokens rendered into `/config.json`. Full reference in [Branding & configuration](/branding/). |
+| `frontend.agentAuthoring.models` | `[]` | Models offered in the agent authoring form, as `[{ id, label? }]`. Each `id` must also be in `ravnar.extraEnv.NEBARI_CHAT_AGENT_MODELS`; the render fails on a mismatch when that variable is a literal `value`. Empty disables creation. See [Dynamic agents](/agents/#dynamic-agents). |
+| `frontend.agentAuthoring.mcp.enabled` | `false` | Show the MCP server URL field in the authoring form. Pair with `ravnar.extraEnv.NEBARI_CHAT_MCP_ALLOWED_HOSTS`. |
 
 `frontend.keycloak.*` (`authServerUrl`, `realm`, `resource`) exists in `values.yaml` but the
 browser's Keycloak settings are rendered from the top-level `keycloak.*` values — set those.
@@ -155,6 +157,11 @@ The ones you are most likely to set yourself:
 | `ravnar.extraVolumes` / `ravnar.extraVolumeMounts` | `[]` | Mount extra content into the backend — e.g. agent plugin modules under `RAVNARPATH`, or a private CA bundle. |
 | `ravnar.securityContext.container.readOnlyRootFilesystem` | `true` | |
 
+Two optional variables configure [agent authoring](/agents/#dynamic-agents) and belong in
+`ravnar.extraEnv` too: `NEBARI_CHAT_AGENT_MODELS` (comma-separated model ids users may pick) and
+`NEBARI_CHAT_MCP_ALLOWED_HOSTS` (comma-separated hostnames an authored MCP server URL may target, or
+`*`). Both take effect only with `config.inline.agents.dynamic.enabled: true`.
+
 Some environment variables are reserved by the subchart and will fail the render if you set them
 in `extraEnv`: `RAVNAR_CONFIG`, `RAVNAR_LOCAL_STORAGE`, `RAVNAR_STORAGE__FILE_STORAGE__PATH`
 (when persistent file storage is on), and the `POSTGRES_*` / `RAVNAR_STORAGE__DATABASE__DSN` set
@@ -168,6 +175,12 @@ keycloak:
   url: https://keycloak.example.com
   realm: nebari
 
+config:
+  inline:
+    agents:
+      dynamic:
+        enabled: true
+
 frontend:
   nebariapp:
     hostname: chat.example.com
@@ -180,6 +193,10 @@ frontend:
     theme:
       light:
         bgBrandDefault: "#0066cc"
+  agentAuthoring:
+    models:
+      - id: anthropic/claude-sonnet-4.6
+        label: Claude Sonnet 4.6
 
 backend:
   nebariapp:
@@ -192,6 +209,8 @@ ravnar:
         secretKeyRef:
           name: openrouter
           key: api-key
+    NEBARI_CHAT_AGENT_MODELS:
+      value: anthropic/claude-sonnet-4.6
   persistentFileStorage:
     storage: 32Gi
   resources:

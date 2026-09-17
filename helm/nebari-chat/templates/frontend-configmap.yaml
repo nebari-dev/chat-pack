@@ -10,6 +10,23 @@ metadata:
 data:
   {{- $branding := .Values.frontend.branding | default dict }}
   {{- $theme := $branding.theme | default dict }}
+  {{- $authoring := .Values.frontend.agentAuthoring | default dict }}
+  {{- $authoringMcp := $authoring.mcp | default dict }}
+  {{- $authoringModels := $authoring.models | default list }}
+  {{- /*
+  The frontend list only populates the model picker; the backend's
+  NEBARI_CHAT_AGENT_MODELS is the authority. When that variable is given as a
+  literal value, fail the render on any id the backend would reject.
+  */}}
+  {{- $backendModels := dig "NEBARI_CHAT_AGENT_MODELS" "value" "" ((.Values.ravnar | default dict).extraEnv | default dict) }}
+  {{- if and $authoringModels $backendModels }}
+    {{- $allowed := regexSplit "\\s*,\\s*" (trim ($backendModels | toString)) -1 }}
+    {{- range $authoringModels }}
+      {{- if not (has (.id | toString) $allowed) }}
+        {{- fail (printf "frontend.agentAuthoring.models: %q is not in ravnar.extraEnv.NEBARI_CHAT_AGENT_MODELS (%q)" (.id | toString) ($backendModels | toString)) }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
   # Served by nginx at /config.json. The frontend fetches this file at startup,
   # so Keycloak connection settings and branding can be changed without
   # rebuilding the image. Empty branding fields fall back to built-in defaults.
@@ -29,6 +46,12 @@ data:
         "theme" (dict
           "light" ($theme.light | default dict)
           "dark" ($theme.dark | default dict)
+        )
+      )
+      "agentAuthoring" (dict
+        "models" $authoringModels
+        "mcp" (dict
+          "enabled" ($authoringMcp.enabled | default false)
         )
       )
     | toPrettyJson | nindent 4

@@ -136,6 +136,21 @@ frontend:
       light: {}
       dark: {}
 
+  # Agent authoring — lets users create custom agents from the UI. Rendered into
+  # /config.json. Requires config.inline.agents.dynamic.enabled: true and
+  # ravnar.extraEnv.NEBARI_CHAT_AGENT_MODELS listing the same model ids; the
+  # render fails if the two lists disagree.
+  agentAuthoring:
+    # -- Models users may pick when authoring an agent. Empty disables creation.
+    # Each id must also appear in NEBARI_CHAT_AGENT_MODELS. Example:
+    #   models:
+    #     - id: anthropic/claude-sonnet-4.6
+    #       label: Claude Sonnet 4.6
+    models: []
+    mcp:
+      # -- Show the MCP server URL field. Requires ravnar.extraEnv.NEBARI_CHAT_MCP_ALLOWED_HOSTS
+      enabled: false
+
   # NebariApp CR (https://github.com/nebari-dev/nebari-operator) for the frontend.
   # Rendered through the official nebari-app.nebariApp template 
   # (https://github.com/nebari-dev/nebari-operator/tree/main/charts/nebari-app) with templating enabled.

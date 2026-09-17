@@ -1,5 +1,10 @@
 keycloak:
   url: keycloak.example.com
+config:
+  inline:
+    agents:
+      dynamic:
+        enabled: true
 backend:
   nebariapp:
     hostname: backend.example.com
@@ -7,3 +12,11 @@ frontend:
   enabled: true
   nebariapp:
     hostname: frontend.example.com
+  agentAuthoring:
+    models:
+      - id: anthropic/claude-sonnet-4.6
+        label: Claude Sonnet 4.6
+ravnar:
+  extraEnv:
+    NEBARI_CHAT_AGENT_MODELS:
+      value: anthropic/claude-sonnet-4.6

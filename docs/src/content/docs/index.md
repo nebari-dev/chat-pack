@@ -59,5 +59,7 @@ The demo agent factories in this package are starting points, not the product. A
 object Ravnar can construct from a dotted path plus params — usually a
 [pydantic-ai](https://ai.pydantic.dev/) `Agent` wrapped by `PydanticAiAgentWrapper`. Point the
 config at your own factory (baked into the image, or mounted as a plugin under
-`RAVNARPATH`), and it appears in the UI's agent picker with no frontend change at all. See
+`RAVNARPATH`), and it appears in the UI's agent picker with no frontend change at all. Or turn on
+[dynamic agents](/agents/#dynamic-agents) and let users author simple agents — a model,
+instructions, quick prompts, optionally an MCP server — from the UI. See
 [Agents & models](/agents/).

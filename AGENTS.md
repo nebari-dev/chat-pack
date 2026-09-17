@@ -27,7 +27,7 @@ npm run check:fix    # biome check --write
 npm run ci           # biome ci — what CI runs alongside the build
 ```
 
-There is no test runner configured. CI (`.github/workflows/ci.yml`) runs `npm run build` then `npm run ci`.
+Unit tests run with Vitest (`npm run test`, node environment, pure functions only); end-to-end and accessibility checks with Playwright (`npm run test:e2e`), which mock every `/api/*` request in `e2e/mocks.ts`. CI (`.github/workflows/ci.yml`) runs the build, `npm run ci`, the unit tests, the e2e suite, and the backend's ruff/mypy/pytest job.
 
 ### Layered architecture
 
@@ -37,7 +37,7 @@ Data flows through clearly separated layers — keep new code in the matching la
 - `src/queries/` — TanStack Query mutation/query factories built on top of `api/`.
 - `src/context/` — React contexts (`AppConfigContext` for available agents, `ChatConfigContext` for the current thread/agent/detail) plus `permissions`. Consumed via hooks like `useAgents()`, `useChatConfig()` that throw if used outside their provider.
 - `src/routes/` — TanStack Router routes. `_authenticated.tsx` is the auth-guarded layout; routes under `_authenticated/` require login.
-- Feature folders: `src/chat/`, `src/home/`, `src/sidebar/`, `src/history/` hold the UI for each area.
+- Feature folders: `src/chat/`, `src/home/`, `src/sidebar/`, `src/history/`, `src/agents/` hold the UI for each area.
 
 **Generated files — never hand-edit:** `src/routeTree.gen.ts` (TanStack Router plugin) and `src/components/ui/*` (shadcn). Biome is configured to ignore all of these.
 
@@ -67,6 +67,7 @@ uv run ravnar health     # health check
 uv run ruff check        # lint
 uv run ruff format       # format
 uv run mypy src          # type check
+uv run pytest            # unit tests (tests/)
 uv run pre-commit run --all-files
 ```
 
@@ -76,6 +77,7 @@ uv run pre-commit run --all-files
 
 - **`config.yml`** is the heart of the backend. It declares agents under `agents.static.*`, each pointing at a `cls_or_fn` (a Ravnar/pydantic-ai constructor or a factory in this package) with nested `params`. `agents.dynamic.enabled` allows user-defined agents at runtime. Models are wired through OpenRouter using a `{{ OPENROUTER_API_KEY }}` template placeholder resolved from the environment.
 - **`src/ravnar_nebari_chat/_authenticators.py`** — `keycloak_authenticator()` builds a Ravnar `BearerTokenAuthenticator` backed by an OIDC validator pointed at a Keycloak realm.
+- **`src/ravnar_nebari_chat/dynamic_agents.py`** — `make_chat_agent()`, the only `cls_or_fn` the UI registers user-authored agents through (`POST /api/agents`). It validates a small domain schema (name, description, instructions, model, quick prompts, optional MCP URL), enforces the `NEBARI_CHAT_AGENT_MODELS` and `NEBARI_CHAT_MCP_ALLOWED_HOSTS` allowlists, reads `OPENROUTER_API_KEY` itself, and stashes the definition in `identity.metadata.nebariChat` for the UI to read back. Its `setup()` never raises, because Ravnar registers an agent before awaiting setup.
 - **`src/ravnar_nebari_chat/demo_agents/`** — example agent factories (e.g. `make_austin_permits_agent`) referenced by `config.yml`. They attach a system prompt plus tools from `demo_agents/_tools/` (`add_database_tools`, `add_visualization_tools`).
 
 To add an agent: write a factory under `demo_agents/` (or your own module), then reference it by dotted path in `config.yml` under `agents.static`. In a deployment, agents can also be mounted as plugins under `RAVNARPATH`.

@@ -7,8 +7,9 @@ The backend is [Ravnar](https://github.com/nebari-dev/ravnar) plus a small Pytho
 (`ravnar_nebari_chat`). Ravnar supplies the server, the AG-UI endpoints, and thread history; the
 pack supplies a Keycloak authenticator, demo agent factories, and the tools those agents call.
 
-Which agents exist — and therefore what the UI's picker offers — is entirely a matter of
-configuration. No frontend change is ever needed to add one.
+Which agents exist — and therefore what the UI's picker offers — is a matter of configuration:
+declare them in `config.yml`, or [enable dynamic agents](#dynamic-agents) and let users author
+them from the UI. No frontend change is ever needed to add one.
 
 ## The config file
 
@@ -191,11 +192,90 @@ in-cluster base URL.
 
 ## Dynamic agents
 
-`agents.dynamic.enabled: true` lets users define agents at runtime rather than only in config.
-`agents.dynamic.allowed_env_vars` limits which environment variables such an agent may read —
-leave it empty unless you have a reason to widen it, since a dynamic agent is user-supplied
-configuration running in your backend. The frontend surfaces the flag as
-`dynamicAgentsEnabled` from `GET /api/config`.
+`agents.dynamic.enabled: true` lets agents be registered at runtime through `POST /api/agents`
+instead of only in config. The frontend reads the flag as `dynamicAgentsEnabled` from
+`GET /api/config` and, when it is set, adds an **Agents** page (also reachable from the sidebar
+and a **New agent** card on the home page) where users can create, edit, and delete their own
+agents.
+
+### What users can author
+
+The UI never sends a raw constructor graph. It registers every agent through one pack-owned
+factory, `ravnar_nebari_chat.dynamic_agents.make_chat_agent`, which accepts:
+
+| Field | Notes |
+| --- | --- |
+| `name`, `description` | Shown in the agent picker. |
+| `instructions` | The system prompt. |
+| `model` | An OpenRouter model id. Must appear in the `NEBARI_CHAT_AGENT_MODELS` allowlist. |
+| `quick_prompts` | Up to 12 starter cards, each `title`, optional `description`, and `prompt`. |
+| `mcp_url` | Optional. A streamable-HTTP MCP server whose tools the agent may call. Accepted only when its host is listed in `NEBARI_CHAT_MCP_ALLOWED_HOSTS` (or that variable is `*`); plain `http` is allowed only for explicitly listed hosts. |
+
+The factory builds the pydantic-ai agent server-side, reads `OPENROUTER_API_KEY` from its own
+environment (so `agents.dynamic.allowed_env_vars` can stay empty), and records the authored
+definition under `capabilities.identity.metadata.nebariChat` so the UI can fill the edit form from
+`GET /api/agents`. Validation failures come back as `422` with a readable `detail`; a missing
+allowlist or API key is a `503`. If the MCP server cannot be reached during registration, the agent
+is still created — with no tools and a `setupError` the UI shows as **Setup failed**.
+
+### Enabling it
+
+Three settings across the backend and the frontend:
+
+```yaml
+# Backend config — config.inline under Helm, or backend/config.yml locally
+agents:
+  dynamic:
+    enabled: true
+```
+
+```yaml
+# Backend environment — ravnar.extraEnv under Helm, or exported in your shell locally
+NEBARI_CHAT_AGENT_MODELS: anthropic/claude-sonnet-4.6,openai/gpt-5.5
+NEBARI_CHAT_MCP_ALLOWED_HOSTS: mcp.internal.example.com # optional; unset disables MCP URLs
+```
+
+```yaml
+# Frontend runtime config — frontend.agentAuthoring under Helm, or public/config.json locally
+agentAuthoring:
+  models:
+    - id: anthropic/claude-sonnet-4.6
+      label: Claude Sonnet 4.6
+    - id: openai/gpt-5.5
+      label: GPT-5.5
+  mcp:
+    enabled: false
+```
+
+The frontend list only populates the picker; the backend variable is the authority and rejects
+anything else. The Helm chart fails the render when the two disagree, as long as the variable is
+given as a literal `value` rather than a secret reference. See
+[Helm values](/helm-values/#frontend-values).
+
+Ravnar renders every string in a registration payload as a Jinja template against the (empty by
+default) `allowed_env_vars` context. The UI wraps user text in `{% raw %}…{% endraw %}` so braces
+in instructions survive; do the same if you call `POST /api/agents` yourself.
+
+### Caveats
+
+Read these before enabling dynamic agents on a shared deployment.
+
+- **In memory only.** Ravnar keeps dynamic agents in the server process. They vanish on every
+  restart or rollout, and threads bound to a vanished agent fail on their next run. Run a single
+  backend replica (`ravnar.replicaCount: 1`); with more, each replica keeps its own list.
+- **Shared with everyone.** Every user sees, uses, and can edit or delete every custom agent,
+  including reading its full instructions. There is no ownership.
+- **Editing is not atomic.** Ravnar has no update endpoint, so the UI deletes and re-registers
+  under the same id (keeping threads bound), and restores the previous definition if the new one
+  is rejected.
+- **`agents:write` is powerful.** The pack's authenticator grants it to every realm user, and
+  Ravnar's own endpoint accepts *any* importable `cls_or_fn`, not just the pack's factory.
+  Enabling dynamic agents therefore lets any authenticated user run arbitrary Python callables in
+  the backend. Restrict `agents:write` and `agents:delete` with your own
+  [authenticator](#authentication) before enabling this where you do not trust every user.
+- **MCP URLs are reached from the backend.** The host allowlist and the https requirement are the
+  only guards; there is no DNS-rebinding protection, and no user identity is forwarded to the MCP
+  server.
 
 ## Authentication
 

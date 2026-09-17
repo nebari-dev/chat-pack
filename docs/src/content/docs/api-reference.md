@@ -34,11 +34,20 @@ The frontend container serves its own `/healthz` from nginx.
 | --- | --- | --- |
 | `GET` | `/api/config` | `{ storageEnabled, dynamicAgentsEnabled }` — server capabilities. The UI refuses to run without storage. |
 | `GET` | `/api/user` | `{ id, permissions, data }` for the caller. |
-| `GET` | `/api/agents` | The agents from `config.yml`: `[{ id, capabilities, quickPrompts }]`. |
+| `GET` | `/api/agents` | The agents from `config.yml` plus any registered at runtime: `[{ id, capabilities, quickPrompts }]`. |
+| `POST` | `/api/agents` | Register a dynamic agent from `{ id, agent: { cls_or_fn, params } }`; returns its `{ id, capabilities, quickPrompts }`. Mounted only when `dynamicAgentsEnabled`; requires `agents:write`. `409` if the id exists. |
+| `DELETE` | `/api/agents/{agentId}` | Unregister a dynamic agent. Requires `agents:delete`; `403` for agents declared in config. |
 
 `capabilities.identity` (`name`, `provider`, `description`) is what the picker renders;
 `quickPrompts` are the suggestion cards shown in an empty chat, each `{ title, description?,
 prompt }`.
+
+Agents created from the UI go through the pack's `make_chat_agent` factory and carry their
+authored definition at `capabilities.identity.metadata.nebariChat`:
+`{ kind: "dynamic", version: 1, definition: { name, description, instructions, model, mcpUrl },
+setupError, createdAt }`. Agents declared in config have no such key. Every string in a
+`POST /api/agents` body is Jinja-rendered by Ravnar; wrap free text in `{% raw %}…{% endraw %}`.
+See [Dynamic agents](/agents/#dynamic-agents).
 
 Do not confuse `GET /api/config` with the frontend's `/config.json` — the latter is a static file
 served by nginx that carries Keycloak settings and branding for the browser. See
@@ -108,7 +117,9 @@ validated caller the full set — a narrower model means supplying your own auth
 
 `GET /api/user` reports what the caller has. The UI requires `threads:read`, `threads:write`,
 `threads:delete`, and `agents:read` to load at all, and treats `files:read` + `files:write` as
-optional, degrading to a chat without attachments.
+optional, degrading to a chat without attachments. `agents:write` and `agents:delete` gate the
+create/edit and delete controls on the Agents page, which only exists when dynamic agents are
+enabled.
 
 ## Calling it directly
 

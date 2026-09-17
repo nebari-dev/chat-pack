@@ -55,6 +55,11 @@ export OPENROUTER_API_KEY=sk-or-...      # resolves the {{ OPENROUTER_API_KEY }}
 uv run ravnar serve                      # reads ./config.yml, serves on 127.0.0.1:8000
 ```
 
+To try [agent authoring](/agents/#dynamic-agents) locally, also set `agents.dynamic.enabled: true`
+in `config.yml` and export `NEBARI_CHAT_AGENT_MODELS=anthropic/claude-sonnet-4.6` (any
+comma-separated OpenRouter ids), then list the same ids under `agentAuthoring.models` in
+`frontend/public/config.json`.
+
 Check it is alive:
 
 ```bash
@@ -79,6 +84,7 @@ RAVNAR_SERVER__PORT=9000 uv run ravnar serve
 uv run ruff check          # lint
 uv run ruff format         # format
 uv run mypy src            # type check
+uv run pytest              # unit tests (tests/)
 uv run pre-commit run --all-files
 ```
 
