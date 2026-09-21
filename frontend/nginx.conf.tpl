@@ -1,21 +1,23 @@
-pid /nebi-bundle/nebi-bundle/nginx.pid;
+error_log /tmp/nginx/error.log;
+pid /tmp/nginx/nginx.pid;
 
 events {}
 
 http {
-    client_body_temp_path /nebi-bundle/nebi-bundle/client_body;
-    proxy_temp_path /nebi-bundle/nebi-bundle/proxy;
-    fastcgi_temp_path /nebi-bundle/nebi-bundle/fastcgi;
-    uwsgi_temp_path /nebi-bundle/nebi-bundle/uwsgi;
-    scgi_temp_path /nebi-bundle/nebi-bundle/scgi;
-    include       /nebi-bundle/nebi-bundle/mime.types;
+    client_body_temp_path /tmp/nginx/client_body;
+    proxy_temp_path /tmp/nginx/proxy;
+    fastcgi_temp_path /tmp/nginx/fastcgi;
+    uwsgi_temp_path /tmp/nginx/uwsgi;
+    scgi_temp_path /tmp/nginx/scgi;
+    access_log /tmp/nginx/access.log;
+
     default_type  application/octet-stream;
     sendfile      on;
 
     server {
         listen       8080;
         server_name  _;
-        root         /nebi-bundle/nebi-bundle/html;
+        root         /nebi-bundle/dist;
         index        index.html;
 
         # Health check endpoint.
@@ -33,7 +35,7 @@ http {
 
         # Proxy API requests to the backend; avoids CORS and keeps paths relative.
         location /api/ {
-            proxy_pass ${API_URL}/api/;
+            proxy_pass {{ .API_URL }}/api/;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;

@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist
 dist-ssr
 *.local
 
@@ -32,4 +32,6 @@ dist-ssr
 # env files
 .*.env
 .env
-.env.development
+.env.development# pixi environments
+.pixi/*
+!.pixi/config.toml
