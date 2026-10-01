@@ -3,9 +3,11 @@
 |----------------------------------------------------------------------------*/
 import type * as agui from '@ag-ui/core';
 
+import { githubDarkTheme } from '@json-edit-react/themes';
+
 import { useQuery } from '@tanstack/react-query';
 
-import { githubDarkTheme, JsonEditor } from 'json-edit-react';
+import { JsonViewer } from 'json-edit-react';
 
 import type { ReactNode } from 'react';
 
@@ -105,14 +107,13 @@ namespace Private {
 
     // Return the rendered component.
     return (
-      <JsonEditor
+      <JsonViewer
         className="ot-NebariChat-jer"
         theme={isDarkMode ? githubDarkTheme : undefined}
         data={args}
         maxWidth="100%"
         rootName="arguments"
-        viewOnly={true}
-        rootFontSize={12}
+        baseFontSize={12}
         collapse={false}
       />
     );
@@ -142,14 +143,13 @@ namespace Private {
 
     // Return the rendered component.
     return (
-      <JsonEditor
+      <JsonViewer
         className="ot-NebariChat-jer"
         theme={isDarkMode ? githubDarkTheme : undefined}
         data={result}
         maxWidth="100%"
         rootName="result"
-        viewOnly={true}
-        rootFontSize={12}
+        baseFontSize={12}
         collapse={true}
       />
     );
