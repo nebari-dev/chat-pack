@@ -45,7 +45,7 @@
     "fast-json-patch": "^3.1.1",
     "immer": "^11.1.18",
     "jotai": "^3.0.0",
-    "json-edit-react": "^1.30.2",
+    "json-edit-react": "^2.0.0",
     "katex": "^0.18.9",
     "keycloak-js": "^26.2.4",
     "leaflet": "^1.9.4",
