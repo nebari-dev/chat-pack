@@ -32,18 +32,30 @@ defaults and looks identical to an unbranded deployment.
 | Field | Description |
 | --- | --- |
 | `title` | Browser tab title. Empty keeps the default (`Nebari Chat`). |
-| `logoUrl` | Sidebar header logo. Empty uses the built-in Nebari logo. |
+| `logoUrl` | Header logo. Empty uses the built-in Nebari logo. |
 | `logoUrlDark` | Dark-mode logo. Empty falls back to `logoUrl`, then the built-in dark logo. |
 | `faviconUrl` | Favicon. Empty uses the built-in Nebari favicon. |
 | `theme.light` / `theme.dark` | CSS variable overrides applied per color scheme. |
 
 ### Theme tokens
 
-Theme tokens are the camelCase form of the app's brand CSS variables; each is converted to a
-`--kebab-case` custom property at runtime and applied over the defaults. Common tokens:
+Theme tokens are the camelCase form of the [Nebari design system](https://github.com/nebari-dev/nebari-design)'s
+semantic CSS variables; each is applied over the built-in theme at runtime as its `--kebab-case`
+custom property (`primaryHover` → `--primary-hover`). Unknown keys are ignored. The full list is
+`THEME_TOKENS` in `frontend/src/config/index.ts`; the ones most deployments touch:
 
-`bgBrandDefault`, `bgBrandSecondary`, `bgNeutralDefault`, `bgWhite`, `bdBrandDefault`,
-`bdNeutralDefault`, `textBrandOnBrand`, `textNeutralDefault`, `textNeutralSecondary`, `radius`.
+| Token | What it colors |
+| --- | --- |
+| `primary`, `primaryForeground`, `primaryHover`, `ring` | Brand color: buttons, links, focus rings, selection |
+| `canvas`, `header`, `card`, `popover`, `muted` | The surface stack, from page background to recessed fills |
+| `foreground`, `mutedForeground`, `mutedForegroundStrong` | Text |
+| `border`, `borderStrong`, `input` | Borders and form controls |
+| `sidebar`, `sidebarAccent`, `sidebarBorder` | The conversation sidebar |
+| `info`, `success`, `warning`, `destructive` (+ `…Foreground`) | Status colors |
+| `chart1` … `chart5` | Chart series |
+| `radius` | Corner radius base (e.g. `0.5rem`) |
+
+Values can be any CSS color (`#0066cc`, `oklch(55% 0.19 311)`, …).
 
 Values are validated at runtime for security: any value containing `;`, `{`, `}`, quotes, `url(`,
 `expression(`, or `javascript:` is rejected, and logo/favicon URLs must be root-relative paths or
@@ -75,10 +87,13 @@ frontend:
     faviconUrl: "https://cdn.acme.com/favicon.ico"
     theme:
       light:
-        bgBrandDefault: "#0066cc"
-        bdBrandDefault: "#004a99"
+        primary: "#0066cc"
+        primaryHover: "#004a99"
+        ring: "#0066cc"
       dark:
-        bgBrandDefault: "#4da6ff"
+        primary: "#4da6ff"
+        primaryHover: "#80c0ff"
+        ring: "#4da6ff"
 ```
 
 ## Standalone (non-Kubernetes)

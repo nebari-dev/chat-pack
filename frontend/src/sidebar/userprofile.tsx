@@ -23,8 +23,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { useTheme } from '@/hooks/themecontext';
-import { isThemeMode, type ThemeMode } from '@/hooks/usethemepreference';
+import { useTheme } from '@/hooks/theme-provider';
+import { isThemeMode, type ThemeMode } from '@/hooks/use-theme-preference';
 import { cn } from '@/lib/utils';
 
 /**

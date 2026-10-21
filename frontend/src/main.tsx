@@ -16,14 +16,24 @@ import { initAuth } from '@/auth';
 import { ErrorBoundary, ErrorFallback } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/sonner';
 import { applyBranding, loadAppConfig } from '@/config';
-import { ThemeProvider } from '@/hooks/themecontext';
+import { ThemeProvider } from '@/hooks/theme-provider';
 import { notifyError } from '@/lib/notifications';
 
 import { routeTree } from './routeTree.gen';
 
+import '@fontsource-variable/geist';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
 import 'katex/dist/katex.min.css';
 
 import './main.css';
+
+/**
+ * The localStorage key under which the theme preference is persisted. Kept in
+ * sync with the inline bootstrap script in `index.html` that prevents a flash
+ * of the wrong theme on initial load.
+ */
+const THEME_MODE_STORAGE_KEY = 'nebari-chat:themeMode';
 
 // Create the singleton query client.
 //
@@ -55,7 +65,7 @@ function App() {
   return (
     <StrictMode>
       <ErrorBoundary>
-        <ThemeProvider>
+        <ThemeProvider storageKey={THEME_MODE_STORAGE_KEY}>
           <QueryClientProvider client={client}>
             <RouterProvider router={router} />
             <Toaster />

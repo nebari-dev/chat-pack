@@ -1,82 +1,128 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-@import "tailwindcss";
+
+/*
+ * `theme.css` is the Nebari design-system theme, written verbatim by
+ * `npx shadcn add @nebari/theme` (see components.json → tailwind.css). It is
+ * registry-managed: never edit it by hand, and keep app overrides below.
+ */
+@import "./theme.css";
 @import "tw-animate-css";
-/*---break---*/
-@custom-variant dark (&:is(.dark *));
+
+/*
+ * ── App-owned styles ─────────────────────────────────────────────────────────
+ * Overrides and derived tokens live here, after the theme import, so a theme
+ * re-apply never clobbers them and these later declarations win the cascade.
+ */
+
+/* Header interaction and status colors are app-defined per the Nebari header
+ * recipe; the chrome surface itself (`--header`) ships with the theme. */
+:root {
+  --header-action-hover: #d9d9dc;
+  --notification-badge: #d00000;
+  --sign-out-foreground: #d2161c;
+}
+
+.dark {
+  --header-action-hover: #4a4a50;
+  --notification-badge: #e00000;
+  --sign-out-foreground: #ff6b6b;
+}
+
+@theme {
+  /* The maximum width of the chat thread column. */
+  --thread-max-width: 44rem;
+}
+
+@theme inline {
+  --color-header-action-hover: var(--header-action-hover);
+  --color-notification-badge: var(--notification-badge);
+  --color-sign-out-foreground: var(--sign-out-foreground);
+
+  /*
+   * Transitional aliases for the pre-design-system brand utilities
+   * (`bg-bg-white`, `border-bd-neutral-default`, …). They now resolve to the
+   * Nebari semantic tokens so screens that have not been rebuilt yet pick up
+   * the new theme. Each alias is deleted once its last call site is migrated.
+   */
+  --color-bg-neutral-dark: var(--muted);
+  --color-bg-neutral-xdark: var(--accent);
+  --color-bg-neutral-default: var(--background);
+  --color-bg-neutral-white: var(--card);
+  --color-bg-brand-default: var(--primary);
+  --color-bg-brand-secondary: var(--secondary);
+  --color-bg-white: var(--canvas);
+  --color-bd-neutral-default: var(--border);
+  --color-bd-neutral-secondary: var(--border-strong);
+  --color-bd-brand-default: var(--primary);
+  --color-text-brand-on-brand: var(--primary-foreground);
+  --color-text-neutral-default: var(--foreground);
+  --color-text-neutral-secondary: var(--muted-foreground);
+}
 
 html {
   height: 100%;
 }
 
 body {
-  font-family: Inter;
-  font-weight: 400;
   height: 100%;
   font-size: 14px;
 }
 
 #root {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   overflow: hidden;
   display: flex;
   flex-direction: row;
 }
 
+/* Markdown rendered from assistant replies. */
 .ot-NebariChat-markdown {
   h1 {
     margin: 0 0 2rem 0;
-    font-weight: 800;
-    font-size: var(--text-4xl);
-    line-height: var(--text-4xl--line-height);
+    font-weight: 700;
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
   }
 
   h2 {
     margin: 2rem 0 1rem 0;
     font-weight: 600;
-    font-size: var(--text-3xl);
-    line-height: var(--text-3xl--line-height);
-  }
-
-  h3 {
-    margin: 1.5rem 0 1rem 0;
-    font-weight: 600;
     font-size: var(--text-2xl);
     line-height: var(--text-2xl--line-height);
   }
 
-  h4 {
+  h3 {
     margin: 1.5rem 0 1rem 0;
     font-weight: 600;
     font-size: var(--text-xl);
     line-height: var(--text-xl--line-height);
   }
 
-  h5 {
-    margin: 1rem 0 1rem 0;
+  h4 {
+    margin: 1.5rem 0 1rem 0;
     font-weight: 600;
     font-size: var(--text-lg);
     line-height: var(--text-lg--line-height);
   }
 
+  h5,
   h6 {
     margin: 1rem 0 1rem 0;
     font-weight: 600;
   }
 
   p {
-    margin: 1.25rem 0 1.25rem 0;
+    margin: 1rem 0 1rem 0;
   }
 
   a {
     font-weight: 500;
     cursor: pointer;
-    color: var(--color-bd-brand-default);
+    color: var(--primary);
+    text-underline-offset: 3px;
 
     &:hover {
       text-decoration: underline;
@@ -84,48 +130,63 @@ body {
   }
 
   blockquote {
-    padding-left: 2rem;
-    font-style: italic;
-    border-left: 1px solid var(--border);
+    padding-left: 1.5rem;
+    color: var(--muted-foreground-strong);
+    border-left: 2px solid var(--border);
   }
 
   ul {
-    margin: 1rem 0 1rem 2rem;
+    margin: 1rem 0 1rem 1.5rem;
     list-style: disc;
   }
 
   ol {
-    margin: 1rem 0 1rem 2rem;
+    margin: 1rem 0 1rem 1.5rem;
     list-style: decimal;
   }
 
   li {
-    margin-top: 0.5rem;
+    margin-top: 0.375rem;
   }
 
   hr {
-    margin: 1rem 0 1rem 0;
+    margin: 1.5rem 0;
+    border-color: var(--border);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+
+  :not(pre) > code {
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-sm);
+    background: var(--muted);
   }
 
   pre {
     overflow-x: auto;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border);
+    background: var(--background);
     padding: 1rem;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
   }
 
   thead {
-    background: var(--color-bg-neutral-dark);
+    background: var(--header);
   }
 
   th {
     text-align: left;
-    padding: 0.5rem 1rem 0.5rem 1rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
   }
 
   tr {
@@ -134,192 +195,17 @@ body {
 
   td {
     text-align: left;
-    padding: 0.5rem 1rem 0.5rem 1rem;
+    padding: 0.5rem 0.75rem;
   }
 }
 
 /**
- * This rule aligns the keys to the top of the row in the JSON tool
- * renderers when using the `json-edit-react` library.
- *
- * It overrides the default in the library which aligns the keys in the
- * vertical center, which appears confusing when looking at it.
+ * Align the keys to the top of the row in the JSON tool renderers
+ * (`json-edit-react`). The library centers them vertically, which reads
+ * confusingly next to multi-line values.
  */
 .ot-NebariChat-jer {
   .jer-value-main-row {
     align-items: start;
-  }
-}
-
-@theme {
-  --thread-max-width: 44rem;
-}
-
-/*---break---*/
-
-@theme inline {
-  /* Custom brand tokens, driven by CSS variables so they respond to `.dark`. */
-  --color-bg-neutral-dark: var(--bg-neutral-dark);
-  --color-bg-neutral-xdark: var(--bg-neutral-xdark);
-  --color-bg-neutral-default: var(--bg-neutral-default);
-  --color-bg-neutral-white: var(--bg-neutral-white);
-  --color-bg-brand-default: var(--bg-brand-default);
-  --color-bg-brand-secondary: var(--bg-brand-secondary);
-  --color-bg-white: var(--bg-white);
-  --color-bd-neutral-default: var(--bd-neutral-default);
-  --color-bd-neutral-secondary: var(--bd-neutral-secondary);
-  --color-bd-brand-default: var(--bd-brand-default);
-  --color-text-brand-on-brand: var(--text-brand-on-brand);
-  --color-text-neutral-default: var(--text-neutral-default);
-  --color-text-neutral-secondary: var(--text-neutral-secondary);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-/*---break---*/
-
-:root {
-  /* Custom brand tokens (light). */
-  --bg-neutral-dark: #ededed;
-  --bg-neutral-xdark: #d5d5d5;
-  --bg-neutral-default: #f5f5f5;
-  --bg-neutral-white: #fbfbfb;
-  --bg-brand-default: #9b3dcc;
-  --bg-brand-secondary: #e8d7fb;
-  --bg-white: #ffffff;
-  --bd-neutral-default: #d9d9d9;
-  --bd-neutral-secondary: #b3b3b3;
-  --bd-brand-default: #682888;
-  --text-brand-on-brand: #fbfbfb;
-  --text-neutral-default: #1e1e1e;
-  --text-neutral-secondary: #757575;
-
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.645 0.272 328.63);
-  --chart-2: oklch(0.741 0.112 201.39);
-  --chart-3: oklch(0.807 0.167 84.29);
-  --chart-4: oklch(0.68 0.19 27);
-  --chart-5: oklch(0.63 0.16 265);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-/*---break---*/
-
-.dark {
-  /* Custom brand tokens (dark). */
-  --bg-neutral-dark: #333333;
-  --bg-neutral-xdark: #404040;
-  --bg-neutral-default: #2a2a2a;
-  --bg-neutral-white: #262626;
-  --bg-brand-default: #9b3dcc;
-  --bg-brand-secondary: #3a2352;
-  --bg-white: #1e1e1e;
-  --bd-neutral-default: #404040;
-  --bd-neutral-secondary: #525252;
-  --bd-brand-default: #b45ee0;
-  --text-brand-on-brand: #fbfbfb;
-  --text-neutral-default: #ededed;
-  --text-neutral-secondary: #a3a3a3;
-
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
-/*---break---*/
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
