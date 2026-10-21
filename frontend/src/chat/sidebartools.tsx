@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
 
 import { useChatConfig } from '@/context/chat';
 
-import { useTheme } from '@/hooks/themecontext';
+import { useTheme } from '@/hooks/theme-provider';
 
 import { threadMessagesQuery } from '@/queries';
 

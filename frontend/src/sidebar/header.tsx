@@ -8,7 +8,7 @@ import { PanelLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { getAppConfig } from '@/config';
-import { useTheme } from '@/hooks/themecontext';
+import { useTheme } from '@/hooks/theme-provider';
 import { cn } from '@/lib/utils';
 
 /**

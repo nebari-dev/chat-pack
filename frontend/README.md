@@ -67,9 +67,10 @@ Nebari defaults when nothing is set. Supported fields:
 | `faviconUrl` | Favicon. Empty uses the built-in Nebari favicon. |
 | `theme.light` / `theme.dark` | CSS variable overrides per color scheme (see below). |
 
-Theme tokens are camelCase brand variables (see `src/main.css`), converted to `--kebab-case` CSS
-custom properties at runtime. Useful tokens include `bgBrandDefault`, `bgBrandSecondary`,
-`bdBrandDefault`, `textBrandOnBrand`, `textNeutralDefault`, `textNeutralSecondary`, and `radius`.
+Theme tokens are the camelCase Nebari semantic variables (see `THEME_TOKENS` in
+`src/config/index.ts`), applied at runtime as `--kebab-case` CSS custom properties. Useful tokens
+include `primary`, `primaryHover`, `ring`, `canvas`, `header`, `card`, `muted`, `foreground`,
+`border`, and `radius`. Unknown keys are ignored.
 Values are validated at runtime — anything containing `;`, `{`, `}`, quotes, `url(`, `expression(`,
 or `javascript:` is rejected — and logo/favicon URLs must be root-relative paths or `http(s)` URLs.
 
@@ -79,8 +80,8 @@ or `javascript:` is rejected — and logo/favicon URLs must be root-relative pat
     "title": "ACME Chat",
     "logoUrl": "https://cdn.acme.com/logo.svg",
     "theme": {
-      "light": { "bgBrandDefault": "#0066cc", "bdBrandDefault": "#004a99" },
-      "dark":  { "bgBrandDefault": "#4da6ff" }
+      "light": { "primary": "#0066cc", "primaryHover": "#004a99" },
+      "dark":  { "primary": "#4da6ff" }
     }
   }
 }

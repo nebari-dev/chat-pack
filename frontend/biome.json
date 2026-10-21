@@ -19,7 +19,10 @@
       "!!**/dist",
       "!**/*.gen.ts",
       "!src/components/ui/*",
-      "!src/routeTree.gen.ts"
+      "!src/routeTree.gen.ts",
+      "!src/theme.css",
+      "!src/hooks/use-theme-preference.ts",
+      "!src/hooks/theme-provider.tsx"
     ]
   },
   "formatter": {

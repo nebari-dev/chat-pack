@@ -36,29 +36,72 @@ export type KeycloakConfig = {
 };
 
 /**
- * Theme token overrides injected at runtime as CSS custom properties.
+ * The Nebari semantic theme tokens that branding may override.
  *
- * Each key is the camelCase form of one of the app's brand CSS variables (see
- * `src/main.css`); it is converted to a `--kebab-case` custom property at
- * runtime. Omitted tokens keep their built-in default. Values are validated
- * against {@link UNSAFE_CSS} before being applied.
+ * Keys are the camelCase form of the CSS custom properties written by the
+ * Nebari theme (`--primary`, `--primary-hover`, `--muted-foreground`, …) in
+ * `src/main.css`. Unknown keys are ignored.
  */
-export type ThemeTokens = {
-  bgNeutralDark?: string;
-  bgNeutralXdark?: string;
-  bgNeutralDefault?: string;
-  bgNeutralWhite?: string;
-  bgBrandDefault?: string;
-  bgBrandSecondary?: string;
-  bgWhite?: string;
-  bdNeutralDefault?: string;
-  bdNeutralSecondary?: string;
-  bdBrandDefault?: string;
-  textBrandOnBrand?: string;
-  textNeutralDefault?: string;
-  textNeutralSecondary?: string;
-  radius?: string;
-};
+export const THEME_TOKENS = {
+  radius: '--radius',
+  background: '--background',
+  foreground: '--foreground',
+  canvas: '--canvas',
+  canvasForeground: '--canvas-foreground',
+  header: '--header',
+  headerForeground: '--header-foreground',
+  card: '--card',
+  cardForeground: '--card-foreground',
+  popover: '--popover',
+  popoverForeground: '--popover-foreground',
+  primary: '--primary',
+  primaryForeground: '--primary-foreground',
+  primaryHover: '--primary-hover',
+  secondary: '--secondary',
+  secondaryForeground: '--secondary-foreground',
+  muted: '--muted',
+  mutedForeground: '--muted-foreground',
+  mutedForegroundStrong: '--muted-foreground-strong',
+  accent: '--accent',
+  accentForeground: '--accent-foreground',
+  info: '--info',
+  infoForeground: '--info-foreground',
+  success: '--success',
+  successForeground: '--success-foreground',
+  warning: '--warning',
+  warningForeground: '--warning-foreground',
+  destructive: '--destructive',
+  destructiveForeground: '--destructive-foreground',
+  border: '--border',
+  borderStrong: '--border-strong',
+  input: '--input',
+  ring: '--ring',
+  sidebar: '--sidebar',
+  sidebarForeground: '--sidebar-foreground',
+  sidebarPrimary: '--sidebar-primary',
+  sidebarPrimaryForeground: '--sidebar-primary-foreground',
+  sidebarAccent: '--sidebar-accent',
+  sidebarAccentForeground: '--sidebar-accent-foreground',
+  sidebarBorder: '--sidebar-border',
+  sidebarRing: '--sidebar-ring',
+  chart1: '--chart-1',
+  chart2: '--chart-2',
+  chart3: '--chart-3',
+  chart4: '--chart-4',
+  chart5: '--chart-5',
+  headerActionHover: '--header-action-hover',
+  signOutForeground: '--sign-out-foreground',
+} as const;
+
+/**
+ * A type alias for a theme token key.
+ */
+export type ThemeTokenKey = keyof typeof THEME_TOKENS;
+
+/**
+ * Per-color-scheme overrides for the theme tokens.
+ */
+export type ThemeTokens = Partial<Record<ThemeTokenKey, string>>;
 
 /**
  * Operator-configurable branding.
@@ -221,15 +264,14 @@ export function safeCssValue(value: string | undefined): string | undefined {
   return value && !UNSAFE_CSS.test(value) ? value : undefined;
 }
 
-// Convert a camelCase token key to a kebab-case CSS custom property name.
-const toKebab = (s: string): string =>
-  s.replace(/([A-Z])/g, '-$1').toLowerCase();
-
-// Build a `--var: value;` block from safe tokens, skipping anything unsafe.
-const toCssVars = (tokens: Record<string, string>): string =>
+// Build a `--var: value;` block from known, safe tokens, skipping anything
+// unknown or unsafe.
+const toCssVars = (tokens: ThemeTokens): string =>
   Object.entries(tokens)
-    .filter(([, v]) => v && !UNSAFE_CSS.test(v))
-    .map(([k, v]) => `  --${toKebab(k)}: ${v};`)
+    .filter(
+      ([k, v]) => k in THEME_TOKENS && v !== undefined && !UNSAFE_CSS.test(v),
+    )
+    .map(([k, v]) => `  ${THEME_TOKENS[k as ThemeTokenKey]}: ${v};`)
     .join('\n');
 
 /**
@@ -262,13 +304,13 @@ export function applyBranding(branding: BrandingConfig | undefined): void {
   if (branding.theme) {
     let css = '';
     if (branding.theme.light) {
-      const vars = toCssVars(branding.theme.light as Record<string, string>);
+      const vars = toCssVars(branding.theme.light);
       if (vars) {
         css += `:root {\n${vars}\n}\n`;
       }
     }
     if (branding.theme.dark) {
-      const vars = toCssVars(branding.theme.dark as Record<string, string>);
+      const vars = toCssVars(branding.theme.dark);
       if (vars) {
         css += `.dark {\n${vars}\n}\n`;
       }
