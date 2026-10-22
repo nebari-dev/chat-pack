@@ -315,7 +315,7 @@ export function ChatInput(): ReactNode {
   ) : (
     <Button
       aria-label="Send"
-      title="Send"
+      title="Send (Enter) · Shift+Enter for a new line"
       size="icon"
       onClick={handleClick}
       className="rounded-full"
@@ -331,7 +331,7 @@ export function ChatInput(): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className="sticky bottom-0 mx-auto w-full min-w-3xs max-w-(--thread-max-width) bg-canvas pb-4">
+    <div className="sticky bottom-0 mx-auto w-full min-w-3xs max-w-(--thread-max-width) bg-canvas pb-6">
       <form
         ref={formRef}
         onSubmit={handleSubmit}
@@ -371,11 +371,6 @@ export function ChatInput(): ReactNode {
           {sendButton}
         </div>
       </form>
-      <p className="mt-2 text-center text-muted-foreground text-xs">
-        <kbd className="font-mono">Enter</kbd> to send ·{' '}
-        <kbd className="font-mono">Shift</kbd>+
-        <kbd className="font-mono">Enter</kbd> for a new line
-      </p>
     </div>
   );
 }

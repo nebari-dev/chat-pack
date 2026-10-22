@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 import type * as api from '@/api';
-import { Avatar, AvatarFallback, getInitials } from '@/components/avatar';
+import { Avatar, AvatarFallback, getAgentInitials } from '@/components/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAgents, useChatConfig } from '@/context';
 import { notifyError } from '@/lib/notifications';
@@ -46,7 +46,7 @@ export function EmptyState(): ReactNode {
       <div className="flex flex-col items-center gap-3 text-center">
         <Avatar className="size-14 rounded-2xl">
           <AvatarFallback className="rounded-2xl bg-primary font-semibold text-primary-foreground text-xl">
-            {getInitials(name)}
+            {getAgentInitials(name)}
           </AvatarFallback>
         </Avatar>
         <h1 className="text-balance font-semibold text-2xl tracking-tight">

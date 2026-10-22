@@ -9,7 +9,7 @@ import { Check, ChevronDown } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
-import { Avatar, AvatarFallback, getInitials } from '@/components/avatar';
+import { Avatar, AvatarFallback, getAgentInitials } from '@/components/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +39,7 @@ export function AgentPicker(): ReactNode {
     <>
       <Avatar className="size-5">
         <AvatarFallback className="bg-primary font-semibold text-[10px] text-primary-foreground">
-          {getInitials(name)}
+          {getAgentInitials(name)}
         </AvatarFallback>
       </Avatar>
       <span className="max-w-[12rem] truncate">{name}</span>
