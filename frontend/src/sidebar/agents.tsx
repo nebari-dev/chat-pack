@@ -5,7 +5,7 @@ import { Link, useSearch } from '@tanstack/react-router';
 
 import type { ReactNode } from 'react';
 
-import { Avatar, AvatarFallback, getInitials } from '@/components/avatar';
+import { Avatar, AvatarFallback, getAgentInitials } from '@/components/avatar';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -45,7 +45,7 @@ export function Agents(): ReactNode {
         >
           <Avatar className="size-5">
             <AvatarFallback className="bg-primary font-semibold text-[10px] text-primary-foreground">
-              {getInitials(name)}
+              {getAgentInitials(name)}
             </AvatarFallback>
           </Avatar>
           <SidebarMenuLabel className="group-data-[state=collapsed]/sidebar:sr-only">
