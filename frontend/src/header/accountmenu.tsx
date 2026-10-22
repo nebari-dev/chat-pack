@@ -1,9 +1,11 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+import { useQuery } from '@tanstack/react-query';
+
 import { useNavigate } from '@tanstack/react-router';
 
-import { ChevronDown, LogOut, User } from 'lucide-react';
+import { ChevronDown, LogOut } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
@@ -17,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { userQuery } from '@/queries';
 
 import { ThemePicker } from './themepicker';
 
@@ -25,35 +28,39 @@ import { ThemePicker } from './themepicker';
  *
  * It follows the Nebari header recipe: avatar, name and chevron as the
  * trigger, then a name/email block, the theme picker, and a red sign-out item.
- * When auth is disabled there is no profile, so only the theme picker shows.
  */
 export function AccountMenu(): ReactNode {
   const navigate = useNavigate();
 
-  // The profile is `null` when auth is disabled (local development).
+  // Prefer the Keycloak profile. With auth disabled (local development)
+  // there is none, so fall back to the backend's view of the user, which
+  // always has at least an id.
   const profile = auth.getUserProfile();
-  const displayName = profile?.name || profile?.email || 'Account';
-  const initials = getInitials(profile?.name, profile?.email);
+  const { data: user } = useQuery(userQuery);
+  const name =
+    profile?.name ||
+    stringClaim(user?.data, 'name') ||
+    stringClaim(user?.data, 'preferred_username') ||
+    user?.id ||
+    'Account';
+  const email = profile?.email || stringClaim(user?.data, 'email');
+  const initials = getInitials(name, email);
 
   // Sign out through the `/logout` route, which owns the Keycloak redirect.
   const handleSignOut = () => {
     navigate({ to: '/logout' });
   };
 
-  const identity = profile ? (
+  const identity = (
     <div className="border-b px-1.5 pb-2">
-      <p className="truncate font-medium text-foreground text-sm">
-        {profile.name || profile.email}
-      </p>
-      {profile.email ? (
-        <p className="truncate text-muted-foreground text-xs">
-          {profile.email}
-        </p>
+      <p className="truncate font-medium text-foreground text-sm">{name}</p>
+      {email ? (
+        <p className="truncate text-muted-foreground text-xs">{email}</p>
       ) : null}
     </div>
-  ) : null;
+  );
 
-  const signOut = profile ? (
+  const signOut = (
     <>
       <DropdownMenuSeparator />
       <DropdownMenuItem
@@ -64,7 +71,7 @@ export function AccountMenu(): ReactNode {
         Sign out
       </DropdownMenuItem>
     </>
-  ) : null;
+  );
 
   return (
     <DropdownMenu modal={false}>
@@ -75,14 +82,10 @@ export function AccountMenu(): ReactNode {
       >
         <Avatar>
           <AvatarFallback className="bg-primary font-semibold text-primary-foreground">
-            {profile ? (
-              initials
-            ) : (
-              <User className="size-4" aria-hidden="true" />
-            )}
+            {initials}
           </AvatarFallback>
         </Avatar>
-        <span className="max-w-[16rem] truncate">{displayName}</span>
+        <span className="max-w-[16rem] truncate">{name}</span>
         <ChevronDown aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
@@ -94,4 +97,15 @@ export function AccountMenu(): ReactNode {
       </DropdownMenuPortal>
     </DropdownMenu>
   );
+}
+
+/**
+ * Read a string claim from the backend user data, if present.
+ */
+function stringClaim(
+  data: Record<string, unknown> | undefined,
+  key: string,
+): string | undefined {
+  const value = data?.[key];
+  return typeof value === 'string' && value ? value : undefined;
 }

@@ -67,6 +67,20 @@ test.describe('app shell', () => {
     ).toHaveAttribute('aria-expanded', 'true');
   });
 
+  test('shows the user and sign out in the account menu', async ({ page }) => {
+    await page.goto('/');
+
+    // With auth disabled the name comes from the backend's /api/user.
+    const trigger = page.getByRole('button', { name: 'Account menu' });
+    await expect(trigger).toContainText('Test User');
+    await trigger.click();
+
+    await expect(page.getByRole('menu').getByText('Test User')).toBeVisible();
+    await expect(
+      page.getByRole('menuitem', { name: 'Sign out' }),
+    ).toBeVisible();
+  });
+
   test('switches theme from the account menu', async ({ page }) => {
     await page.goto('/');
 

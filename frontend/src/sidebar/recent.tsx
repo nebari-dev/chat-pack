@@ -24,7 +24,13 @@ import { groupByRecency } from './grouping';
  * The number of recent threads listed in the sidebar. The rest are one click
  * away under "All conversations".
  */
-const RECENT_COUNT = 20;
+const RECENT_COUNT = 50;
+
+/**
+ * The most conversations listed under "Older". Anything past that is in
+ * "All conversations", so the sidebar stays short for long-time users.
+ */
+const OLDER_LIMIT = 10;
 
 /**
  * A React component that renders recent threads grouped by day.
@@ -44,8 +50,16 @@ export function Recent(): ReactNode {
     }),
   );
 
-  // Group by the latest activity, since the server has no `updatedAt`.
-  const groups = groupByRecency(page.data?.items ?? [], api.getThreadUpdatedAt);
+  // Group by the latest activity (the server has no `updatedAt`) and keep
+  // "Older" short.
+  const groups = groupByRecency(
+    page.data?.items ?? [],
+    api.getThreadUpdatedAt,
+  ).map((group) =>
+    group.label === 'Older'
+      ? { ...group, items: group.items.slice(0, OLDER_LIMIT) }
+      : group,
+  );
 
   const content =
     groups.length > 0 ? (

@@ -42,7 +42,7 @@ export function Footer(): ReactNode {
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-      <SidebarTrigger className="ml-1" />
+      <SidebarTrigger className="[&_svg]:size-4" />
     </SidebarFooter>
   );
 }
