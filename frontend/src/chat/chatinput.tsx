@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import { Link } from '@tanstack/react-router';
 
-import { ArrowUp, Hammer, Paperclip, Square, X } from 'lucide-react';
+import { ArrowUp, Paperclip, Square, Wrench, X } from 'lucide-react';
 
 import type { FormEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
@@ -26,6 +26,7 @@ import { notifyError } from '@/lib/notifications';
 import { cn } from '@/lib/utils';
 import { abortRun } from '@/queries';
 
+import { AgentPicker } from './agentpicker';
 import { useOnSubmit } from './hooks';
 
 import { FRONTEND_TOOLS } from './tools';
@@ -225,42 +226,33 @@ export function ChatInput(): ReactNode {
     <Badge
       key={info.id}
       variant="outline"
-      role="button"
-      tabIndex={0}
-      className="cursor-pointer hover:bg-sidebar"
+      render={<button type="button" />}
+      aria-label={`Remove ${info.file.name}`}
+      className="cursor-pointer gap-1 font-mono hover:bg-accent"
       onClick={() => {
         removeFile(info.id);
       }}
     >
       {info.file.name}
-      <X size={12} />
+      <X className="size-3" aria-hidden="true" />
     </Badge>
   ));
 
-  // Create the attach file button.
+  // Create the attach button.
   const attachButton = (
     <Button
-      aria-label="Attach File"
+      aria-label="Attach file"
       disabled={isSubmitting || !!filePermissionTooltip}
       variant="ghost"
-      size="icon"
-      className={cn(
-        'font-light',
-        filePermissionTooltip && 'opacity-50 cursor-not-allowed',
-      )}
+      size="icon-sm"
       onClick={filePermissionTooltip ? undefined : triggerInput}
     >
       <Paperclip />
     </Button>
   );
 
-  // Create the tools toggle button.
-  //
-  // The toggle flips the `showTools` search param, which opens or closes the
-  // tools panel (the agent identity and its tools) in the chat sidebar.
-  // When the agent provides no tools, the toggle is disabled.
-  // The link that flips the panel. Opening the tools panel closes any open
-  // message detail so the two never compete for the right sidebar slot.
+  // The link that flips the tools panel. Opening it closes any open message
+  // detail so the two never compete for the right side of the chat.
   const toolsLink = (
     <Link
       to="."
@@ -272,55 +264,98 @@ export function ChatInput(): ReactNode {
     />
   );
 
+  // The tools toggle shows how many tools the agent and client provide.
+  const toolCount =
+    (agent?.capabilities?.tools?.items?.length ?? 0) + FRONTEND_TOOLS.length;
   const toolsButton = (
     <Button
       render={hasTools ? toolsLink : undefined}
-      aria-label="Toggle tools panel"
-      title={hasTools ? 'Tools' : undefined}
+      aria-label={
+        hasTools
+          ? `${showTools ? 'Hide' : 'Show'} tools (${toolCount})`
+          : 'No tools available'
+      }
       variant="ghost"
-      size="icon"
+      size="sm"
       disabled={!hasTools}
       className={cn(
-        'font-light',
-        hasTools && showTools && 'bg-bg-neutral-dark',
-        !hasTools && 'opacity-50 cursor-not-allowed',
+        'hover:no-underline',
+        showTools && 'bg-accent text-accent-foreground',
       )}
     >
-      <Hammer />
+      <Wrench />
+      {hasTools ? <span className="tabular-nums">{toolCount}</span> : null}
     </Button>
   );
 
-  const toolsToggle = hasTools ? (
-    toolsButton
+  // Show the reason a control is disabled, since disabled buttons get no
+  // pointer events of their own.
+  const attachControl = filePermissionTooltip ? (
+    <Tooltip>
+      <TooltipTrigger render={<span />}>{attachButton}</TooltipTrigger>
+      <TooltipContent side="top">{filePermissionTooltip}</TooltipContent>
+    </Tooltip>
   ) : (
-    // A disabled button suppresses pointer events, so the `title` tooltip
-    // only shows when it is set on a wrapping element.
-    <span title="This agent does not provide any tools.">{toolsButton}</span>
+    attachButton
   );
+
+  // Send becomes Stop while a run is in flight.
+  const sendButton = isSubmitting ? (
+    <Button
+      type="button"
+      aria-label="Stop"
+      title="Stop"
+      variant="outline"
+      size="icon"
+      onClick={handleStop}
+      className="rounded-full"
+    >
+      <Square fill="currentColor" className="size-3" />
+    </Button>
+  ) : (
+    <Button
+      aria-label="Send"
+      title="Send"
+      size="icon"
+      onClick={handleClick}
+      className="rounded-full"
+    >
+      <ArrowUp />
+    </Button>
+  );
+
+  const agentName = agent?.capabilities.identity?.name || agentId;
+  const placeholder = thread
+    ? `Reply to ${agentName}…`
+    : `Message ${agentName}…`;
 
   // Return the rendered component.
   return (
-    <div
-      className={cn(
-        'pb-6 bg-background mx-auto w-full min-w-3xs max-w-3xl sticky bottom-0',
-      )}
-    >
+    <div className="sticky bottom-0 mx-auto w-full min-w-3xs max-w-(--thread-max-width) bg-canvas pb-4">
       <form
         ref={formRef}
         onSubmit={handleSubmit}
         className={cn(
-          'p-4 flex flex-col gap-6 rounded-md border shadow-sm',
-          'has-[textarea:focus-visible]:border-bd-brand-default',
+          'flex flex-col rounded-xl border border-input bg-card shadow-xs',
+          'motion-safe:transition-[border-color,box-shadow] motion-safe:duration-(--duration-fast)',
+          'has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-3 has-[textarea:focus-visible]:ring-ring/25',
         )}
       >
         <textarea
           ref={textAreaRef}
           disabled={isSubmitting}
           onKeyDown={handleKeyDown}
-          placeholder="Send a message..."
-          className="outline-none resize-none field-sizing-content w-full"
+          placeholder={placeholder}
+          aria-label="Message"
+          rows={2}
+          className="field-sizing-content max-h-60 min-h-12 w-full resize-none bg-transparent px-4 pt-3.5 pb-1.5 outline-none placeholder:text-muted-foreground"
         />
-        <div className="flex flex-row gap-2">
+        {fileBadges.length > 0 ? (
+          <div className="flex flex-row flex-wrap gap-1.5 px-3 pb-1">
+            {fileBadges}
+          </div>
+        ) : null}
+        <div className="flex flex-row items-center gap-1 px-2 pt-1 pb-2">
           <input
             ref={inputRef}
             onChange={handleInputChange}
@@ -329,47 +364,18 @@ export function ChatInput(): ReactNode {
             multiple
             accept=".txt,.csv,.md"
           />
-          {filePermissionTooltip ? (
-            <Tooltip>
-              <TooltipTrigger render={<span />}>{attachButton}</TooltipTrigger>
-              <TooltipContent side="top">
-                {filePermissionTooltip}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            attachButton
-          )}
-          {toolsToggle}
-          <div className="grow flex flex-row flex-wrap gap-2 items-center">
-            {fileBadges}
-          </div>
-          {isSubmitting ? (
-            <Button
-              type="button"
-              aria-label="Stop"
-              title="Stop"
-              onClick={handleStop}
-              className={cn(
-                'rounded-full size-8 bg-bd-brand-default',
-                'hover:bg-bd-brand-default/90 hover:cursor-pointer',
-              )}
-            >
-              <Square fill="currentColor" />
-            </Button>
-          ) : (
-            <Button
-              aria-label="Submit"
-              onClick={handleClick}
-              className={cn(
-                'rounded-full size-8 bg-bd-brand-default',
-                'hover:bg-bd-brand-default/90 hover:cursor-pointer',
-              )}
-            >
-              <ArrowUp />
-            </Button>
-          )}
+          <AgentPicker />
+          {attachControl}
+          {toolsButton}
+          <span className="grow" />
+          {sendButton}
         </div>
       </form>
+      <p className="mt-2 text-center text-muted-foreground text-xs">
+        <kbd className="font-mono">Enter</kbd> to send ·{' '}
+        <kbd className="font-mono">Shift</kbd>+
+        <kbd className="font-mono">Enter</kbd> for a new line
+      </p>
     </div>
   );
 }
