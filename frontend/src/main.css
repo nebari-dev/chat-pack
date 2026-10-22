@@ -198,14 +198,3 @@ body {
     padding: 0.5rem 0.75rem;
   }
 }
-
-/**
- * Align the keys to the top of the row in the JSON tool renderers
- * (`json-edit-react`). The library centers them vertically, which reads
- * confusingly next to multi-line values.
- */
-.ot-NebariChat-jer {
-  .jer-value-main-row {
-    align-items: start;
-  }
-}
