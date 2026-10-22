@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@ag-ui/core": "^0.0.59",
+    "@base-ui/react": "^1.9.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@json-edit-react/themes": "^1.0.0",

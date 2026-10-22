@@ -1,22 +1,17 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import { createFileRoute } from '@tanstack/react-router';
-
-import type { ReactNode } from 'react';
-
-import { Home } from '@/home';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 /**
- * The route definition for the home page.
+ * The route definition for `/`.
+ *
+ * There is no separate home page: the sidebar already lists every agent and
+ * conversation, so the app opens straight into a new chat. The `/chat` route
+ * picks the default agent.
  */
 export const Route = createFileRoute('/_authenticated/')({
-  component: RouteComponent,
+  beforeLoad: () => {
+    throw redirect({ to: '/chat', replace: true });
+  },
 });
-
-/**
- * A react component that renders the home route.
- */
-function RouteComponent(): ReactNode {
-  return <Home />;
-}

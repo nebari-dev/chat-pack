@@ -243,6 +243,7 @@ export function ChatInput(): ReactNode {
       aria-label="Attach File"
       disabled={isSubmitting || !!filePermissionTooltip}
       variant="ghost"
+      size="icon"
       className={cn(
         'font-light',
         filePermissionTooltip && 'opacity-50 cursor-not-allowed',
@@ -258,12 +259,26 @@ export function ChatInput(): ReactNode {
   // The toggle flips the `showTools` search param, which opens or closes the
   // tools panel (the agent identity and its tools) in the chat sidebar.
   // When the agent provides no tools, the toggle is disabled.
+  // The link that flips the panel. Opening the tools panel closes any open
+  // message detail so the two never compete for the right sidebar slot.
+  const toolsLink = (
+    <Link
+      to="."
+      search={(prev) => ({
+        ...prev,
+        detailId: undefined,
+        showTools: showTools ? undefined : true,
+      })}
+    />
+  );
+
   const toolsButton = (
     <Button
-      asChild={hasTools}
+      render={hasTools ? toolsLink : undefined}
       aria-label="Toggle tools panel"
       title={hasTools ? 'Tools' : undefined}
       variant="ghost"
+      size="icon"
       disabled={!hasTools}
       className={cn(
         'font-light',
@@ -271,22 +286,7 @@ export function ChatInput(): ReactNode {
         !hasTools && 'opacity-50 cursor-not-allowed',
       )}
     >
-      {hasTools ? (
-        <Link
-          to="."
-          search={(prev) => ({
-            ...prev,
-            // Opening the tools panel closes any open message detail so
-            // the two never compete for the right sidebar slot.
-            detailId: undefined,
-            showTools: showTools ? undefined : true,
-          })}
-        >
-          <Hammer />
-        </Link>
-      ) : (
-        <Hammer />
-      )}
+      <Hammer />
     </Button>
   );
 
@@ -331,9 +331,7 @@ export function ChatInput(): ReactNode {
           />
           {filePermissionTooltip ? (
             <Tooltip>
-              <TooltipTrigger asChild>
-                <span>{attachButton}</span>
-              </TooltipTrigger>
+              <TooltipTrigger render={<span />}>{attachButton}</TooltipTrigger>
               <TooltipContent side="top">
                 {filePermissionTooltip}
               </TooltipContent>
