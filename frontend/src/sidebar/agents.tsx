@@ -44,7 +44,7 @@ export function Agents(): ReactNode {
           className="px-2 hover:no-underline group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
         >
           <Avatar className="size-5">
-            <AvatarFallback className="font-semibold text-[10px]">
+            <AvatarFallback className="bg-primary font-semibold text-[10px] text-primary-foreground">
               {getInitials(name)}
             </AvatarFallback>
           </Avatar>
