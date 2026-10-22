@@ -8,7 +8,6 @@
  * registry-managed: never edit it by hand, and keep app overrides below.
  */
 @import "./theme.css";
-@import "tw-animate-css";
 
 /*
  * ── App-owned styles ─────────────────────────────────────────────────────────
@@ -39,26 +38,6 @@
   --color-header-action-hover: var(--header-action-hover);
   --color-notification-badge: var(--notification-badge);
   --color-sign-out-foreground: var(--sign-out-foreground);
-
-  /*
-   * Transitional aliases for the pre-design-system brand utilities
-   * (`bg-bg-white`, `border-bd-neutral-default`, …). They now resolve to the
-   * Nebari semantic tokens so screens that have not been rebuilt yet pick up
-   * the new theme. Each alias is deleted once its last call site is migrated.
-   */
-  --color-bg-neutral-dark: var(--muted);
-  --color-bg-neutral-xdark: var(--accent);
-  --color-bg-neutral-default: var(--background);
-  --color-bg-neutral-white: var(--card);
-  --color-bg-brand-default: var(--primary);
-  --color-bg-brand-secondary: var(--secondary);
-  --color-bg-white: var(--canvas);
-  --color-bd-neutral-default: var(--border);
-  --color-bd-neutral-secondary: var(--border-strong);
-  --color-bd-brand-default: var(--primary);
-  --color-text-brand-on-brand: var(--primary-foreground);
-  --color-text-neutral-default: var(--foreground);
-  --color-text-neutral-secondary: var(--muted-foreground);
 }
 
 html {

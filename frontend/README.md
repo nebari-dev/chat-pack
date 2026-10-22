@@ -62,7 +62,7 @@ Nebari defaults when nothing is set. Supported fields:
 | Field | Description |
 | --- | --- |
 | `title` | Browser tab title. Empty keeps the default (`Nebari Chat`). |
-| `logoUrl` | Sidebar header logo. Empty uses the built-in Nebari logo. |
+| `logoUrl` | Header logo. Empty uses the built-in Nebari logo. |
 | `logoUrlDark` | Dark-mode logo. Empty falls back to `logoUrl`, then the built-in dark logo. |
 | `faviconUrl` | Favicon. Empty uses the built-in Nebari favicon. |
 | `theme.light` / `theme.dark` | CSS variable overrides per color scheme (see below). |

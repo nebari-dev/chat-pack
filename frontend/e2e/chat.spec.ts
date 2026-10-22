@@ -87,8 +87,12 @@ test.describe('chat page', () => {
     await page.goto('/chat?agentId=test-agent');
     await expect(page.getByRole('textbox', { name: 'Message' })).toBeVisible();
 
+    // Base UI wraps open popups in invisible focus-guard spans. On WebKit it
+    // gives them `role="button"` for VoiceOver, which axe reports as unnamed
+    // buttons. They are library internals, not app markup, so skip them.
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .exclude('[data-base-ui-focus-guard]')
       .analyze();
 
     const seriousViolations = results.violations.filter(

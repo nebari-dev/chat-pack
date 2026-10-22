@@ -74,8 +74,8 @@ agents:
 - **`{{ VAR }}`** placeholders are resolved from the backend process environment, so secrets stay
   out of the config. Under Helm they must be escaped — see
   [Install](/getting-started/#install).
-- **`capabilities.identity`** is what the UI shows in the agent picker and the home page. Give
-  each agent a name a user would recognize.
+- **`capabilities.identity`** is what the UI shows in the sidebar, the agent picker, and the
+  new-chat screen (with `description`). Give each agent a name a user would recognize.
 
 At least one static agent must be configured, or `agents.dynamic.enabled` must be `true`;
 otherwise the server refuses to start. With neither set, Ravnar falls back to a single `default`

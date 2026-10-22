@@ -142,8 +142,8 @@ kubectl get deploy,sts,svc -n chat
 kubectl logs -n chat deploy/chat-ravnar
 ```
 
-Then open `https://chat.example.com`. You should be redirected to Keycloak, land back on the
-home page, and see the agents you declared in `config.inline` in the picker. Pick one, send a
+Then open `https://chat.example.com`. You should be redirected to Keycloak, land back on a
+new chat, and see the agents you declared in `config.inline` in the sidebar. Pick one, send a
 message, and the response streams back token by token.
 
 The API answers directly too:

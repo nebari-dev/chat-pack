@@ -8,7 +8,7 @@ import type { Page } from '@playwright/test';
  *
  * Shaped to satisfy `AgentConfigSchema` (see `src/api/app.ts`); every
  * `capabilities` field is optional, so only `identity.name` is set — that is
- * what the home page renders as the agent card title.
+ * what the sidebar, agent picker and new-chat screen show.
  */
 export const MOCK_AGENT = {
   id: 'test-agent',
