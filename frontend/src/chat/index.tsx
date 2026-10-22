@@ -10,6 +10,7 @@ import { useChatConfig } from '@/context';
 import { threadMessagesQuery } from '@/queries';
 import { ChatInput } from './chatinput';
 import { ChatOutput } from './chatoutput';
+import { EmptyState } from './emptystate';
 import { Header } from './header';
 import { SidebarPanel } from './sidebarpanel';
 import { ToolsPanel } from './toolspanel';
@@ -55,17 +56,17 @@ export function Chat(): ReactNode {
   // viewport in the same tree position avoids remounting the chat (and
   // losing in-progress input) when the sidebar is toggled.
   return (
-    <main className="grow min-w-0 flex flex-col">
+    <main className="flex min-w-0 grow flex-col bg-canvas">
       <Header />
       <div className="grow min-h-0 min-w-0 flex flex-row">
         <div className="grow min-w-0">
           <Viewport>
-            <ChatOutput />
+            {thread ? <ChatOutput /> : <EmptyState />}
             <ChatInput />
           </Viewport>
         </div>
         {sidebarPanel ? (
-          <aside className="w-96 shrink-0 overflow-hidden border-l border-bd-neutral-default">
+          <aside className="w-96 shrink-0 overflow-hidden border-border border-l">
             {sidebarPanel}
           </aside>
         ) : null}

@@ -1,132 +1,52 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
+
+import { Plus } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAgents, useChatConfig } from '@/context';
 
-import { cn } from '@/lib/utils';
-
 /**
- * A react component that renders the header for the chat page.
+ * A React component that renders the thread header.
+ *
+ * It names the conversation and its agent. The agent is chosen in the
+ * composer, and New chat lives in the sidebar, so a new chat needs no header
+ * actions; an open thread offers New chat here as well for convenience.
  */
 export function Header(): ReactNode {
+  const agents = useAgents();
+  const { agentId, thread } = useChatConfig();
+
+  const agent = agents.find((a) => a.id === agentId);
+  const agentName = agent?.capabilities.identity?.name || agentId;
+  const title = thread ? thread.name || 'Untitled conversation' : 'New chat';
+
+  const newChatLink = <Link to="." search={{ agentId }} />;
+  const newChat = thread ? (
+    <Button
+      render={newChatLink}
+      variant="outline"
+      size="sm"
+      className="hover:no-underline"
+    >
+      <Plus aria-hidden="true" />
+      New chat
+    </Button>
+  ) : null;
+
   return (
-    <div className="px-4 py-2 flex flex-row border-b border-bd-neutral-default">
-      <Private.AgentSelect />
-      <Private.ThreadName />
-      <div className="grow" />
-      <Private.NewChatLink />
+    <div className="flex h-12 flex-none flex-row items-center gap-2.5 border-border border-b px-4">
+      <h1 className="min-w-0 truncate font-medium">{title}</h1>
+      <Badge variant="secondary" className="shrink-0">
+        {agentName}
+      </Badge>
+      <span className="grow" />
+      {newChat}
     </div>
   );
-}
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * A react component that renders the agent selector.
-   */
-  export function AgentSelect(): ReactNode {
-    // Fetch the agents.
-    const agents = useAgents();
-
-    // Fetch the thread id setter from the chat config.
-    const { agentId } = useChatConfig();
-
-    // Fetch the route navigator.
-    const navigate = useNavigate();
-
-    // Create the callback for the value change.
-    const handleValueChange = (value: string) => {
-      navigate({ to: '.', search: { agentId: value } });
-    };
-
-    // Create the items for the selector
-    const items = agents.map((agent) => {
-      const agentName = agent.capabilities.identity?.name ?? agent.id;
-      return (
-        <SelectItem key={agent.id} value={agent.id}>
-          {agentName}
-        </SelectItem>
-      );
-    });
-
-    // Return the rendered component.
-    return (
-      <Select value={agentId} onValueChange={handleValueChange}>
-        <SelectTrigger
-          size="sm"
-          aria-label="Select agent"
-          className={cn(
-            'w-[200px] rounded-sm shadow-none focus-visible:ring-0',
-            'focus-visible:border-bd-brand-default data-[size=sm]:h-7',
-          )}
-        >
-          <SelectValue placeholder="Select..." />
-        </SelectTrigger>
-        <SelectContent position="popper">{items}</SelectContent>
-      </Select>
-    );
-  }
-
-  /**
-   * A React component that renders the thread name.
-   */
-  export function ThreadName(): ReactNode {
-    // Fetch the current thread.
-    const { thread } = useChatConfig();
-
-    // Bail if there is no current thread.
-    if (!thread) {
-      return null;
-    }
-
-    // Return the rendered component.
-    return (
-      <div className="px-4 min-w-0 flex items-center">
-        <span className="truncate">{thread.name}</span>
-      </div>
-    );
-  }
-
-  /**
-   * A react component that renders a link to create a new chat.
-   *
-   * The current agent id is maintained, everything else is cleared.
-   */
-  export function NewChatLink(): ReactNode {
-    // Fetch the current thread.
-    const { thread } = useChatConfig();
-
-    // Determine whether the link should be disabled.
-    const isDisabled = thread === null;
-
-    // Return the rendered component.
-    return (
-      <Link
-        to="."
-        search={(prev) => ({ agentId: prev.agentId })}
-        className={cn(
-          'h-7 w-24 shrink-0 whitespace-nowrap',
-          'flex justify-center items-center rounded-sm text-white',
-          isDisabled ? 'bg-bd-brand-default/50' : 'bg-bd-brand-default',
-        )}
-        disabled={isDisabled}
-      >
-        New Chat
-      </Link>
-    );
-  }
 }

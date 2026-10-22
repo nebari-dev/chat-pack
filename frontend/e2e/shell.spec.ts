@@ -17,7 +17,7 @@ test.describe('app shell', () => {
     await page.goto('/');
 
     await expect(page).toHaveURL(/\/chat\?agentId=test-agent/);
-    await expect(page.getByPlaceholder('Send a message...')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Message' })).toBeVisible();
   });
 
   test('renders the header and the sidebar navigation', async ({ page }) => {
@@ -119,8 +119,11 @@ test.describe('app shell', () => {
   test('has no critical or serious accessibility violations', {
     tag: '@a11y',
   }, async ({ page }) => {
+    // Skip `motion-safe` entrance animations so axe measures settled colors,
+    // not a frame mid-fade.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
-    await expect(page.getByPlaceholder('Send a message...')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Message' })).toBeVisible();
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
