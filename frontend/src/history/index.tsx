@@ -99,7 +99,7 @@ export function History(): ReactNode {
 
   return (
     <main className="flex min-w-0 grow flex-col overflow-y-auto bg-canvas">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-6">
+      <div className="flex w-full flex-col gap-4 px-6 py-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-semibold text-xl tracking-tight">History</h1>
