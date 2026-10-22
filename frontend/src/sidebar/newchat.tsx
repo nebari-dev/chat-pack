@@ -26,7 +26,7 @@ export function NewChat(): ReactNode {
   const link = <Link to="/chat" search={{ agentId }} />;
 
   return (
-    <SidebarHeader className="px-2 pt-3 pb-5">
+    <SidebarHeader className="px-2 pt-3 pb-4">
       <Button
         render={link}
         size={collapsed ? 'icon' : 'default'}
