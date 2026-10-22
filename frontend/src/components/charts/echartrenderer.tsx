@@ -5,7 +5,9 @@ import * as echarts from 'echarts';
 
 import type { ReactNode } from 'react';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
+
+import { nebariChartTheme } from './theme';
 
 /**
  * Recursively parse JSON-encoded string values within an echart option.
@@ -116,6 +118,30 @@ function coerceComponents(option: Record<string, unknown>): void {
 }
 
 /**
+ * Subscribe to changes of the `<html>` class list.
+ *
+ * Charts read theme tokens from the DOM, so they follow the `.dark` class
+ * itself rather than the theme preference: the preference hook toggles the
+ * class in an effect that runs after this component's effects, and reading
+ * the tokens then would pick up the previous theme.
+ */
+function subscribeToHtmlClass(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+  return () => observer.disconnect();
+}
+
+/**
+ * Whether the `<html>` element currently carries the `.dark` class.
+ */
+function isDarkClassSet(): boolean {
+  return document.documentElement.classList.contains('dark');
+}
+
+/**
  * A react component that renders an EChart.
  */
 export function EChartRenderer(props: EChartRenderer.Props): ReactNode {
@@ -127,6 +153,7 @@ export function EChartRenderer(props: EChartRenderer.Props): ReactNode {
 
   // Create the ref for the chart instance.
   const chartRef = useRef<echarts.ECharts | null>(null);
+  const isDarkMode = useSyncExternalStore(subscribeToHtmlClass, isDarkClassSet);
 
   // Setup the effect to create and dispose the chart instance.
   useEffect(() => {
@@ -134,7 +161,9 @@ export function EChartRenderer(props: EChartRenderer.Props): ReactNode {
     const node = ref.current!;
 
     // Initialize the chart.
-    const chart = echarts.init(node);
+    // The theme is fixed when a chart is created, so the chart is rebuilt
+    // whenever the `.dark` class on <html> changes, to read the new tokens.
+    const chart = echarts.init(node, nebariChartTheme());
 
     // Store the chart instance.
     chartRef.current = chart;
@@ -170,7 +199,7 @@ export function EChartRenderer(props: EChartRenderer.Props): ReactNode {
       // Clear the chart instance.
       chartRef.current = null;
     };
-  }, []);
+  }, [isDarkMode]);
 
   // Setup the effect to apply the option to the chart.
   useEffect(() => {
@@ -190,7 +219,7 @@ export function EChartRenderer(props: EChartRenderer.Props): ReactNode {
     } catch (error) {
       console.error('Failed to render chart option:', error);
     }
-  }, [option]);
+  }, [option, isDarkMode]);
 
   // Return the rendered component.
   return <div ref={ref} className={className} />;

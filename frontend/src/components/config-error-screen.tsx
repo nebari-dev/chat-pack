@@ -1,6 +1,8 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |-----------------------------------------------------------------------------*/
+import { TriangleAlert } from 'lucide-react';
+
 import type { ReactNode } from 'react';
 
 /**
@@ -10,10 +12,17 @@ export function ConfigErrorScreen(props: ConfigErrorScreen.Props): ReactNode {
   const { title, message } = props;
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-bg-white">
+    <main className="flex min-h-screen grow items-center justify-center bg-canvas">
       <div className="max-w-lg p-8 text-center">
-        <div className="mb-4 text-6xl">⚠️</div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">{title}</h1>
+        <div
+          aria-hidden="true"
+          className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-warning text-warning-foreground"
+        >
+          <TriangleAlert className="size-6" />
+        </div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground mb-2">
+          {title}
+        </h1>
         <p className="text-muted-foreground whitespace-pre-line">{message}</p>
       </div>
     </main>

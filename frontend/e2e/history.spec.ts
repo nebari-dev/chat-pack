@@ -113,7 +113,9 @@ test.describe('history page', () => {
     await expect(page.getByText('Deleted 1 conversation')).toBeVisible();
     expect(deleted).toEqual([['t2']]);
     await expect(
-      page.getByRole('link', { name: 'Inspection backlog' }),
+      page
+        .getByRole('table', { name: 'Conversations' })
+        .getByRole('link', { name: 'Inspection backlog' }),
     ).toBeHidden();
   });
 
@@ -150,8 +152,12 @@ test.describe('history page', () => {
       page.getByRole('table', { name: 'Conversations' }),
     ).toBeVisible();
 
+    // Base UI wraps open popups in invisible focus-guard spans. On WebKit it
+    // gives them `role="button"` for VoiceOver, which axe reports as unnamed
+    // buttons. They are library internals, not app markup, so skip them.
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .exclude('[data-base-ui-focus-guard]')
       .analyze();
 
     const seriousViolations = results.violations.filter(
