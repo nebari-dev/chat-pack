@@ -14,7 +14,7 @@ import { createRoot } from 'react-dom/client';
 
 import { initAuth } from '@/auth';
 import { ErrorBoundary, ErrorFallback } from '@/components/error-boundary';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/components/ui/toast';
 import { applyBranding, loadAppConfig } from '@/config';
 import { ThemeProvider } from '@/hooks/theme-provider';
 import { notifyError } from '@/lib/notifications';

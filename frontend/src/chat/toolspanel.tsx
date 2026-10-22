@@ -3,13 +3,9 @@
 |----------------------------------------------------------------------------*/
 import type * as agui from '@ag-ui/core';
 
-import { Link } from '@tanstack/react-router';
-
-import { Hammer, X } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 
 import type { ReactNode } from 'react';
-
-import { Separator } from '@/components/ui/separator';
 
 import { Switch } from '@/components/ui/switch';
 
@@ -20,48 +16,29 @@ import { cn } from '@/lib/utils';
 import { setToolEnabled, useFrontendToolStates } from './tools';
 
 /**
- * A react component that renders the tools panel for the chat sidebar.
+ * A React component that renders the tools panel body: the agent's tools,
+ * which are always on, and the client tools, which the user can toggle.
  *
- * The panel shows two groups of tools: the tools provided by the current
- * agent (always active), and the client-executed frontend tools, which can
- * be toggled on and off per browser.
+ * Its title and close button come from the detail drawer that hosts it.
  */
 export function ToolsPanel(): ReactNode {
-  // Fetch the agents and the current agent id from the chat config.
   const agents = useAgents();
   const { agentId } = useChatConfig();
-
-  // Resolve the current agent.
   const agent = agents.find((a) => a.id === agentId);
-
-  // Extract the tools provided by the agent.
   const items = agent?.capabilities?.tools?.items ?? [];
 
-  // Return the rendered component.
   return (
-    <section className="h-full flex flex-col">
-      <h1 className="p-2 flex flex-row justify-between items-center">
-        <span className="text-xl font-bold">Tools</span>
-        <Link to="." search={(prev) => ({ ...prev, showTools: undefined })}>
-          <X />
-        </Link>
-      </h1>
-      <Separator />
-      <div className="p-2 grow overflow-auto flex flex-col gap-4">
-        <Private.Group label="Agent" className="pb-2">
-          <Private.AgentToolList tools={items} />
-        </Private.Group>
-        <Private.Group label="Client">
-          <Private.FrontendToolList />
-        </Private.Group>
-      </div>
-    </section>
+    <div className="flex flex-col gap-6">
+      <Private.Group label="Agent">
+        <Private.AgentToolList tools={items} />
+      </Private.Group>
+      <Private.Group label="Client">
+        <Private.FrontendToolList />
+      </Private.Group>
+    </div>
   );
 }
 
-/**
- * The namespace for the module implementation details.
- */
 namespace Private {
   /**
    * A react component that renders a labeled group of tools.
@@ -73,7 +50,7 @@ namespace Private {
   }): ReactNode {
     return (
       <div className={cn('flex flex-col gap-2', props.className)}>
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="font-medium text-muted-foreground-strong text-xs uppercase tracking-wide">
           {props.label}
         </span>
         {props.children}
@@ -96,14 +73,14 @@ namespace Private {
     return (
       <li
         className={cn(
-          'h-12 overflow-hidden rounded-sm px-2',
-          'border border-bd-neutral-default',
+          'min-h-12 overflow-hidden rounded-md px-3 py-2',
+          'border border-border',
           'flex flex-row items-center justify-between gap-2',
         )}
       >
         <div className="min-w-0 flex flex-col">
           <div className="min-w-0 flex flex-row items-center gap-1.5">
-            <Hammer size={12} className="shrink-0" />
+            <Wrench className="size-3 shrink-0" aria-hidden="true" />
             <span className="font-mono text-xs truncate">{name}</span>
           </div>
           {description ? (
@@ -147,7 +124,6 @@ namespace Private {
             control={
               <Switch
                 aria-label={`Toggle ${tool.name}`}
-                size="sm"
                 checked
                 disabled
                 className="shrink-0"
@@ -191,7 +167,6 @@ namespace Private {
               control={
                 <Switch
                   aria-label={`Toggle ${name}`}
-                  size="sm"
                   checked={enabled}
                   onCheckedChange={(value) => setToolEnabled(name, value)}
                   className="shrink-0"

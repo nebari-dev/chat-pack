@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import type * as agui from '@ag-ui/core';
 
-import { useMutation, useMutationState } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery } from '@tanstack/react-query';
 
 import { useNavigate } from '@tanstack/react-router';
 
@@ -13,7 +13,11 @@ import * as api from '@/api';
 
 import { useChatConfig, useHasPermissions } from '@/context';
 
-import { createRunMutation, createThreadMutation } from '@/queries';
+import {
+  createRunMutation,
+  createThreadMutation,
+  threadMessagesQuery,
+} from '@/queries';
 
 import { enabledFrontendToolDefinitions } from './tools';
 
@@ -200,4 +204,24 @@ export namespace useOnSubmit {
      */
     readonly files?: readonly api.FileInputContent[];
   };
+}
+
+/**
+ * Find the tool result message for a tool call in the current thread.
+ *
+ * @param toolCallId - The id of the tool call.
+ * @returns The tool message, or `undefined` while the call is still running.
+ */
+export function useToolMessage(
+  toolCallId: string,
+): agui.ToolMessage | undefined {
+  const { thread } = useChatConfig();
+  const { data } = useQuery({
+    ...threadMessagesQuery(thread?.id),
+    select: (msgs) =>
+      (msgs ?? []).find(
+        (msg) => msg.role === 'tool' && msg.toolCallId === toolCallId,
+      ),
+  });
+  return data as agui.ToolMessage | undefined;
 }

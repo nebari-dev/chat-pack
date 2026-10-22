@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 
 import { MarkdownRenderer } from '@/components/markdown/markdownrenderer';
 
-import { ToolCountLink } from './toolcountlink';
+import { ToolSteps } from './toolsteps';
 
 /**
  * A react component that renders an ag-ui assistant message.
@@ -18,9 +18,9 @@ export function AssistantMessage(props: AssistantMessage.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className="flex flex-col">
-      <MarkdownRenderer content={message.content ?? ''} />
-      <ToolCountLink message={message} />
+    <div className="flex flex-col gap-3">
+      {message.content ? <MarkdownRenderer content={message.content} /> : null}
+      <ToolSteps message={message} />
     </div>
   );
 }

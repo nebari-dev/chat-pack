@@ -9,7 +9,7 @@ import { memo } from 'react';
 import { ActivityMessage } from './activitymessage';
 import { AssistantMessage } from './assistantmessage';
 
-import { ReasoningLink } from './reasoninglink';
+import { ReasoningStep } from './reasoningstep';
 
 import { UserMessage } from './usermessage';
 
@@ -32,7 +32,7 @@ export function MessageRenderer(props: MessageRenderer.Props): ReactNode {
       content = <AssistantMessage message={message} />;
       break;
     case 'reasoning':
-      content = <ReasoningLink message={message} />;
+      content = <ReasoningStep message={message} />;
       break;
     case 'tool':
       // Ignore tool messages. The tool call count is caught by the assistant
@@ -55,7 +55,7 @@ export function MessageRenderer(props: MessageRenderer.Props): ReactNode {
   }
 
   // Return the rendered component.
-  return <div className="mt-4">{content}</div>;
+  return <div className="motion-safe:animate-slide-up-fade">{content}</div>;
 }
 
 /**

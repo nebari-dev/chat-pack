@@ -5,6 +5,7 @@ import { Check, ShieldQuestion, X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -33,7 +34,7 @@ export function ApprovalPrompts(props: ApprovalPrompts.Props): ReactNode {
 
   // Return the rendered component.
   return (
-    <div className="mt-4 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       {pending.map((req) => (
         <Private.ApprovalCard key={req.id} request={req} />
       ))}
@@ -64,46 +65,35 @@ namespace Private {
    * A react component that renders a single approval request.
    */
   export function ApprovalCard(props: ApprovalCard.Props): ReactNode {
-    // Extract the props.
     const { request } = props;
 
-    // Build the handler that resolves the request with a decision.
     const decide = (decision: 'approved' | 'rejected') => () => {
       decideApproval(request.id, decision);
     };
 
-    // Return the rendered component.
+    // The warning variant is an assertive live region, so screen readers
+    // announce the request as soon as the agent blocks on it.
     return (
-      <div className="rounded-sm border border-bd-neutral-default p-3 flex flex-col gap-3">
-        <div className="flex flex-row items-start gap-2">
-          <ShieldQuestion size={16} className="mt-0.5 shrink-0" />
-          <div className="min-w-0 flex flex-col gap-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Approval requested
-            </span>
-            <p className="text-sm font-medium">{request.action}</p>
-            {request.details ? (
-              <p className="text-sm text-muted-foreground">{request.details}</p>
-            ) : null}
+      <Alert variant="warning">
+        <ShieldQuestion aria-hidden="true" />
+        <AlertTitle>{request.action}</AlertTitle>
+        <AlertDescription className="flex flex-col gap-3">
+          {request.details ? <p>{request.details}</p> : null}
+          <div className="flex flex-row gap-2">
+            <Button size="sm" onClick={decide('approved')}>
+              <Check aria-hidden="true" />
+              Approve
+            </Button>
+            <Button size="sm" variant="outline" onClick={decide('rejected')}>
+              <X aria-hidden="true" />
+              Reject
+            </Button>
           </div>
-        </div>
-        <div className="flex flex-row justify-end gap-2">
-          <Button size="sm" variant="outline" onClick={decide('rejected')}>
-            <X />
-            Reject
-          </Button>
-          <Button size="sm" onClick={decide('approved')}>
-            <Check />
-            Approve
-          </Button>
-        </div>
-      </div>
+        </AlertDescription>
+      </Alert>
     );
   }
 
-  /**
-   * The namespace for the `ApprovalCard` statics.
-   */
   export namespace ApprovalCard {
     /**
      * A type alias for the `ApprovalCard` props.

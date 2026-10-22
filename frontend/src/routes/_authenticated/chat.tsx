@@ -59,10 +59,11 @@ export const Route = createFileRoute('/_authenticated/chat')({
         return;
       }
 
-      // Otherwise, redirect to sync the `agentId` with the thread.
+      // Otherwise, redirect to sync the `agentId` with the thread. Keep the
+      // other params so a link to an open drawer still opens it.
       throw redirect({
         replace: true,
-        search: { agentId: thread.agentId, threadId: thread.id },
+        search: { ...search, agentId: thread.agentId, threadId: thread.id },
       });
     } else {
       // If the `agentId` is valid, we are done.

@@ -21,7 +21,7 @@ export function UserMessage(props: UserMessage.Props): ReactNode {
 
   // Create the badges for the attached files.
   const fileBadges = files.map(({ id, name }) => (
-    <Badge key={id} variant="outline">
+    <Badge key={id} variant="outline" className="font-mono">
       {name}
     </Badge>
   ));
@@ -38,7 +38,9 @@ export function UserMessage(props: UserMessage.Props): ReactNode {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-row justify-end">
-        <div className="px-4 py-2 rounded-md border bg-muted">{text}</div>
+        <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-muted px-4 py-2.5">
+          {text}
+        </div>
       </div>
       {badges}
     </div>

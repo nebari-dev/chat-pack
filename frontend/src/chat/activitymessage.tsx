@@ -24,7 +24,7 @@ export function ActivityMessage(props: ActivityMessage.Props): ReactNode {
     case 'application/json+echart':
       content = (
         <EChartRenderer
-          className="h-120 p-4 border rounded-md"
+          className="h-120 rounded-lg border border-border bg-card p-4"
           option={message.content}
         />
       );
@@ -32,7 +32,7 @@ export function ActivityMessage(props: ActivityMessage.Props): ReactNode {
     case 'application/json+leaflet':
       content = (
         <LeafletRenderer
-          className="h-120 border rounded-md"
+          className="h-120 overflow-hidden rounded-lg border border-border"
           center={message.content.center}
           features={message.content.features}
         />
