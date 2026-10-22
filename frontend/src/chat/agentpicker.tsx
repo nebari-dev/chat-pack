@@ -38,7 +38,7 @@ export function AgentPicker(): ReactNode {
   const label = (
     <>
       <Avatar className="size-5">
-        <AvatarFallback className="font-semibold text-[10px]">
+        <AvatarFallback className="bg-primary font-semibold text-[10px] text-primary-foreground">
           {getInitials(name)}
         </AvatarFallback>
       </Avatar>

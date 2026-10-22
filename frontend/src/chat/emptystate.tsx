@@ -45,7 +45,7 @@ export function EmptyState(): ReactNode {
     >
       <div className="flex flex-col items-center gap-3 text-center">
         <Avatar className="size-14 rounded-2xl">
-          <AvatarFallback className="rounded-2xl font-semibold text-xl">
+          <AvatarFallback className="rounded-2xl bg-primary font-semibold text-primary-foreground text-xl">
             {getInitials(name)}
           </AvatarFallback>
         </Avatar>
