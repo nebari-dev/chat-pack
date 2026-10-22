@@ -50,6 +50,50 @@ export const threadPageQuery = (options: api.getThreadPage.Options) => {
 };
 
 /**
+ * The page size used when loading the whole history.
+ */
+const ALL_THREADS_PAGE_SIZE = 100;
+
+/**
+ * The most pages loaded for the whole history, as a guard against an
+ * unbounded loop. At the page size above this covers 2,000 conversations.
+ */
+const ALL_THREADS_MAX_PAGES = 20;
+
+/**
+ * A query for the user's whole thread history, newest first.
+ *
+ * History searches, filters and sorts on the client, so it needs every
+ * thread rather than one server page. Threads are small metadata records,
+ * so this stays cheap for a personal history. It lives under the `threads`
+ * key so deleting threads invalidates it.
+ */
+export const allThreadsQuery = queryOptions({
+  queryKey: ['threads', 'all'],
+  queryFn: async () => {
+    const items: api.Thread[] = [];
+    for (
+      let pageNumber = 1;
+      pageNumber <= ALL_THREADS_MAX_PAGES;
+      ++pageNumber
+    ) {
+      const page = await api.getThreadPage({
+        pageSize: ALL_THREADS_PAGE_SIZE,
+        pageNumber,
+        sortBy: 'createdAt',
+        sortOrder: 'descending',
+      });
+      items.push(...page.items);
+      if (pageNumber >= page.pageCount) {
+        break;
+      }
+    }
+    return items;
+  },
+  staleTime: 1000 * 60 * 5, // 5min
+});
+
+/**
  * A mutation for deleting threads.
  */
 export const deleteThreadsMutation = mutationOptions({
