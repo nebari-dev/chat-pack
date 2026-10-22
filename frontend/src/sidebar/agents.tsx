@@ -41,14 +41,16 @@ export function Agents(): ReactNode {
           active={active}
           variant="ghost"
           tooltip={name}
-          className="px-2 hover:no-underline"
+          className="px-2 hover:no-underline group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
         >
           <Avatar className="size-5">
             <AvatarFallback className="font-semibold text-[10px]">
               {getInitials(name)}
             </AvatarFallback>
           </Avatar>
-          <SidebarMenuLabel>{name}</SidebarMenuLabel>
+          <SidebarMenuLabel className="group-data-[state=collapsed]/sidebar:sr-only">
+            {name}
+          </SidebarMenuLabel>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );

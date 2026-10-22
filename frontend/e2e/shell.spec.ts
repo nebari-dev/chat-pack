@@ -55,11 +55,33 @@ test.describe('app shell', () => {
   });
 
   test('collapses and expands the sidebar', async ({ page }) => {
+    // Skip the width transition so positions are measured at rest.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
     await page.getByRole('button', { name: 'Collapse sidebar' }).click();
     const expand = page.getByRole('button', { name: 'Expand sidebar' });
     await expect(expand).toHaveAttribute('aria-expanded', 'false');
+
+    // Every icon in the collapsed rail sits on the rail's center line.
+    const sidebar = page.getByRole('navigation', { name: 'Conversations' });
+    await expect(
+      sidebar.getByRole('link', { name: 'All conversations' }),
+    ).toBeVisible();
+    const rail = (await sidebar.boundingBox())!;
+    const railCenter = rail.x + rail.width / 2;
+    const icons = [
+      sidebar.getByRole('link', { name: 'New chat' }).locator('svg'),
+      sidebar
+        .getByRole('link', { name: /Test Agent/ })
+        .locator('[data-slot=avatar]'),
+      sidebar.getByRole('link', { name: 'All conversations' }).locator('svg'),
+      expand.locator('svg'),
+    ];
+    for (const icon of icons) {
+      const box = (await icon.boundingBox())!;
+      expect(Math.abs(box.x + box.width / 2 - railCenter)).toBeLessThan(1);
+    }
 
     await expand.click();
     await expect(

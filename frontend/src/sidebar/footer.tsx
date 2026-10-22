@@ -11,7 +11,7 @@ import { SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
  */
 export function Footer(): ReactNode {
   return (
-    <SidebarFooter className="border-sidebar-border border-t bg-sidebar">
+    <SidebarFooter className="flex border-sidebar-border border-t bg-sidebar group-data-[state=collapsed]/sidebar:justify-center">
       <SidebarTrigger className="[&_svg]:size-4" />
     </SidebarFooter>
   );

@@ -35,10 +35,12 @@ export function AllConversations(): ReactNode {
           active={onHistory}
           variant="ghost"
           tooltip="All conversations"
-          className="px-2 hover:no-underline"
+          className="px-2 hover:no-underline group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
         >
           <History className="size-4 shrink-0" aria-hidden="true" />
-          <SidebarMenuLabel>All conversations</SidebarMenuLabel>
+          <SidebarMenuLabel className="group-data-[state=collapsed]/sidebar:sr-only">
+            All conversations
+          </SidebarMenuLabel>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
