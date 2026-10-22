@@ -3,17 +3,21 @@
 |----------------------------------------------------------------------------*/
 import type { ReactNode } from 'react';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { cn } from '@/lib/utils';
+import {
+  Sidebar as NebariSidebar,
+  SidebarContent,
+  SidebarProvider,
+} from '@/components/ui/sidebar';
 
-import { Header } from './header';
+import { Agents } from './agents';
 
-import { Launcher } from './launcher';
+import { Footer } from './footer';
+
+import { NewChat } from './newchat';
 
 import { Recent } from './recent';
-
-import { UserProfile } from './userprofile';
 
 /**
  * The viewport width below which the sidebar auto-collapses.
@@ -25,47 +29,42 @@ const COLLAPSE_QUERY = '(max-width: 1024px)';
 
 /**
  * A React component that renders the application sidebar.
+ *
+ * The sidebar is the app's only navigation: start a new chat, pick an agent,
+ * reopen a recent conversation, or browse all of them.
  */
 export function Sidebar(): ReactNode {
-  // Setup the state to track the sidebar open state, seeded from the current
-  // viewport so a narrow first paint starts collapsed.
-  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(
-    () => !window.matchMedia(COLLAPSE_QUERY).matches,
+  // Seed the collapsed state from the viewport so a narrow first paint
+  // starts collapsed.
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => window.matchMedia(COLLAPSE_QUERY).matches,
   );
 
-  // Create the toggle handler for the sidebar state.
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
-
-  // Auto-collapse the sidebar when the viewport narrows past the breakpoint,
-  // and re-open it when the viewport widens again. Reacting to the media
-  // query's `change` event (rather than forcing the state on every render)
-  // leaves the user free to toggle the sidebar manually while staying on one
-  // side of the breakpoint.
+  // Follow the breakpoint when the viewport crosses it. Reacting to the
+  // media query's `change` event (rather than forcing the state on every
+  // render) leaves the user free to toggle manually on either side of it.
   useEffect(() => {
     const media = window.matchMedia(COLLAPSE_QUERY);
     const onChange = (event: MediaQueryListEvent) => {
-      setSidebarOpen(!event.matches);
+      setCollapsed(event.matches);
     };
     media.addEventListener('change', onChange);
     return () => media.removeEventListener('change', onChange);
   }, []);
 
-  // Return the rendered component.
   return (
-    <div
-      className={cn(
-        'flex flex-col flex-none gap-3 border-r border-bd-neutral-default',
-        'bg-bg-white transition-[width] duration-150',
-        isSidebarOpen ? 'w-60' : 'w-12.25',
-      )}
-    >
-      <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <Launcher isSidebarOpen={isSidebarOpen} />
-      <Recent isSidebarOpen={isSidebarOpen} />
-      <div className="grow" />
-      <UserProfile isSidebarOpen={isSidebarOpen} />
-    </div>
+    <SidebarProvider collapsed={collapsed} onCollapsedChange={setCollapsed}>
+      <NebariSidebar
+        aria-label="Conversations"
+        className="rounded-none border-sidebar-border border-r"
+      >
+        <NewChat />
+        <SidebarContent className="gap-4 pt-1">
+          <Agents />
+          <Recent />
+        </SidebarContent>
+        <Footer />
+      </NebariSidebar>
+    </SidebarProvider>
   );
 }

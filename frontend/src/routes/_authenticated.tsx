@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import * as auth from '@/auth';
 import { ConfigErrorScreen } from '@/components/config-error-screen';
 import { AppConfigContext, PermissionsContext } from '@/context';
+import { Header } from '@/header';
 import { agentsQuery, appConfigQuery, userQuery } from '@/queries';
 
 import { Sidebar } from '@/sidebar';
@@ -97,8 +98,13 @@ function RouteComponent(): ReactNode {
   return (
     <AppConfigContext value={agents}>
       <PermissionsContext value={permissions}>
-        <Sidebar />
-        <Outlet />
+        <div className="flex min-w-0 grow flex-col bg-canvas">
+          <Header />
+          <div className="flex min-h-0 grow flex-row">
+            <Sidebar />
+            <Outlet />
+          </div>
+        </div>
       </PermissionsContext>
     </AppConfigContext>
   );

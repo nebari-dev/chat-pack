@@ -1,0 +1,100 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) 2025-present, OpenTeams Inc.
+|----------------------------------------------------------------------------*/
+import AxeBuilder from '@axe-core/playwright';
+import { expect, test } from '@playwright/test';
+
+import { mockApi } from './mocks';
+
+// Install the API mocks before every navigation so the app boots without a
+// backend (auth is disabled via the Playwright web server's env).
+test.beforeEach(async ({ page }) => {
+  await mockApi(page);
+});
+
+test.describe('app shell', () => {
+  test('opens a new chat at the root', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page).toHaveURL(/\/chat\?agentId=test-agent/);
+    await expect(page.getByPlaceholder('Send a message...')).toBeVisible();
+  });
+
+  test('renders the header and the sidebar navigation', async ({ page }) => {
+    await page.goto('/');
+
+    // The header holds the brand link and the account menu, and no nav links.
+    const header = page.getByRole('banner');
+    await expect(header.getByRole('link', { name: /home/i })).toBeVisible();
+    await expect(
+      header.getByRole('button', { name: 'Account menu' }),
+    ).toBeVisible();
+
+    // The sidebar lists the primary action, the agents, and the history link.
+    const sidebar = page.getByRole('navigation', { name: 'Conversations' });
+    await expect(sidebar.getByRole('link', { name: 'New chat' })).toBeVisible();
+    await expect(
+      sidebar.getByRole('link', { name: /Test Agent/ }),
+    ).toBeVisible();
+    await expect(
+      sidebar.getByText('Your conversations will appear here.'),
+    ).toBeVisible();
+    await expect(
+      sidebar.getByRole('link', { name: 'All conversations' }),
+    ).toBeVisible();
+  });
+
+  test('navigates to history from the sidebar', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByRole('link', { name: 'All conversations' }).click();
+
+    await expect(page).toHaveURL(/\/history/);
+  });
+
+  test('collapses and expands the sidebar', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+    const expand = page.getByRole('button', { name: 'Expand sidebar' });
+    await expect(expand).toHaveAttribute('aria-expanded', 'false');
+
+    await expand.click();
+    await expect(
+      page.getByRole('button', { name: 'Collapse sidebar' }),
+    ).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  test('switches theme from the account menu', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Account menu' }).click();
+
+    const dark = page.getByRole('menuitemradio', { name: 'Dark mode' });
+    await expect(page.getByRole('menuitemradio')).toHaveCount(3);
+    await dark.click();
+
+    await expect(dark).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('html')).toHaveClass(/dark/);
+  });
+
+  test('has no critical or serious accessibility violations', {
+    tag: '@a11y',
+  }, async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByPlaceholder('Send a message...')).toBeVisible();
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    const seriousViolations = results.violations.filter(
+      (v) => v.impact === 'critical' || v.impact === 'serious',
+    );
+
+    expect(
+      seriousViolations,
+      `Accessibility violations:\n${JSON.stringify(seriousViolations, null, 2)}`,
+    ).toEqual([]);
+  });
+});

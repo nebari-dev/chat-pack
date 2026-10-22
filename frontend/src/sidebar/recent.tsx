@@ -3,139 +3,104 @@
 |----------------------------------------------------------------------------*/
 import { useQuery } from '@tanstack/react-query';
 
-import { Link } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 
 import type { ReactNode } from 'react';
 
 import * as api from '@/api';
-
-import { Separator } from '@/components/ui/separator';
-
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuLabel,
+} from '@/components/ui/sidebar';
 import { threadPageQuery } from '@/queries';
 
-/**
- * A react component that renders the recent threads in the sidebar.
- */
-export function Recent(props: Recent.Props): ReactNode {
-  // Extract the props.
-  const { isSidebarOpen } = props;
+import { groupByRecency } from './grouping';
 
-  // Fetch the most recent threads.
-  //
-  // Note: Sorting is done client-side by computed updatedAt (latest run
-  // createdAt), since the server no longer provides updatedAt.
+/**
+ * The number of recent threads listed in the sidebar. The rest are one click
+ * away under "All conversations".
+ */
+const RECENT_COUNT = 20;
+
+/**
+ * A React component that renders recent threads grouped by day.
+ *
+ * Hidden while the sidebar is collapsed: a rail of identical icons would not
+ * tell conversations apart.
+ */
+export function Recent(): ReactNode {
+  const { threadId } = useSearch({ strict: false });
+
   const page = useQuery(
     threadPageQuery({
-      pageSize: 5,
+      pageSize: RECENT_COUNT,
       pageNumber: 1,
       sortBy: 'createdAt',
       sortOrder: 'descending',
     }),
   );
 
-  // Bail early if the sidebar is not open.
-  if (!isSidebarOpen) {
-    return null;
-  }
+  // Group by the latest activity, since the server has no `updatedAt`.
+  const groups = groupByRecency(page.data?.items ?? [], api.getThreadUpdatedAt);
 
-  // Sort threads by computed updatedAt (latest run's createdAt) and create links.
-  const threads = (page.data?.items || [])
-    .slice()
-    .sort((a, b) =>
-      api.getThreadUpdatedAt(b).localeCompare(api.getThreadUpdatedAt(a)),
-    );
-
-  const links = threads.map((thread) => (
-    <Private.ThreadLink key={thread.id} thread={thread} />
-  ));
-
-  // Create the content for the section.
   const content =
-    links.length > 0 ? (
-      links
+    groups.length > 0 ? (
+      groups.map((group) => (
+        <SidebarGroup key={group.label}>
+          <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarMenu>
+            {group.items.map((thread) => (
+              <ThreadItem
+                key={thread.id}
+                thread={thread}
+                active={thread.id === threadId}
+              />
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      ))
     ) : (
-      <div className="py-1 text-muted-foreground">
-        Recently modified threads will appear here.
-      </div>
+      <p className="px-2 text-muted-foreground text-sm">
+        Your conversations will appear here.
+      </p>
     );
 
-  // Return the rendered component.
   return (
-    <div>
-      <Separator />
-      <section
-        className="px-4 py-2 overflow-hidden"
-        arial-label="Recent threads"
-      >
-        <h1 className="font-semibold">Recent</h1>
-        {content}
-      </section>
-    </div>
+    <section
+      aria-label="Recent conversations"
+      className="flex flex-col gap-3 group-data-[state=collapsed]/sidebar:hidden"
+    >
+      {content}
+    </section>
   );
 }
 
 /**
- * The namespace for the `Recent` statics.
+ * A React component that renders one thread link in the sidebar.
  */
-export namespace Recent {
-  /**
-   * A type alias for the `Recent` props.
-   */
-  export type Props = {
-    /**
-     * Whether the sidebar is open.
-     */
-    readonly isSidebarOpen: boolean;
-  };
-}
-
-/**
- * The namespace for the module implementation details.
- */
-namespace Private {
-  /**
-   * A react component that renders a thread link in the sidebar.
-   */
-  export function ThreadLink(props: ThreadLink.Props): ReactNode {
-    // Extract the props.
-    const { thread } = props;
-
-    // Define the active link props.
-    const activeProps = {
-      className: 'text-bd-brand-default',
-    };
-
-    // Define the inactive link props.
-    const inactiveProps = {
-      className: 'text-muted-foreground',
-    };
-
-    // Return the rendered component.
-    return (
-      <Link
-        className="block truncate py-1"
-        to="/chat"
-        search={{ threadId: thread.id }}
-        activeProps={activeProps}
-        inactiveProps={inactiveProps}
+function ThreadItem(props: {
+  readonly thread: api.Thread;
+  readonly active: boolean;
+}): ReactNode {
+  const { thread, active } = props;
+  const link = <Link to="/chat" search={{ threadId: thread.id }} />;
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        render={link}
+        active={active}
+        variant="ghost"
+        size="sm"
+        className="px-2 font-normal text-muted-foreground-strong hover:no-underline data-[active=true]:font-medium"
       >
-        {thread.name || 'Untitled Thread'}
-      </Link>
-    );
-  }
-
-  /**
-   * The namespace for the `ThreadLink` statics.
-   */
-  export namespace ThreadLink {
-    /**
-     * A type alias for the `ThreadLink` props.
-     */
-    export type Props = {
-      /**
-       * The thread object for the link.
-       */
-      readonly thread: api.Thread;
-    };
-  }
+        <SidebarMenuLabel>
+          {thread.name || 'Untitled conversation'}
+        </SidebarMenuLabel>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 }
