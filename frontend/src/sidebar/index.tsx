@@ -13,6 +13,8 @@ import {
 
 import { Agents } from './agents';
 
+import { AllConversations } from './allconversations';
+
 import { Footer } from './footer';
 
 import { NewChat } from './newchat';
@@ -63,6 +65,10 @@ export function Sidebar(): ReactNode {
           <Agents />
           <Recent />
         </SidebarContent>
+        {/* Pinned below the scrolling list so History is always in reach. */}
+        <div className="px-2 pt-1 pb-2">
+          <AllConversations />
+        </div>
         <Footer />
       </NebariSidebar>
     </SidebarProvider>

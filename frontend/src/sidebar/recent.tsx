@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/sidebar';
 import { threadPageQuery } from '@/queries';
 
-import { AllConversations } from './allconversations';
 import { groupByRecency } from './grouping';
 
 /**
@@ -36,9 +35,8 @@ const OLDER_LIMIT = 10;
 /**
  * A React component that renders recent threads grouped by day.
  *
- * The groups hide while the sidebar is collapsed, since a rail of identical
- * icons would not tell conversations apart. The All conversations link at
- * the end of the list stays visible.
+ * Hidden while the sidebar is collapsed: a rail of identical icons would not
+ * tell conversations apart.
  */
 export function Recent(): ReactNode {
   const { threadId } = useSearch({ strict: false });
@@ -86,11 +84,11 @@ export function Recent(): ReactNode {
     );
 
   return (
-    <section aria-label="Recent conversations" className="flex flex-col gap-3">
-      <div className="flex flex-col gap-3 group-data-[state=collapsed]/sidebar:hidden">
-        {content}
-      </div>
-      <AllConversations />
+    <section
+      aria-label="Recent conversations"
+      className="flex flex-col gap-3 group-data-[state=collapsed]/sidebar:hidden"
+    >
+      {content}
     </section>
   );
 }

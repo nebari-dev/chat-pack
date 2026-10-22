@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/sidebar';
 
 /**
- * A React component that renders the link to the full conversation history
- * at the end of the sidebar's conversation list.
+ * A React component that renders the link to the full conversation history,
+ * pinned to the bottom of the sidebar's conversation area.
  *
  * It stays visible when the sidebar collapses (as an icon with a tooltip),
  * so History is always one click away.
