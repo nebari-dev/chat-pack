@@ -25,7 +25,9 @@ test.describe('app shell', () => {
 
     // The header holds the brand link and the account menu, and no nav links.
     const header = page.getByRole('banner');
-    await expect(header.getByRole('link', { name: /home/i })).toBeVisible();
+    await expect(
+      header.getByRole('link', { name: 'Go to homepage' }),
+    ).toBeVisible();
     await expect(
       header.getByRole('button', { name: 'Account menu' }),
     ).toBeVisible();

@@ -40,11 +40,11 @@ export function Header(): ReactNode {
 
   return (
     <NavigationMenu className="h-14 flex-none justify-between border-border bg-header pl-4 text-header-foreground">
-      <BrandLink to="/" aria-label={`${branding?.title || 'Nebari Chat'} home`}>
+      <BrandLink to="/" aria-label="Go to homepage">
         <img
           src={logoSrc}
-          alt=""
-          className="h-8 w-auto max-w-[160px] object-contain"
+          alt={branding?.title || 'Nebari'}
+          className="h-8 w-auto"
         />
       </BrandLink>
       <MenuBarActions className="gap-2">
