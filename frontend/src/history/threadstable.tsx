@@ -8,8 +8,9 @@ import type { Table as TSTable } from '@tanstack/react-table';
 import {
   createColumnHelper,
   flexRender,
-  getCoreRowModel,
-  useReactTable,
+  rowSelectionFeature,
+  tableFeatures,
+  useTable,
 } from '@tanstack/react-table';
 
 import type { ReactNode } from 'react';
@@ -41,10 +42,10 @@ export function ThreadsTable(): ReactNode {
   const { page } = useHistoryConfig();
 
   // Create the data table model.
-  const table = useReactTable({
+  const table = useTable({
+    features: Private.features,
     data: page.items as api.Thread[],
     columns: Private.columns,
-    getCoreRowModel: getCoreRowModel(),
   });
 
   // Create the array to hold the header rows.
@@ -133,9 +134,14 @@ export function ThreadsTable(): ReactNode {
  */
 namespace Private {
   /**
+   * The table features used by the threads table.
+   */
+  export const features = tableFeatures({ rowSelectionFeature });
+
+  /**
    * Create the helper for defining the columns.
    */
-  const columnHelper = createColumnHelper<api.Thread>();
+  const columnHelper = createColumnHelper<typeof features, api.Thread>();
 
   /**
    * Create the column for the selection check boxes.
@@ -258,13 +264,13 @@ namespace Private {
   /**
    * The column definitions for the table.
    */
-  export const columns = [
+  export const columns = columnHelper.columns([
     selectColumn,
     nameColumn,
     agentIdColumn,
     createdAtColumn,
     updatedAtColumn,
-  ];
+  ]);
 
   /**
    * A type alias for the `ClearDeleteBar` props.
@@ -273,7 +279,7 @@ namespace Private {
     /**
      * The Tanstack table instance for the page.
      */
-    readonly table: TSTable<api.Thread>;
+    readonly table: TSTable<typeof features, api.Thread>;
   };
 
   /**
