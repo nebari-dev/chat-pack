@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import * as z from 'zod';
+import * as z from 'zod/v4';
 
 /**
  * A type alias for a request pagination options.

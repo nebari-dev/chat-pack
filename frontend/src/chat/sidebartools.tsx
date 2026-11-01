@@ -1,7 +1,9 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
+
 import type * as agui from '@ag-ui/core';
+import { contentToText } from '@ag-ui/core';
 
 import { githubDarkTheme } from '@json-edit-react/themes';
 
@@ -134,10 +136,11 @@ namespace Private {
 
     // Try to parse the result to JSON, falling back on the string.
     const result = (() => {
+      const content = contentToText(toolMessage?.content);
       try {
-        return JSON.parse(toolMessage?.content ?? '');
+        return JSON.parse(content);
       } catch {
-        return toolMessage?.content ?? '';
+        return content;
       }
     })();
 

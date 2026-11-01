@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |-----------------------------------------------------------------------------*/
-import * as z from 'zod';
+import * as z from 'zod/v4';
 
 import * as auth from '@/auth';
 
@@ -20,7 +20,7 @@ export const UserSchema = z.object({
   /**
    * Additional user data.
    */
-  data: z.record(z.any()),
+  data: z.record(z.string(), z.any()),
 });
 
 /**
