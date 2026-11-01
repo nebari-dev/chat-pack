@@ -1,8 +1,8 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import * as agui from '@ag-ui/core';
-import * as z from 'zod';
+import * as aguiSchemas from '@ag-ui/core/schemas';
+import * as z from 'zod/v4';
 import * as auth from '@/auth';
 
 /**
@@ -54,7 +54,7 @@ export const AgentConfigSchema = z.object({
   /**
    * The capabilities of the agent.
    */
-  capabilities: agui.AgentCapabilitiesSchema,
+  capabilities: aguiSchemas.AgentCapabilitiesSchema,
 
   /**
    * The quick prompts to show for the agent in a new empty chat.

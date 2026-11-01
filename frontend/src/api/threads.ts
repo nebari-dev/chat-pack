@@ -1,9 +1,10 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import * as agui from '@ag-ui/core';
+import type * as agui from '@ag-ui/core';
+import * as aguiSchemas from '@ag-ui/core/schemas';
 
-import * as z from 'zod';
+import * as z from 'zod/v4';
 
 import * as auth from '@/auth';
 
@@ -111,7 +112,7 @@ export type ThreadPage = z.infer<typeof ThreadPageSchema>;
 /**
  * The schema for thread messages.
  */
-export const ThreadMessagesSchema = z.array(agui.MessageSchema);
+export const ThreadMessagesSchema = z.array(aguiSchemas.MessageSchema);
 
 /**
  * A type alias for detailed information about a thread.
@@ -347,7 +348,7 @@ export async function* createRun(
     // Validate the event against the ag-ui schemas. A single event that
     // fails validation is skipped and logged, not thrown, so one malformed
     // event does not kill the run.
-    const result = agui.EventSchemas.safeParse(json);
+    const result = aguiSchemas.EventSchemas.safeParse(json);
     if (!result.success) {
       console.warn('Skipping invalid ag-ui event:', result.error, json);
       continue;

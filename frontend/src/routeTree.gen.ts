@@ -7,19 +7,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root';
-import { Route as LogoutRouteImport } from './routes/logout';
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated';
+import { Route as LogoutRouteImport } from './routes/logout';
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index';
-import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history';
 import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/chat';
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history';
 
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any);
 const LogoutRoute = LogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
-  getParentRoute: () => rootRouteImport,
-} as any);
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any);
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
@@ -27,14 +27,14 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any);
-const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => AuthenticatedRoute,
-} as any);
 const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => AuthenticatedRoute,
+} as any);
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => AuthenticatedRoute,
 } as any);
 
@@ -79,18 +79,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/logout': {
-      id: '/logout';
-      path: '/logout';
-      fullPath: '/logout';
-      preLoaderRoute: typeof LogoutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
     '/_authenticated': {
       id: '/_authenticated';
       path: '';
       fullPath: '/';
       preLoaderRoute: typeof AuthenticatedRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    '/logout': {
+      id: '/logout';
+      path: '/logout';
+      fullPath: '/logout';
+      preLoaderRoute: typeof LogoutRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     '/_authenticated/': {
@@ -100,18 +100,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport;
       parentRoute: typeof AuthenticatedRoute;
     };
-    '/_authenticated/history': {
-      id: '/_authenticated/history';
-      path: '/history';
-      fullPath: '/history';
-      preLoaderRoute: typeof AuthenticatedHistoryRouteImport;
-      parentRoute: typeof AuthenticatedRoute;
-    };
     '/_authenticated/chat': {
       id: '/_authenticated/chat';
       path: '/chat';
       fullPath: '/chat';
       preLoaderRoute: typeof AuthenticatedChatRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    '/_authenticated/history': {
+      id: '/_authenticated/history';
+      path: '/history';
+      fullPath: '/history';
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport;
       parentRoute: typeof AuthenticatedRoute;
     };
   }

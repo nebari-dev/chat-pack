@@ -1,8 +1,8 @@
 /*------------------------------------------------------------------------------
 | Copyright (c) 2026-present, OpenTeams Inc.
 |-----------------------------------------------------------------------------*/
-import * as agui from '@ag-ui/core';
-import * as z from 'zod';
+import * as aguiSchemas from '@ag-ui/core/schemas';
+import * as z from 'zod/v4';
 import * as auth from '@/auth';
 
 /**
@@ -13,10 +13,10 @@ import * as auth from '@/auth';
  * on both the frontend and backend.
  */
 export const FileInputContentSchema = z.discriminatedUnion('type', [
-  agui.ImageInputContentSchema,
-  agui.AudioInputContentSchema,
-  agui.VideoInputContentSchema,
-  agui.DocumentInputContentSchema,
+  aguiSchemas.ImageInputContentSchema,
+  aguiSchemas.AudioInputContentSchema,
+  aguiSchemas.VideoInputContentSchema,
+  aguiSchemas.DocumentInputContentSchema,
 ]);
 
 /**
@@ -46,7 +46,7 @@ export const RavnarFileContentSchema = z.object({
     value: z.string(),
     mimeType: z.literal(RAVNAR_FILE_CONTENT_SOURCE_MIME_TYPE),
   }),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 /**
@@ -69,7 +69,7 @@ const RavnarFileContentSourceValueSchema = z.object({
   mimeType: z.string(),
   sourceType: z.string(),
   createdAt: z.string().datetime(),
-  sourceData: z.record(z.any()).nullish(),
+  sourceData: z.record(z.string(), z.any()).nullish(),
 });
 
 /**

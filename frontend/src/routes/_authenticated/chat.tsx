@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import * as z from 'zod';
+import * as z from 'zod/v4';
 
 import type * as api from '@/api';
 

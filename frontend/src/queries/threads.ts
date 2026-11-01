@@ -547,7 +547,7 @@ namespace Private {
     } as const;
 
     // Find the best message to associate with the tool call.
-    const msg = evt.pid
+    const msg = pid
       ? draft.findLast((m) => m.id === pid)
       : draft.findLast((m) => m.role === 'assistant');
 

@@ -7,7 +7,7 @@ import { createFileRoute, useRouter } from '@tanstack/react-router';
 
 import { useCallback } from 'react';
 
-import * as z from 'zod';
+import * as z from 'zod/v4';
 
 import type { HistoryConfig } from '@/context';
 

@@ -128,7 +128,10 @@ namespace Private {
           // Add the file using the decoded info.
           files.push({
             id: value.fileId,
-            name: part.metadata?.name ?? value.fileId,
+            name:
+              typeof part.metadata?.name === 'string'
+                ? part.metadata.name
+                : value.fileId,
           });
           break;
         }
