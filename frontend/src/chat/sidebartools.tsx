@@ -5,17 +5,18 @@
 import type * as agui from '@ag-ui/core';
 import { contentToText } from '@ag-ui/core';
 
-import { githubDarkTheme } from '@json-edit-react/themes';
-
 import { useQuery } from '@tanstack/react-query';
-
-import { JsonViewer } from 'json-edit-react';
 
 import type { ReactNode } from 'react';
 
-import { useChatConfig } from '@/context/chat';
+import {
+  CodeBlock,
+  CodeBlockBody,
+  CodeBlockCopyButton,
+  CodeBlockHeader,
+} from '@/components/ui/code-block';
 
-import { useTheme } from '@/hooks/themecontext';
+import { useChatConfig } from '@/context/chat';
 
 import { threadMessagesQuery } from '@/queries';
 
@@ -89,34 +90,52 @@ namespace Private {
   }
 
   /**
+   * The most payload lines shown before a code block scrolls.
+   */
+  const MAX_PAYLOAD_LINES = 16;
+
+  /**
+   * Pretty-print a JSON string, or return it unchanged if it is not JSON.
+   */
+  function formatJson(value: string): string {
+    try {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    } catch {
+      return value;
+    }
+  }
+
+  /**
+   * A react component that renders a labelled, copyable JSON payload.
+   */
+  function Payload(props: { label: string; code: string }): ReactNode {
+    // Extract the props.
+    const { label, code } = props;
+
+    // Return the rendered component.
+    return (
+      <CodeBlock code={code} showCopyButton={false} className="w-full min-w-0">
+        <CodeBlockHeader>
+          <span>{label}</span>
+          <CodeBlockCopyButton />
+        </CodeBlockHeader>
+        <CodeBlockBody maxLines={MAX_PAYLOAD_LINES} aria-label={label} />
+      </CodeBlock>
+    );
+  }
+
+  /**
    * A react component that renders the arguments for a tool call.
    */
   function ToolCallArgs(props: ToolCallItem.Props): ReactNode {
     // Extract the props.
     const { toolCall } = props;
 
-    // Match the JSON viewer theme to the active app theme.
-    const { isDarkMode } = useTheme();
-
-    // Try to parse the arguments to JSON, falling back on the string.
-    const args = (() => {
-      try {
-        return JSON.parse(toolCall.function.arguments);
-      } catch {
-        return toolCall.function.arguments;
-      }
-    })();
-
     // Return the rendered component.
     return (
-      <JsonViewer
-        className="ot-NebariChat-jer"
-        theme={isDarkMode ? githubDarkTheme : undefined}
-        data={args}
-        maxWidth="100%"
-        rootName="arguments"
-        baseFontSize={12}
-        collapse={false}
+      <Payload
+        label="Arguments"
+        code={formatJson(toolCall.function.arguments)}
       />
     );
   }
@@ -128,32 +147,14 @@ namespace Private {
     // Extract the props.
     const { toolCall } = props;
 
-    // Match the JSON viewer theme to the active app theme.
-    const { isDarkMode } = useTheme();
-
     // Find the tool message that matches the tool call id.
     const toolMessage = useToolMessage(toolCall.id);
 
-    // Try to parse the result to JSON, falling back on the string.
-    const result = (() => {
-      const content = contentToText(toolMessage?.content);
-      try {
-        return JSON.parse(content);
-      } catch {
-        return content;
-      }
-    })();
-
     // Return the rendered component.
     return (
-      <JsonViewer
-        className="ot-NebariChat-jer"
-        theme={isDarkMode ? githubDarkTheme : undefined}
-        data={result}
-        maxWidth="100%"
-        rootName="result"
-        baseFontSize={12}
-        collapse={true}
+      <Payload
+        label="Result"
+        code={formatJson(contentToText(toolMessage?.content))}
       />
     );
   }

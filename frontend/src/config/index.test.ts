@@ -3,7 +3,7 @@
 |----------------------------------------------------------------------------*/
 import { describe, expect, it } from 'vitest';
 
-import { sanitizeUrl } from './index';
+import { sanitizeUrl, type ThemeTokens, toCssVars } from './index';
 
 describe('sanitizeUrl', () => {
   it('preserves root-relative paths', () => {
@@ -54,5 +54,28 @@ describe('sanitizeUrl', () => {
     expect(sanitizeUrl(undefined)).toBeUndefined();
     expect(sanitizeUrl('')).toBeUndefined();
     expect(sanitizeUrl('not a url')).toBeUndefined();
+  });
+});
+
+describe('toCssVars', () => {
+  it('maps Nebari token keys to their custom properties', () => {
+    expect(toCssVars({ primary: '#0066cc', primaryHover: '#004a99' })).toBe(
+      '  --primary: #0066cc;\n  --primary-hover: #004a99;',
+    );
+  });
+
+  it('ignores unknown and legacy keys', () => {
+    const tokens = { bgBrandDefault: '#0066cc', ring: 'red' } as ThemeTokens;
+    expect(toCssVars(tokens)).toBe('  --ring: red;');
+  });
+
+  it('drops empty and unsafe values', () => {
+    expect(
+      toCssVars({
+        primary: '',
+        ring: 'red; background: url(x)',
+        canvas: '}body{display:none',
+      }),
+    ).toBe('');
   });
 });

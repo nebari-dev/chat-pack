@@ -22,7 +22,7 @@ export function LinkCard(props: LinkCard.Props): ReactNode {
   // Return the rendered component.
   return (
     <Link to={to}>
-      <Card className="py-3 rounded-sm hover:border-bd-brand-default">
+      <Card className="py-3 rounded-sm hover:border-primary">
         <CardHeader>
           <CardTitle className="flex flex-row gap-2">
             {icon}

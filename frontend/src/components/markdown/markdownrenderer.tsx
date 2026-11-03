@@ -3,13 +3,22 @@
 |----------------------------------------------------------------------------*/
 import type { ReactNode } from 'react';
 
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 
 import rehypeKatex from 'rehype-katex';
 
 import remarkGfm from 'remark-gfm';
 
 import remarkMath from 'remark-math';
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import { cn } from '@/lib/utils';
 
@@ -64,13 +73,19 @@ namespace Private {
   /**
    * The custom markdown components.
    *
-   * These handle the tags that can't be handled solely in `main.css`.
+   * Tables render with the Nebari table parts. react-markdown also passes the
+   * source `node`, which is dropped so it never reaches the DOM.
    */
-  export const markdownComponents = {
-    table: ({ ...props }) => (
-      <div className="my-6 w-full border rounded-md overflow-x-auto">
-        <table {...props} />
-      </div>
+  export const markdownComponents: Components = {
+    table: ({ node, ...props }) => (
+      <Table scrollContainerClassName="my-6" {...props} />
     ),
-  } as const;
+    thead: ({ node, ...props }) => <TableHeader {...props} />,
+    tbody: ({ node, ...props }) => <TableBody {...props} />,
+    tr: ({ node, ...props }) => <TableRow {...props} />,
+    // `TableHead` types its click and key handlers for a sortable header
+    // button, which markdown headers never are.
+    th: ({ node, onClick, onKeyDown, ...props }) => <TableHead {...props} />,
+    td: ({ node, ...props }) => <TableCell {...props} />,
+  };
 }

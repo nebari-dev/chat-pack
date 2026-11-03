@@ -9,9 +9,9 @@ import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
-import { useChatConfig } from '@/context';
+import { Button } from '@/components/ui/button';
 
-import { cn } from '@/lib/utils';
+import { useChatConfig } from '@/context';
 
 /**
  * A react component that renders a "Reasoning" link.
@@ -35,24 +35,29 @@ export function ReasoningLink(props: ReasoningLink.Props): ReactNode {
     <ArrowRightFromLine size={14} />
   );
 
+  // Create the link the button renders as.
+  const link = (
+    <Link
+      to="."
+      search={(prev) => ({
+        ...prev,
+        detailId: opened ? undefined : message.id,
+      })}
+    />
+  );
+
   // Return the rendered component.
   return (
     <div>
-      <Link
-        to="."
-        search={(prev) => ({
-          ...prev,
-          detailId: opened ? undefined : message.id,
-        })}
-        className={cn(
-          'px-2 h-6 inline-flex gap-2 items-center text-nowrap text-xs',
-          'rounded-sm cursor-pointer bg-bg-neutral-dark border',
-          'hover:no-underline hover:bg-bg-neutral-default',
-        )}
+      <Button
+        variant="outline"
+        size="xs"
+        className="hover:no-underline"
+        render={link}
       >
         Reasoning
         {openCloseIcon}
-      </Link>
+      </Button>
     </div>
   );
 }

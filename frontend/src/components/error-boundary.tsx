@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
  */
 export function ErrorFallback(): ReactNode {
   return (
-    <main className="flex items-center justify-center min-h-screen bg-bg-white">
+    <main className="flex items-center justify-center min-h-screen bg-canvas">
       <div className="max-w-lg p-8 text-center">
         <div className="mb-4 text-6xl">⚠️</div>
         <h1 className="text-2xl font-bold text-foreground mb-2">

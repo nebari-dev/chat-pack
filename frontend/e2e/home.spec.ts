@@ -37,6 +37,21 @@ test.describe('home page', () => {
     await expect(page).toHaveURL(/\/chat/);
   });
 
+  test('shows the Nebari header across the full page width', async ({
+    page,
+  }) => {
+    await page.goto('/chat');
+
+    // The header spans the viewport above the sidebar, not just the sidebar.
+    const header = page.getByRole('banner');
+    const box = await header.boundingBox();
+    expect(box?.width).toBe(page.viewportSize()?.width);
+
+    // Its logo returns to the home page.
+    await header.getByRole('link', { name: 'Go to homepage' }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
+  });
+
   test('has no critical or serious accessibility violations', {
     tag: '@a11y',
   }, async ({ page }) => {
