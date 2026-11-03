@@ -7,6 +7,13 @@ import { AlertCircle, X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+
 import { Button } from '@/components/ui/button';
 
 import { useChatConfig } from '@/context';
@@ -114,41 +121,47 @@ export function ChatOutput(): ReactNode {
   // run is not cancelled automatically; the user can keep waiting or stop it.
   const stalledNotice =
     isRunning && stalled && thread ? (
-      <div className="mt-4 flex flex-row items-start gap-2 text-muted-foreground">
-        <AlertCircle size={16} className="mt-0.5 shrink-0" />
-        <span className="grow text-sm">
+      <Alert className="mt-4">
+        <AlertCircle aria-hidden="true" />
+        <AlertTitle>Still waiting for the agent</AlertTitle>
+        <AlertDescription>
           This is taking longer than expected — the connection may have stalled.
           You can keep waiting or stop the run.
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0"
-          onClick={() => {
-            abortRun(thread.id);
-          }}
-        >
-          Stop
-        </Button>
-      </div>
+        </AlertDescription>
+        <AlertAction>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              abortRun(thread.id);
+            }}
+          >
+            Stop
+          </Button>
+        </AlertAction>
+      </Alert>
     ) : null;
 
   // Render the inline error when the latest run failed to send.
   const inlineError =
     error && thread ? (
-      <div className="mt-4 flex flex-row items-start gap-2 text-destructive">
-        <AlertCircle size={16} className="mt-0.5 shrink-0" />
-        <span className="grow text-sm">{error}</span>
-        <button
-          aria-label="Dismiss error"
-          className="shrink-0 cursor-pointer opacity-70 hover:opacity-100"
-          onClick={() => {
-            client.setQueryData(['thread', 'error', thread.id], null);
-          }}
-        >
-          <X size={16} />
-        </button>
-      </div>
+      <Alert variant="destructive" className="mt-4">
+        <AlertCircle aria-hidden="true" />
+        <AlertTitle>The run failed</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+        <AlertAction>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Dismiss error"
+            onClick={() => {
+              client.setQueryData(['thread', 'error', thread.id], null);
+            }}
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </AlertAction>
+      </Alert>
     ) : null;
 
   // Return the rendered component.

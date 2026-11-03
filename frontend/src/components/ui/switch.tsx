@@ -1,33 +1,36 @@
-import * as React from "react"
-import * as SwitchPrimitive from "@radix-ui/react-switch"
+import { Switch as SwitchPrimitive } from '@base-ui/react/switch';
+import type { ComponentProps } from 'react';
+import { cn } from '@/lib/utils';
 
-import { cn } from "@/lib/utils"
+type SwitchProps = ComponentProps<typeof SwitchPrimitive.Root>;
 
-function Switch({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
-  size?: "sm" | "default"
-}) {
+/**
+ * Switch implemented from the Nebari Figma spec on top of Base UI's `Switch`.
+ * Toggles a single setting on or off with immediate effect — reach for this
+ * instead of `Checkbox` when the change applies instantly rather than on form
+ * submit. Controlled via `checked` / `onCheckedChange`, or uncontrolled via
+ * `defaultChecked`.
+ *
+ * Base UI threads `data-checked` / `data-unchecked` / `data-disabled` onto both
+ * the root track and the thumb, which drive every visual state below.
+ */
+function Switch({ className, ...props }: SwitchProps) {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
-      data-size={size}
       className={cn(
-        "peer group/switch inline-flex shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[1.15rem] data-[size=default]:w-8 data-[size=sm]:h-3.5 data-[size=sm]:w-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input dark:data-[state=unchecked]:bg-input/80",
-        className
+        'relative inline-flex h-[18px] w-8 shrink-0 cursor-pointer items-center rounded-full p-0.5 outline-none motion-safe:transition-colors motion-safe:duration-(--duration-fast) motion-safe:ease-(--ease-standard) before:absolute before:left-1/2 before:top-1/2 before:h-full before:min-h-6 before:w-full before:min-w-6 before:-translate-x-1/2 before:-translate-y-1/2 before:content-[""] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[checked]:bg-primary data-[checked]:hover:bg-primary-hover data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[unchecked]:bg-muted-foreground/40 data-[unchecked]:hover:bg-muted-foreground/70',
+        className,
       )}
       {...props}
     >
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className={cn(
-          "pointer-events-none block rounded-full bg-background ring-0 transition-transform group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0 dark:data-[state=checked]:bg-primary-foreground dark:data-[state=unchecked]:bg-foreground"
-        )}
+        className="pointer-events-none block size-3.5 rounded-full bg-background shadow-sm motion-safe:transition-transform motion-safe:duration-(--duration-fast) motion-safe:ease-(--ease-standard) data-[checked]:translate-x-3.5 data-[unchecked]:translate-x-0"
       />
     </SwitchPrimitive.Root>
-  )
+  );
 }
 
-export { Switch }
+export type { SwitchProps };
+export { Switch };

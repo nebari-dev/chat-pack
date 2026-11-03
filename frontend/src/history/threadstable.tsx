@@ -153,15 +153,11 @@ namespace Private {
       const all = table.getIsAllRowsSelected();
       const some = table.getIsSomeRowsSelected();
       const handleChange = () => table.toggleAllRowsSelected();
-      const checked = all ? true : some ? 'indeterminate' : false;
       return (
         <Checkbox
           aria-label="Select All"
-          className={cn(
-            'data-[state=checked]:bg-bd-brand-default',
-            'data-[state=checked]:border-none',
-          )}
-          checked={checked}
+          checked={all}
+          indeterminate={!all && some}
           onCheckedChange={handleChange}
         />
       );
@@ -173,10 +169,6 @@ namespace Private {
       return (
         <Checkbox
           aria-label="Select Row"
-          className={cn(
-            'data-[state=checked]:bg-bd-brand-default',
-            'data-[state=checked]:border-none',
-          )}
           checked={checked}
           onCheckedChange={handleChange}
         />
@@ -193,7 +185,7 @@ namespace Private {
       const row = cellContext.row;
       const threadId = row.original.id;
       const activeProps = {
-        className: 'text-bd-brand-default font-semibold',
+        className: 'text-primary font-semibold',
       };
       return (
         <p className="whitespace-pre-wrap">
@@ -325,7 +317,7 @@ namespace Private {
       <div
         className={cn(
           'fixed bottom-4 flex flex-row justify-self-center items-center gap-4',
-          'rounded-sm border px-4 py-2 shadow-lg z-1 bg-bg-white',
+          'rounded-sm border px-4 py-2 shadow-lg z-1 bg-card',
         )}
       >
         <div>
@@ -337,20 +329,10 @@ namespace Private {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            className="rounded-sm cursor-pointer"
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-          >
+          <Button variant="ghost" size="sm" onClick={handleClear}>
             Clear Selection
           </Button>
-          <Button
-            className="rounded-sm cursor-pointer"
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-          >
+          <Button variant="destructive" size="sm" onClick={handleDelete}>
             Delete Selection
           </Button>
         </div>

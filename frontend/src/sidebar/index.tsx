@@ -3,17 +3,19 @@
 |----------------------------------------------------------------------------*/
 import type { ReactNode } from 'react';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { cn } from '@/lib/utils';
-
-import { Header } from './header';
+import {
+  SidebarContent,
+  SidebarHeader,
+  Sidebar as SidebarPrimitive,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
 
 import { Launcher } from './launcher';
 
 import { Recent } from './recent';
-
-import { UserProfile } from './userprofile';
 
 /**
  * The viewport width below which the sidebar auto-collapses.
@@ -24,19 +26,15 @@ import { UserProfile } from './userprofile';
 const COLLAPSE_QUERY = '(max-width: 1024px)';
 
 /**
- * A React component that renders the application sidebar.
+ * A React component that renders the collapsible application sidebar.
  */
 export function Sidebar(): ReactNode {
-  // Setup the state to track the sidebar open state, seeded from the current
-  // viewport so a narrow first paint starts collapsed.
-  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(
-    () => !window.matchMedia(COLLAPSE_QUERY).matches,
+  // Setup the state to track the collapsed state, seeded from the current
+  // viewport so a narrow first paint starts collapsed. The registry provider
+  // is controlled so the viewport listener below can drive it too.
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => window.matchMedia(COLLAPSE_QUERY).matches,
   );
-
-  // Create the toggle handler for the sidebar state.
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
 
   // Auto-collapse the sidebar when the viewport narrows past the breakpoint,
   // and re-open it when the viewport widens again. Reacting to the media
@@ -46,7 +44,7 @@ export function Sidebar(): ReactNode {
   useEffect(() => {
     const media = window.matchMedia(COLLAPSE_QUERY);
     const onChange = (event: MediaQueryListEvent) => {
-      setSidebarOpen(!event.matches);
+      setCollapsed(event.matches);
     };
     media.addEventListener('change', onChange);
     return () => media.removeEventListener('change', onChange);
@@ -54,18 +52,19 @@ export function Sidebar(): ReactNode {
 
   // Return the rendered component.
   return (
-    <div
-      className={cn(
-        'flex flex-col flex-none gap-3 border-r border-bd-neutral-default',
-        'bg-bg-white transition-[width] duration-150',
-        isSidebarOpen ? 'w-60' : 'w-12.25',
-      )}
-    >
-      <Header isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-      <Launcher isSidebarOpen={isSidebarOpen} />
-      <Recent isSidebarOpen={isSidebarOpen} />
-      <div className="grow" />
-      <UserProfile isSidebarOpen={isSidebarOpen} />
-    </div>
+    <SidebarProvider collapsed={collapsed} onCollapsedChange={setCollapsed}>
+      <SidebarPrimitive
+        aria-label="Main"
+        className="rounded-none border-r border-border bg-sidebar"
+      >
+        <SidebarHeader className="justify-end group-data-[state=collapsed]/sidebar:justify-center">
+          <SidebarTrigger />
+        </SidebarHeader>
+        <SidebarContent className="gap-4">
+          <Launcher />
+          <Recent />
+        </SidebarContent>
+      </SidebarPrimitive>
+    </SidebarProvider>
   );
 }

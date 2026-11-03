@@ -13,7 +13,7 @@ import { ThreadsTable } from './threadstable';
 export function History(): ReactNode {
   return (
     <main className="grow flex flex-col">
-      <div className="px-4 py-2 border-b border-bd-neutral-default">
+      <div className="px-4 py-2 border-b border-border">
         <h2 className="text-lg font-semibold">History</h2>
       </div>
       <ThreadsTable />

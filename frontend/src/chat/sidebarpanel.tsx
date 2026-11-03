@@ -9,6 +9,8 @@ import { X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+
 import { Separator } from '@/components/ui/separator';
 
 import { SidebarReasoning } from './sidebarreasoning';
@@ -45,9 +47,19 @@ export function SidebarPanel(props: SidebarPanel.Props): ReactNode {
     <section className="h-full flex flex-col">
       <h1 className="p-2 flex flex-row justify-between items-center">
         <span className="text-xl font-bold">{title}</span>
-        <Link to="." search={(prev) => ({ ...prev, detailId: undefined })}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Close"
+          render={
+            <Link
+              to="."
+              search={(prev) => ({ ...prev, detailId: undefined })}
+            />
+          }
+        >
           <X />
-        </Link>
+        </Button>
       </h1>
       <Separator />
       <div className="p-2 grow overflow-auto">{content}</div>

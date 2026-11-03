@@ -5,6 +5,8 @@ import { Check, ShieldQuestion, X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 import { Button } from '@/components/ui/button';
 
 import {
@@ -72,32 +74,29 @@ namespace Private {
       decideApproval(request.id, decision);
     };
 
+    // Create the details, if the request has any.
+    const details = request.details ? <p>{request.details}</p> : null;
+
     // Return the rendered component.
     return (
-      <div className="rounded-sm border border-bd-neutral-default p-3 flex flex-col gap-3">
-        <div className="flex flex-row items-start gap-2">
-          <ShieldQuestion size={16} className="mt-0.5 shrink-0" />
-          <div className="min-w-0 flex flex-col gap-1">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Approval requested
-            </span>
-            <p className="text-sm font-medium">{request.action}</p>
-            {request.details ? (
-              <p className="text-sm text-muted-foreground">{request.details}</p>
-            ) : null}
+      <Alert>
+        <ShieldQuestion aria-hidden="true" />
+        <AlertTitle>Approval requested</AlertTitle>
+        <AlertDescription className="flex flex-col gap-3">
+          <p className="font-medium text-foreground">{request.action}</p>
+          {details}
+          <div className="flex flex-row justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={decide('rejected')}>
+              <X />
+              Reject
+            </Button>
+            <Button size="sm" onClick={decide('approved')}>
+              <Check />
+              Approve
+            </Button>
           </div>
-        </div>
-        <div className="flex flex-row justify-end gap-2">
-          <Button size="sm" variant="outline" onClick={decide('rejected')}>
-            <X />
-            Reject
-          </Button>
-          <Button size="sm" onClick={decide('approved')}>
-            <Check />
-            Approve
-          </Button>
-        </div>
-      </div>
+        </AlertDescription>
+      </Alert>
     );
   }
 

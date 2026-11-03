@@ -55,7 +55,10 @@ export function PageNav(): ReactNode {
   const navigate = useNavigate();
 
   // Create the callback to handle changing the page size.
-  const handlePageSizeChange = (value: string) => {
+  const handlePageSizeChange = (value: string | null) => {
+    if (value === null) {
+      return;
+    }
     const nextPageSize = Number(value);
     navigate({
       to: '.',
@@ -82,7 +85,7 @@ export function PageNav(): ReactNode {
   // Return the rendered component.
   return (
     <nav className="flex w-full flex-row items-center justify-end gap-4 px-4 pb-4">
-      <Field orientation="horizontal" className="w-fit">
+      <Field className="w-fit flex-row items-center gap-2">
         <FieldLabel
           htmlFor="history-rows-per-page"
           className="whitespace-nowrap text-sm text-muted-foreground"
@@ -90,7 +93,10 @@ export function PageNav(): ReactNode {
           Rows per page
         </FieldLabel>
         <Select value={`${pageSize}`} onValueChange={handlePageSizeChange}>
-          <SelectTrigger id="history-rows-per-page" size="sm">
+          <SelectTrigger
+            id="history-rows-per-page"
+            className="min-h-7 h-7 py-0"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -109,7 +115,6 @@ export function PageNav(): ReactNode {
       </span>
       <div className="flex items-center gap-2">
         <Button
-          className="rounded-sm cursor-pointer"
           variant="ghost"
           size="sm"
           disabled={pageNumber <= 1}
@@ -119,7 +124,6 @@ export function PageNav(): ReactNode {
           Previous
         </Button>
         <Button
-          className="rounded-sm cursor-pointer"
           variant="ghost"
           size="sm"
           disabled={pageNumber >= pageCount}
