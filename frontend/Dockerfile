@@ -18,7 +18,7 @@ RUN npm run build
 # Vite outputs to /app/dist by default.
 
 # ─── Stage 2: serve ──────────────────────────────────────────────────────────
-FROM nginx:1.27-alpine AS final
+FROM nginx:1.31.9-alpine AS final
 
 # envsubst is part of gettext — needed to render ${API_URL} in the template.
 RUN apk add --no-cache gettext
