@@ -179,7 +179,7 @@ frontend:
     logoUrl: https://cdn.acme.com/logo.svg
     theme:
       light:
-        bgBrandDefault: "#0066cc"
+        primary: "#0066cc"
 
 backend:
   nebariapp:

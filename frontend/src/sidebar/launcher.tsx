@@ -1,53 +1,37 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import { Link } from '@tanstack/react-router';
+import { Link, useMatchRoute } from '@tanstack/react-router';
 
 import { History, MessageSquarePlus } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
-import { cn } from '@/lib/utils';
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuLabel,
+} from '@/components/ui/sidebar';
 
 /**
  * A React component that renders the sidebar launcher links.
  */
-export function Launcher(props: Launcher.Props): ReactNode {
-  // Extract the props.
-  const { isSidebarOpen } = props;
-
-  // Return the rendered component.
+export function Launcher(): ReactNode {
   return (
-    <div className="px-2 flex flex-col flex-none gap-px">
+    <SidebarMenu>
       <Private.LauncherLink
         to="/chat"
         text="Chat"
-        collapsed={!isSidebarOpen}
-        icon={<MessageSquarePlus className="m-auto" size={20} />}
+        icon={<MessageSquarePlus className="size-5 shrink-0" />}
       />
       <Private.LauncherLink
         to="/history"
         text="History"
-        collapsed={!isSidebarOpen}
-        icon={<History className="m-auto" size={20} />}
+        icon={<History className="size-5 shrink-0" />}
       />
-    </div>
+    </SidebarMenu>
   );
-}
-
-/**
- * The namespace for the `Launcher` component statics.
- */
-export namespace Launcher {
-  /**
-   * A type alias for the `Launcher` props.
-   */
-  export type Props = {
-    /**
-     * Whether sidebar is open.
-     */
-    readonly isSidebarOpen: boolean;
-  };
 }
 
 /**
@@ -61,12 +45,7 @@ namespace Private {
     /**
      * The route to use for the link.
      */
-    readonly to: string;
-
-    /**
-     * Whether the button is collapsed.
-     */
-    readonly collapsed: boolean;
+    readonly to: '/chat' | '/history';
 
     /**
      * The icon for the button.
@@ -81,35 +60,32 @@ namespace Private {
 
   /**
    * A React component that renders a launcher link.
+   *
+   * The link is active anywhere under its route (e.g. `/chat?threadId=…`),
+   * and shows its text as a tooltip while the sidebar is collapsed.
    */
   export function LauncherLink(props: LauncherLinkProps): ReactNode {
     // Extract the props.
-    const { to, collapsed, icon, text } = props;
+    const { to, icon, text } = props;
 
-    // Create the active link props.
-    const activeProps = {
-      className: 'text-bd-brand-default font-semibold',
-    };
-
-    // Create the inactive link props.
-    const inactiveProps = {
-      className: 'hover:bg-bg-neutral-dark',
-    };
+    // Determine whether the link's route is the current one.
+    const matchRoute = useMatchRoute();
+    const active = !!matchRoute({ to, fuzzy: true });
 
     // Return the rendered component.
     return (
-      <Link
-        to={to}
-        activeProps={activeProps}
-        inactiveProps={inactiveProps}
-        className={cn(
-          'h-9 px-1 flex flex-row gap-2 items-center',
-          'rounded-sm whitespace-nowrap overflow-hidden',
-        )}
-      >
-        <span className="flex-none w-6">{icon}</span>
-        <span className={collapsed ? 'hidden' : ''}>{text}</span>
-      </Link>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          size="lg"
+          className="px-2.5"
+          active={active}
+          tooltip={text}
+          render={<Link to={to} />}
+        >
+          {icon}
+          <SidebarMenuLabel>{text}</SidebarMenuLabel>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
   }
 }

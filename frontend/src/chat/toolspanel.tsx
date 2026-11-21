@@ -9,6 +9,8 @@ import { Hammer, X } from 'lucide-react';
 
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+
 import { Separator } from '@/components/ui/separator';
 
 import { Switch } from '@/components/ui/switch';
@@ -42,9 +44,19 @@ export function ToolsPanel(): ReactNode {
     <section className="h-full flex flex-col">
       <h1 className="p-2 flex flex-row justify-between items-center">
         <span className="text-xl font-bold">Tools</span>
-        <Link to="." search={(prev) => ({ ...prev, showTools: undefined })}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Close"
+          render={
+            <Link
+              to="."
+              search={(prev) => ({ ...prev, showTools: undefined })}
+            />
+          }
+        >
           <X />
-        </Link>
+        </Button>
       </h1>
       <Separator />
       <div className="p-2 grow overflow-auto flex flex-col gap-4">
@@ -97,7 +109,7 @@ namespace Private {
       <li
         className={cn(
           'h-12 overflow-hidden rounded-sm px-2',
-          'border border-bd-neutral-default',
+          'border border-border',
           'flex flex-row items-center justify-between gap-2',
         )}
       >
@@ -147,7 +159,6 @@ namespace Private {
             control={
               <Switch
                 aria-label={`Toggle ${tool.name}`}
-                size="sm"
                 checked
                 disabled
                 className="shrink-0"
@@ -191,7 +202,6 @@ namespace Private {
               control={
                 <Switch
                   aria-label={`Toggle ${name}`}
-                  size="sm"
                   checked={enabled}
                   onCheckedChange={(value) => setToolEnabled(name, value)}
                   className="shrink-0"

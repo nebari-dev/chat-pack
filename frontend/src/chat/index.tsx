@@ -65,7 +65,7 @@ export function Chat(): ReactNode {
           </Viewport>
         </div>
         {sidebarPanel ? (
-          <aside className="w-96 shrink-0 overflow-hidden border-l border-bd-neutral-default">
+          <aside className="w-96 shrink-0 overflow-hidden border-l border-border">
             {sidebarPanel}
           </aside>
         ) : null}

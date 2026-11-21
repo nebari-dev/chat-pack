@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import * as auth from '@/auth';
 import { ConfigErrorScreen } from '@/components/config-error-screen';
 import { AppConfigContext, PermissionsContext } from '@/context';
+import { Header } from '@/header';
 import { agentsQuery, appConfigQuery, userQuery } from '@/queries';
 
 import { Sidebar } from '@/sidebar';
@@ -94,11 +95,17 @@ function RouteComponent(): ReactNode {
   const { agents, permissions } = loaderData;
 
   // Return the rendered component.
+  //
+  // The app shell is the Nebari header across the top, with the sidebar and
+  // the routed page sharing the remaining height side by side.
   return (
     <AppConfigContext value={agents}>
       <PermissionsContext value={permissions}>
-        <Sidebar />
-        <Outlet />
+        <Header />
+        <div className="flex min-h-0 flex-1 flex-row">
+          <Sidebar />
+          <Outlet />
+        </div>
       </PermissionsContext>
     </AppConfigContext>
   );

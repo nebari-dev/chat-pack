@@ -1,16 +1,57 @@
-import { Loader2Icon } from "lucide-react"
+import { cva, type VariantProps } from 'class-variance-authority';
+import { LoaderCircle, type LucideProps } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-import { cn } from "@/lib/utils"
+const spinnerVariants = cva('motion-safe:animate-spin', {
+  variants: {
+    // `default` intentionally adds no `size-*` class: standalone it falls back
+    // to lucide's own size, and inside `Button` it lets the button's
+    // `[&_svg:not([class*='size-'])]:size-*` rule size the spinner per button
+    // size. The explicit sizes are for standalone use.
+    size: {
+      xs: 'size-3.5',
+      sm: 'size-4',
+      default: '',
+      lg: 'size-6',
+      xl: 'size-8',
+    },
+  },
+  defaultVariants: {
+    size: 'default',
+  },
+});
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+type SpinnerProps = Omit<LucideProps, 'size'> &
+  VariantProps<typeof spinnerVariants> & {
+    /**
+     * Accessible label announced by assistive tech. Defaults to `"Loading"`.
+     */
+    label?: string;
+  };
+
+/**
+ * Minimal loading spinner — a `motion-safe:animate-spin` wrapper around
+ * lucide's `LoaderCircle`. Exposes `role="status"` so assistive tech announces
+ * it and tests can query it, which also carries the loading state when reduced
+ * motion holds the icon still. Used by `Button`'s `loading` state.
+ */
+function Spinner({
+  className,
+  size,
+  label = 'Loading',
+  ...props
+}: SpinnerProps) {
   return (
-    <Loader2Icon
+    <LoaderCircle
+      aria-label={label}
+      className={cn(spinnerVariants({ size }), className)}
+      data-size={size ?? 'default'}
+      data-slot="spinner"
       role="status"
-      aria-label="Loading"
-      className={cn("size-4 animate-spin", className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Spinner }
+export type { SpinnerProps };
+export { Spinner, spinnerVariants };

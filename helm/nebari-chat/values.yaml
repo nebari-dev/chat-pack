@@ -116,22 +116,23 @@ frontend:
   branding:
     # -- Browser tab title. Empty keeps the default ("Nebari Chat")
     title: ""
-    # -- URL to a custom logo shown in the sidebar header. Empty uses the built-in Nebari logo
+    # -- URL to a custom logo shown in the app header. Empty uses the built-in Nebari logo
     logoUrl: ""
     # -- URL to a custom dark-mode logo. Empty falls back to logoUrl / the built-in Nebari dark logo
     logoUrlDark: ""
     # -- URL to a custom favicon. Empty uses the built-in Nebari favicon
     faviconUrl: ""
     # -- CSS variable overrides injected at runtime — no image rebuild required.
-    # Keys are camelCase brand tokens (see frontend/src/main.css), e.g. bgBrandDefault,
-    # bdBrandDefault, bgBrandSecondary, textBrandOnBrand, textNeutralDefault, radius.
+    # Keys are the camelCase Nebari semantic tokens (see THEME_TOKENS in
+    # frontend/src/config/index.ts), e.g. primary, primaryHover, ring, canvas,
+    # header, card, muted, foreground, border, radius. Unknown keys are ignored.
     # Example:
     #   theme:
     #     light:
-    #       bgBrandDefault: "#0066cc"
-    #       bdBrandDefault: "#004a99"
+    #       primary: "#0066cc"
+    #       primaryHover: "#004a99"
     #     dark:
-    #       bgBrandDefault: "#4da6ff"
+    #       primary: "#4da6ff"
     theme:
       light: {}
       dark: {}

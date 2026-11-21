@@ -3,22 +3,30 @@
 |----------------------------------------------------------------------------*/
 import { useQuery } from '@tanstack/react-query';
 
-import { Link } from '@tanstack/react-router';
+import { Link, useSearch } from '@tanstack/react-router';
 
 import type { ReactNode } from 'react';
 
 import * as api from '@/api';
 
-import { Separator } from '@/components/ui/separator';
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuLabel,
+  useSidebar,
+} from '@/components/ui/sidebar';
 
 import { threadPageQuery } from '@/queries';
 
 /**
  * A react component that renders the recent threads in the sidebar.
  */
-export function Recent(props: Recent.Props): ReactNode {
-  // Extract the props.
-  const { isSidebarOpen } = props;
+export function Recent(): ReactNode {
+  // Fetch the sidebar collapsed state.
+  const { collapsed } = useSidebar();
 
   // Fetch the most recent threads.
   //
@@ -33,8 +41,12 @@ export function Recent(props: Recent.Props): ReactNode {
     }),
   );
 
-  // Bail early if the sidebar is not open.
-  if (!isSidebarOpen) {
+  // Fetch the current thread id, if any, to mark its link active.
+  const { threadId } = useSearch({ strict: false });
+
+  // Bail early if the sidebar is collapsed. Thread titles have no icon to
+  // fall back to, so the section is hidden rather than squeezed.
+  if (collapsed) {
     return null;
   }
 
@@ -46,47 +58,30 @@ export function Recent(props: Recent.Props): ReactNode {
     );
 
   const links = threads.map((thread) => (
-    <Private.ThreadLink key={thread.id} thread={thread} />
+    <Private.ThreadLink
+      key={thread.id}
+      thread={thread}
+      active={thread.id === threadId}
+    />
   ));
 
   // Create the content for the section.
   const content =
     links.length > 0 ? (
-      links
+      <SidebarMenu>{links}</SidebarMenu>
     ) : (
-      <div className="py-1 text-muted-foreground">
+      <p className="px-2 py-1 text-sm text-muted-foreground-strong">
         Recently modified threads will appear here.
-      </div>
+      </p>
     );
 
   // Return the rendered component.
   return (
-    <div>
-      <Separator />
-      <section
-        className="px-4 py-2 overflow-hidden"
-        arial-label="Recent threads"
-      >
-        <h1 className="font-semibold">Recent</h1>
-        {content}
-      </section>
-    </div>
+    <SidebarGroup role="region" aria-labelledby="sidebar-recent-label">
+      <SidebarGroupLabel id="sidebar-recent-label">Recent</SidebarGroupLabel>
+      {content}
+    </SidebarGroup>
   );
-}
-
-/**
- * The namespace for the `Recent` statics.
- */
-export namespace Recent {
-  /**
-   * A type alias for the `Recent` props.
-   */
-  export type Props = {
-    /**
-     * Whether the sidebar is open.
-     */
-    readonly isSidebarOpen: boolean;
-  };
 }
 
 /**
@@ -98,29 +93,22 @@ namespace Private {
    */
   export function ThreadLink(props: ThreadLink.Props): ReactNode {
     // Extract the props.
-    const { thread } = props;
-
-    // Define the active link props.
-    const activeProps = {
-      className: 'text-bd-brand-default',
-    };
-
-    // Define the inactive link props.
-    const inactiveProps = {
-      className: 'text-muted-foreground',
-    };
+    const { thread, active } = props;
 
     // Return the rendered component.
     return (
-      <Link
-        className="block truncate py-1"
-        to="/chat"
-        search={{ threadId: thread.id }}
-        activeProps={activeProps}
-        inactiveProps={inactiveProps}
-      >
-        {thread.name || 'Untitled Thread'}
-      </Link>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          size="sm"
+          className="px-2"
+          active={active}
+          render={<Link to="/chat" search={{ threadId: thread.id }} />}
+        >
+          <SidebarMenuLabel>
+            {thread.name || 'Untitled Thread'}
+          </SidebarMenuLabel>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
   }
 
@@ -136,6 +124,11 @@ namespace Private {
        * The thread object for the link.
        */
       readonly thread: api.Thread;
+
+      /**
+       * Whether the thread is the one currently open.
+       */
+      readonly active: boolean;
     };
   }
 }

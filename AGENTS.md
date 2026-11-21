@@ -14,7 +14,7 @@ The frontend is just an AG-UI client; the backend is just Ravnar with a Keycloak
 
 ## Frontend (`frontend/`)
 
-React 19 + TypeScript + Vite, TanStack Router (file-based) + TanStack Query, shadcn/ui (new-york style) + Tailwind v4, Biome for lint/format.
+React 19 + TypeScript + Vite, TanStack Router (file-based) + TanStack Query, the [Nebari design system](https://github.com/nebari-dev/nebari-design) (a shadcn registry built on Base UI) + Tailwind v4, Biome for lint/format.
 
 ### Commands (run from `frontend/`)
 
@@ -39,7 +39,7 @@ Data flows through clearly separated layers — keep new code in the matching la
 - `src/routes/` — TanStack Router routes. `_authenticated.tsx` is the auth-guarded layout; routes under `_authenticated/` require login.
 - Feature folders: `src/chat/`, `src/home/`, `src/sidebar/`, `src/history/` hold the UI for each area.
 
-**Generated files — never hand-edit:** `src/routeTree.gen.ts` (TanStack Router plugin) and `src/components/ui/*` (shadcn). Biome is configured to ignore all of these.
+**Generated files — never hand-edit:** `src/routeTree.gen.ts` (TanStack Router plugin) and `src/components/ui/*` (Nebari/shadcn registry). Biome is configured to ignore all of these.
 
 ### Conventions
 
@@ -49,7 +49,8 @@ Data flows through clearly separated layers — keep new code in the matching la
 - Files prefixed with the OpenTeams copyright banner (see any existing file).
 - Feature-folder files use lowercase single-word names (`assistantmessage.tsx`, `pagenav.tsx`); barrels (`index.ts`) exist per layer (`api/`, `queries/`, `context/`, `auth/`), not per component. Match the local folder's pattern rather than renaming.
 - **Tailwind v4** via `@tailwindcss/vite` — there is no `tailwind.config.*`; configuration lives in `src/main.css`.
-- **shadcn/ui** (new-york style) components in `src/components/ui/` are vendored — add new ones with `npx shadcn add <component>` and don't hand-edit them (Biome ignores `src/components/ui/*`).
+- **Nebari design system** components in `src/components/ui/` are vendored from the `@nebari` shadcn registry (registered in `components.json`) — add or update them with `npx shadcn add @nebari/<name>` and don't hand-edit them (Biome ignores `src/components/ui/*`). They are built on **Base UI**, not Radix: compose with the `render` prop (`<Button render={<Link … />}>`), not `asChild`, and customize at the call site via `className`. For anything the registry lacks, fall back to upstream shadcn (`components.json` uses the Base UI `base-vega` style; currently `separator`, `toggle`, `toggle-group` and `input-group`) or an app-owned component outside `ui/` (e.g. `src/components/avatar.tsx`). `src/hooks/use-theme-preference.ts` and `src/hooks/theme-provider.tsx` are registry-owned too.
+- **Theme:** the top of `src/main.css` is written by `npx shadcn add @nebari/theme` — don't edit it (Biome formatting is off for that file so re-applying the theme stays a no-op). App-owned styles live in the section below it. Style with the Nebari semantic tokens (`bg-primary`, `text-muted-foreground`, `border-border`, …), never raw colors or app-invented brand tokens: operators rebrand by overriding those same tokens through `branding.theme` in `/config.json`, allow-listed by `THEME_TOKENS` in `src/config/index.ts`.
 - **Zod** schemas describe payloads coming from the AG-UI/Ravnar backend; parse at the API boundary (`src/api/`) rather than re-validating downstream.
 - Components do one thing and stay small. Prefer hooks/queries for server data over prop-drilling, give each component its own file, hoist event handlers and non-trivial JSX (ternaries, `.map()`s) to named `const`s in the component body, and comment the *why* behind non-obvious choices.
 - Auth: `keycloak-js`, configured at **runtime** from `public/keycloak-config.json` (not build-time). Set `VITE_AUTH_ENABLED=false` in `.env` to bypass auth locally. Copy `.env.example` → `.env` and set `VITE_API_URL` to your Ravnar backend.

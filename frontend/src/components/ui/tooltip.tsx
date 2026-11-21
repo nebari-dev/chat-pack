@@ -1,61 +1,146 @@
-"use client"
+import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
+import { createContext, useContext, useId } from 'react';
+import { cn } from '@/lib/utils';
 
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+type TooltipContextValue = {
+  contentId: string;
+  disabled: boolean;
+};
 
-import { cn } from "@/lib/utils"
+type TooltipContentProps = TooltipPrimitive.Popup.Props &
+  Pick<
+    TooltipPrimitive.Positioner.Props,
+    'align' | 'alignOffset' | 'side' | 'sideOffset'
+  > & {
+    /** Props forwarded to the Base UI Portal. */
+    portalProps?: TooltipPrimitive.Portal.Props;
+    /** Renders the small arrow anchored to the trigger. */
+    showArrow?: boolean;
+  };
 
+const TooltipContext = createContext<TooltipContextValue | null>(null);
+
+/** Provides shared open and close timing for a group of tooltips. */
 function TooltipProvider({
-  delayDuration = 0,
+  delay = 0,
+  closeDelay = 100,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+}: TooltipPrimitive.Provider.Props) {
   return (
     <TooltipPrimitive.Provider
       data-slot="tooltip-provider"
-      delayDuration={delayDuration}
+      delay={delay}
+      closeDelay={closeDelay}
       {...props}
     />
-  )
+  );
 }
 
+/**
+ * Tooltip groups a trigger with supplemental, non-interactive content.
+ * It opens on hover and keyboard focus, remains hoverable, and closes on Escape.
+ */
 function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  )
-}
-
-function TooltipTrigger({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
-
-function TooltipContent({
-  className,
-  sideOffset = 0,
   children,
+  disabled = false,
+  disableHoverablePopup = false,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: TooltipPrimitive.Root.Props) {
+  const generatedId = useId();
+
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "bg-foreground text-background animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
-          className
-        )}
+    <TooltipContext.Provider
+      value={{ contentId: `${generatedId}-tooltip`, disabled }}
+    >
+      <TooltipPrimitive.Root
+        disabled={disabled}
+        disableHoverablePopup={disableHoverablePopup}
         {...props}
       >
-        {children}
-        <TooltipPrimitive.Arrow className="bg-foreground fill-foreground z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
-  )
+        {children ?? <span data-slot="tooltip" hidden />}
+      </TooltipPrimitive.Root>
+    </TooltipContext.Provider>
+  );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+/** Element that opens the tooltip on hover or keyboard focus. */
+function TooltipTrigger({
+  'aria-describedby': ariaDescribedBy,
+  disabled,
+  ...props
+}: TooltipPrimitive.Trigger.Props) {
+  const context = useContext(TooltipContext);
+  const contentId =
+    context?.disabled || disabled ? undefined : context?.contentId;
+  const describedBy = [ariaDescribedBy, contentId].filter(Boolean).join(' ');
+
+  return (
+    <TooltipPrimitive.Trigger
+      aria-describedby={describedBy || undefined}
+      data-slot="tooltip-trigger"
+      disabled={disabled}
+      {...props}
+    />
+  );
+}
+
+/** Portaled tooltip surface positioned against its trigger. */
+function TooltipContent({
+  className,
+  side = 'top',
+  sideOffset = 8,
+  align = 'center',
+  alignOffset = 0,
+  portalProps,
+  showArrow = true,
+  style,
+  children,
+  ...props
+}: TooltipContentProps) {
+  const context = useContext(TooltipContext);
+
+  return (
+    <TooltipPrimitive.Portal {...portalProps}>
+      <TooltipPrimitive.Positioner
+        align={align}
+        alignOffset={alignOffset}
+        side={side}
+        sideOffset={sideOffset}
+        className="isolate z-50 pointer-events-auto"
+      >
+        <TooltipPrimitive.Popup
+          {...props}
+          data-slot="tooltip-content"
+          id={context?.contentId ?? props.id}
+          role="tooltip"
+          className={(state) =>
+            cn(
+              'pointer-events-auto relative z-50 w-max max-w-xs origin-(--transform-origin) rounded-sm bg-foreground px-2.5 py-1.5 text-background text-xs leading-4 shadow-md outline-none data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 motion-safe:transition-[opacity,transform] motion-safe:duration-(--duration-fast) motion-safe:ease-(--ease-emphasized) has-data-[slot=kbd]:pr-1.5 **:data-[slot=kbd]:ml-1.5 **:data-[slot=kbd]:rounded-sm **:data-[slot=kbd]:bg-background/10 **:data-[slot=kbd]:px-1.5 **:data-[slot=kbd]:py-0.5 **:data-[slot=kbd]:font-mono **:data-[slot=kbd]:text-[0.6875rem] **:data-[slot=kbd]:leading-3',
+              typeof className === 'function' ? className(state) : className,
+            )
+          }
+          style={(state) => ({
+            ...(typeof style === 'function' ? style(state) : style),
+            pointerEvents: 'auto',
+          })}
+        >
+          {children}
+          {showArrow && (
+            <TooltipPrimitive.Arrow
+              data-slot="tooltip-arrow"
+              className="pointer-events-none z-50 size-2.5 rotate-45 bg-foreground data-[side=bottom]:bottom-full data-[side=bottom]:translate-y-1/2 data-[side=left]:left-full data-[side=left]:-translate-x-1/2 data-[side=right]:right-full data-[side=right]:translate-x-1/2 data-[side=top]:top-full data-[side=top]:-translate-y-1/2"
+            />
+          )}
+        </TooltipPrimitive.Popup>
+      </TooltipPrimitive.Positioner>
+    </TooltipPrimitive.Portal>
+  );
+}
+
+export {
+  Tooltip,
+  TooltipContent,
+  type TooltipContentProps,
+  TooltipProvider,
+  TooltipTrigger,
+};

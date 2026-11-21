@@ -1,7 +1,7 @@
 /*-----------------------------------------------------------------------------
 | Copyright (c) 2025-present, OpenTeams Inc.
 |----------------------------------------------------------------------------*/
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/toast';
 
 import { classifyError } from './errors';
 
@@ -35,13 +35,15 @@ export function notifyError(
   // classified copy, never the raw message or stack trace.
   console.error(message, error);
 
-  // Show the toast, de-duplicating by category via a stable id.
-  toast.error(message, {
+  // Show the toast, de-duplicating by category via a stable id: adding an id
+  // that is already on screen updates that toast instead of stacking another.
+  // A timeout of 0 keeps the toast open until dismissed.
+  toast.add({
     id: `error:${category}`,
+    type: 'error',
+    title: message,
     description: detail,
-    duration: persistent
-      ? Number.POSITIVE_INFINITY
-      : (options.duration ?? DEFAULT_TOAST_DURATION),
+    timeout: persistent ? 0 : (options.duration ?? DEFAULT_TOAST_DURATION),
   });
 }
 

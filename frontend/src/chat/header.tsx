@@ -5,6 +5,8 @@ import { Link, useNavigate } from '@tanstack/react-router';
 
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
+
 import {
   Select,
   SelectContent,
@@ -15,14 +17,12 @@ import {
 
 import { useAgents, useChatConfig } from '@/context';
 
-import { cn } from '@/lib/utils';
-
 /**
  * A react component that renders the header for the chat page.
  */
 export function Header(): ReactNode {
   return (
-    <div className="px-4 py-2 flex flex-row border-b border-bd-neutral-default">
+    <div className="px-4 py-2 flex flex-row border-b border-border">
       <Private.AgentSelect />
       <Private.ThreadName />
       <div className="grow" />
@@ -49,34 +49,38 @@ namespace Private {
     const navigate = useNavigate();
 
     // Create the callback for the value change.
-    const handleValueChange = (value: string) => {
-      navigate({ to: '.', search: { agentId: value } });
+    const handleValueChange = (value: string | null) => {
+      if (value !== null) {
+        navigate({ to: '.', search: { agentId: value } });
+      }
     };
 
+    // Map each agent id to its display name. Base UI's `SelectValue` renders
+    // the raw value unless the root is given the labels up front.
+    const labels = Object.fromEntries(
+      agents.map((agent) => [
+        agent.id,
+        agent.capabilities.identity?.name ?? agent.id,
+      ]),
+    );
+
     // Create the items for the selector
-    const items = agents.map((agent) => {
-      const agentName = agent.capabilities.identity?.name ?? agent.id;
-      return (
-        <SelectItem key={agent.id} value={agent.id}>
-          {agentName}
-        </SelectItem>
-      );
-    });
+    const items = agents.map((agent) => (
+      <SelectItem key={agent.id} value={agent.id}>
+        {labels[agent.id]}
+      </SelectItem>
+    ));
 
     // Return the rendered component.
     return (
-      <Select value={agentId} onValueChange={handleValueChange}>
+      <Select value={agentId} items={labels} onValueChange={handleValueChange}>
         <SelectTrigger
-          size="sm"
           aria-label="Select agent"
-          className={cn(
-            'w-[200px] rounded-sm shadow-none focus-visible:ring-0',
-            'focus-visible:border-bd-brand-default data-[size=sm]:h-7',
-          )}
+          className="h-7 min-h-7 w-[200px] py-0"
         >
           <SelectValue placeholder="Select..." />
         </SelectTrigger>
-        <SelectContent position="popper">{items}</SelectContent>
+        <SelectContent>{items}</SelectContent>
       </Select>
     );
   }
@@ -113,20 +117,14 @@ namespace Private {
     // Determine whether the link should be disabled.
     const isDisabled = thread === null;
 
+    // Create the link the button renders as.
+    const link = <Link to="." search={(prev) => ({ agentId: prev.agentId })} />;
+
     // Return the rendered component.
     return (
-      <Link
-        to="."
-        search={(prev) => ({ agentId: prev.agentId })}
-        className={cn(
-          'h-7 w-24 shrink-0 whitespace-nowrap',
-          'flex justify-center items-center rounded-sm text-white',
-          isDisabled ? 'bg-bd-brand-default/50' : 'bg-bd-brand-default',
-        )}
-        disabled={isDisabled}
-      >
+      <Button size="sm" className="w-24" disabled={isDisabled} render={link}>
         New Chat
-      </Link>
+      </Button>
     );
   }
 }
